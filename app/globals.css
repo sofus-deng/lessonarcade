@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  /* LessonArcade Design Tokens */
+  --la-bg: #1e293b;
+  /* Deep blue-slate background */
+  --la-surface: #f8fafc;
+  /* Soft neutral surface */
+  --la-primary: #6366f1;
+  /* Violet/indigo primary */
+  --la-accent: #14b8a6;
+  /* Teal/aqua accent */
+  --la-muted: #64748b;
+  /* Muted gray */
+  --la-border: #e2e8f0;
+  /* Light border */
+
+  /* Semantic color mappings */
+  --background: var(--la-bg);
+  --foreground: var(--la-surface);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-la-bg: var(--la-bg);
+  --color-la-surface: var(--la-surface);
+  --color-la-primary: var(--la-primary);
+  --color-la-accent: var(--la-accent);
+  --color-la-muted: var(--la-muted);
+  --color-la-border: var(--la-border);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Typography scale */
+  --text-4xl: 2.25rem;
+  --text-3xl: 1.875rem;
+  --text-2xl: 1.5rem;
+  --text-xl: 1.25rem;
+  --text-lg: 1.125rem;
+  --text-base: 1rem;
+  --text-sm: 0.875rem;
+  --text-xs: 0.75rem;
+
+  /* Spacing */
+  --container-padding: 1rem;
+  --section-gap: 4rem;
+  --card-gap: 2rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --la-surface: #f1f5f9;
+    /* Slightly darker surface for dark mode */
+    --foreground: var(--la-surface);
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+/* Custom scrollbar for better UX */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--la-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--la-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--la-primary);
+}

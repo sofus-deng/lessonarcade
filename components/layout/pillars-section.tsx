@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -38,7 +39,6 @@ export function PillarsSection() {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-la-surface mb-4">
             Built for everyone in learning ecosystem
           </h2>
-          {/* eslint-disable-next-line react/no-unescaped-entities */}
           <p className="text-xl text-la-muted max-w-3xl mx-auto">
             Whether you're creating content, managing teams, or hungry to learn, LessonArcade adapts to your needs
           </p>

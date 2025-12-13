@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { type LessonArcadeLesson, type LessonArcadeItem, type LessonArcadeMultipleChoiceItem } from '@/lib/lessonarcade/schema'
 import { LevelSidebar } from './level-sidebar'
 import { LevelHeader } from './level-header'
+import { LessonSummary } from './lesson-summary'
 import { MultipleChoiceItem } from './items/multiple-choice-item'
 import { OpenEndedItem } from './items/open-ended-item'
 import { CheckpointItem } from './items/checkpoint-item'
@@ -223,6 +224,12 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="max-w-4xl mx-auto space-y-6"
           >
+            {/* Lesson Summary */}
+            <LessonSummary
+              lesson={lesson}
+              scoringState={scoringState}
+            />
+
             {/* Level Header */}
             <LevelHeader
               level={currentLevel}

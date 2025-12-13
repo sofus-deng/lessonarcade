@@ -11,11 +11,13 @@ interface OpenEndedItemProps {
   item: LessonArcadeOpenEndedItem
   value: string
   onChange: (value: string) => void
+  onSubmit: () => void
 }
 
-export function OpenEndedItem({ item, value, onChange }: OpenEndedItemProps) {
+export function OpenEndedItem({ item, value, onChange, onSubmit }: OpenEndedItemProps) {
   const [isFocused, setIsFocused] = useState(false)
   const [characterCount, setCharacterCount] = useState(value.length)
+  const [isSubmitted, setIsSubmitted] = useState(false)
 
   useEffect(() => {
     setCharacterCount(value.length)
@@ -27,6 +29,15 @@ export function OpenEndedItem({ item, value, onChange }: OpenEndedItemProps) {
       return // Prevent exceeding max characters
     }
     onChange(newValue)
+  }
+
+  const handleBlur = () => {
+    setIsFocused(false)
+    // Auto-submit when user leaves the textarea if there's content
+    if (value.trim().length > 0 && !isSubmitted) {
+      setIsSubmitted(true)
+      onSubmit()
+    }
   }
 
   const isNearLimit = item.maxCharacters && characterCount > item.maxCharacters * 0.9
@@ -67,11 +78,13 @@ export function OpenEndedItem({ item, value, onChange }: OpenEndedItemProps) {
               onChange={handleChange}
               placeholder={item.placeholder || "Enter your answer here..."}
               onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
+              onBlur={handleBlur}
+              disabled={isSubmitted}
               className={cn(
                 "min-h-[120px] resize-none border-la-border bg-la-surface text-la-bg",
                 "placeholder:text-la-muted/50 focus:border-la-accent focus:ring-la-accent/20",
-                isFocused && "ring-2 ring-la-accent/20"
+                isFocused && "ring-2 ring-la-accent/20",
+                isSubmitted && "cursor-not-allowed opacity-75"
               )}
             />
             
@@ -99,7 +112,7 @@ export function OpenEndedItem({ item, value, onChange }: OpenEndedItemProps) {
               </motion.div>
             )}
             
-            {value.length > 0 && (
+            {isSubmitted && value.length > 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -107,6 +120,18 @@ export function OpenEndedItem({ item, value, onChange }: OpenEndedItemProps) {
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Answer submitted</span>
+              </motion.div>
+            )}
+            {!isSubmitted && value.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 text-sm text-la-muted"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>Answer saved locally</span>
               </motion.div>

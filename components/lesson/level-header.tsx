@@ -4,11 +4,26 @@ import { motion } from 'motion/react'
 import { type LessonArcadeLevel } from '@/lib/lessonarcade/schema'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
-interface LevelHeaderProps {
-  level: LessonArcadeLevel
+interface AnswerState {
+  selectedOptions: string[]
+  isSubmitted: boolean
+  isCorrect?: boolean
+  pointsEarned?: number
 }
 
-export function LevelHeader({ level }: LevelHeaderProps) {
+interface ScoringState {
+  totalScore: number
+  levelScores: Record<string, number>
+  streak: number
+  answeredItems: Record<string, AnswerState>
+}
+
+interface LevelHeaderProps {
+  level: LessonArcadeLevel
+  scoringState: ScoringState
+}
+
+export function LevelHeader({ level, scoringState }: LevelHeaderProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -61,8 +76,51 @@ export function LevelHeader({ level }: LevelHeaderProps) {
               </span>
             </div>
           )}
+          
+          {/* Level Stats */}
+          <LevelStats levelId={level.id} level={level} scoringState={scoringState} />
         </CardContent>
       </Card>
+    </motion.div>
+  )
+}
+
+function LevelStats({ levelId, level, scoringState }: {
+  levelId: string
+  level: LessonArcadeLevel
+  scoringState: ScoringState
+}) {
+  const answeredCount = level.items.filter(item =>
+    scoringState.answeredItems[item.id]?.isSubmitted
+  ).length
+  
+  const levelScore = scoringState.levelScores[levelId] || 0
+  
+  return (
+    <motion.div
+      className="flex flex-wrap items-center gap-4 text-sm pt-2 border-t border-la-border/20"
+      initial={{ opacity: 0, y: -5 }}
+      animate={{ opacity: 1, y: 0 }}
+      key={`${levelId}-${answeredCount}-${levelScore}-${scoringState.streak}`}
+    >
+      <div className="flex items-center gap-2">
+        <span className="text-la-muted">Answered:</span>
+        <span className="font-medium text-la-bg">{answeredCount}/{level.items.length}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-la-muted">Points:</span>
+        <span className="font-medium text-la-primary">{levelScore}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-la-muted">Streak:</span>
+        <motion.span
+          className="font-medium text-la-accent"
+          animate={{ scale: scoringState.streak > 0 ? [1, 1.2, 1] : 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          🔥 {scoringState.streak}
+        </motion.span>
+      </div>
     </motion.div>
   )
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from 'react'
 import { motion } from 'motion/react'
 import { type LessonArcadeMultipleChoiceItem } from '@/lib/lessonarcade/schema'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -9,23 +8,37 @@ import { cn } from '@/lib/ui/cn'
 interface MultipleChoiceItemProps {
   item: LessonArcadeMultipleChoiceItem
   selectedOptions: string[]
+  isLocked: boolean
   onSelectionChange: (optionIds: string[]) => void
+  onSubmit: () => void
 }
 
-export function MultipleChoiceItem({ item, selectedOptions, onSelectionChange }: MultipleChoiceItemProps) {
-  const [hasInteracted, setHasInteracted] = useState(false)
-
+export function MultipleChoiceItem({ item, selectedOptions, isLocked, onSelectionChange, onSubmit }: MultipleChoiceItemProps) {
   const handleOptionClick = (optionId: string) => {
+    if (isLocked) return
+    
     const newSelection = selectedOptions.includes(optionId)
       ? selectedOptions.filter(id => id !== optionId)
       : [...selectedOptions, optionId]
     
     onSelectionChange(newSelection)
-    setHasInteracted(true)
+    
+    // Auto-submit on first selection (simple locking behavior)
+    if (newSelection.length > 0) {
+      setTimeout(() => onSubmit(), 100)
+    }
   }
 
   const isCorrect = (optionId: string) => item.correctOptionIds.includes(optionId)
   const isSelected = (optionId: string) => selectedOptions.includes(optionId)
+  
+  // Calculate if the overall answer is correct
+  const isAnswerCorrect =
+    selectedOptions.length === item.correctOptionIds.length &&
+    selectedOptions.every(option => item.correctOptionIds.includes(option))
+  
+  // Calculate points earned
+  const pointsEarned = isLocked && isAnswerCorrect ? (item.points || 1) : 0
 
   return (
     <motion.div
@@ -43,8 +56,8 @@ export function MultipleChoiceItem({ item, selectedOptions, onSelectionChange }:
               <h3 className="text-lg font-semibold text-la-bg mb-2">
                 {item.prompt}
               </h3>
-              {item.difficulty && (
-                <div className="flex items-center gap-2 text-sm text-la-muted">
+              <div className="flex items-center gap-4 text-sm text-la-muted">
+                {item.difficulty && (
                   <span className={cn(
                     "px-2 py-1 rounded-full text-xs font-medium",
                     item.difficulty === 'easy' && "bg-green-100 text-green-800",
@@ -53,11 +66,21 @@ export function MultipleChoiceItem({ item, selectedOptions, onSelectionChange }:
                   )}>
                     {item.difficulty}
                   </span>
-                  {item.points && (
-                    <span>{item.points} points</span>
-                  )}
-                </div>
-              )}
+                )}
+                <span>{item.points || 1} points</span>
+                {isLocked && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={cn(
+                      "px-2 py-1 rounded-full text-xs font-medium",
+                      isAnswerCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    )}
+                  >
+                    {isAnswerCorrect ? `+${pointsEarned} pts` : "0 pts"}
+                  </motion.span>
+                )}
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -66,15 +89,16 @@ export function MultipleChoiceItem({ item, selectedOptions, onSelectionChange }:
           {item.options.map((option, index) => {
             const optionIsSelected = isSelected(option.id)
             const optionIsCorrect = isCorrect(option.id)
-            const showFeedback = hasInteracted && optionIsSelected
+            const showFeedback = isLocked && optionIsSelected
             
             return (
               <motion.button
                 key={option.id}
                 onClick={() => handleOptionClick(option.id)}
+                disabled={isLocked}
                 className={cn(
                   "w-full text-left p-4 rounded-lg border transition-all duration-200",
-                  "hover:shadow-md hover:border-la-accent/50",
+                  isLocked ? "cursor-not-allowed" : "hover:shadow-md hover:border-la-accent/50 cursor-pointer",
                   optionIsSelected
                     ? showFeedback
                       ? optionIsCorrect
@@ -83,8 +107,8 @@ export function MultipleChoiceItem({ item, selectedOptions, onSelectionChange }:
                       : "bg-la-accent/10 border-la-accent text-la-bg"
                     : "bg-la-surface border-la-border text-la-bg hover:bg-la-muted/10"
                 )}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={isLocked ? {} : { scale: 1.01 }}
+                whileTap={isLocked ? {} : { scale: 0.99 }}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1, duration: 0.2 }}
@@ -128,7 +152,7 @@ export function MultipleChoiceItem({ item, selectedOptions, onSelectionChange }:
             )
           })}
           
-          {hasInteracted && item.explanation && (
+          {isLocked && item.explanation && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}

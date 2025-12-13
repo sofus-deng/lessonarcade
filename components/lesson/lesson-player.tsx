@@ -14,55 +14,126 @@ interface LessonPlayerProps {
   lesson: LessonArcadeLesson
 }
 
+type LessonMode = "focus" | "arcade"
+
 interface AnswerState {
   selectedOptions: string[]  // Current selected options
   isSubmitted: boolean       // Whether the answer has been submitted/locked
   isCorrect?: boolean        // Whether the answer is correct (for multiple choice)
   pointsEarned?: number      // Points earned for this answer
+  basePointsEarned?: number  // Base points earned (separate from bonus)
+  bonusPointsEarned?: number // Bonus points earned (Arcade mode only)
+  firstShownAt?: number      // Timestamp when item was first shown (Arcade mode)
+  submittedAt?: number       // Timestamp when item was submitted (Arcade mode)
 }
 
 interface ScoringState {
+  mode: LessonMode           // Current lesson mode (focus or arcade)
   totalScore: number         // Total points across all levels
+  baseScore: number          // Base points only (excluding bonuses)
+  bonusScore: number         // Bonus points only (Arcade mode)
   levelScores: Record<string, number>  // Points per level ID
+  levelBaseScores: Record<string, number>  // Base points per level ID
+  levelBonusScores: Record<string, number>  // Bonus points per level ID
   streak: number             // Current consecutive correct answers
   answeredItems: Record<string, AnswerState>  // Enhanced answer tracking
+  itemFirstShown: Record<string, number>  // Track when items were first shown
 }
 
 export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0)
   const [scoringState, setScoringState] = useState<ScoringState>({
+    mode: "focus",
     totalScore: 0,
+    baseScore: 0,
+    bonusScore: 0,
     levelScores: {},
+    levelBaseScores: {},
+    levelBonusScores: {},
     streak: 0,
-    answeredItems: {}
+    answeredItems: {},
+    itemFirstShown: {}
   })
 
   const currentLevel = lesson.levels[currentLevelIndex]
+
+  // Track when items are first shown for Arcade mode
+  const trackItemShown = (itemId: string) => {
+    if (scoringState.mode === "arcade" && !scoringState.itemFirstShown[itemId]) {
+      setScoringState(prev => ({
+        ...prev,
+        itemFirstShown: {
+          ...prev.itemFirstShown,
+          [itemId]: Date.now()
+        }
+      }))
+    }
+  }
+
+  // Handle mode switching
+  const handleModeChange = (newMode: LessonMode) => {
+    setScoringState(prev => ({
+      ...prev,
+      mode: newMode
+    }))
+  }
 
   const handleLevelSelect = (index: number) => {
     setCurrentLevelIndex(index)
   }
 
-  const calculateMultipleChoiceScore = (item: LessonArcadeMultipleChoiceItem, selectedOptions: string[]) => {
+  const calculateMultipleChoiceScore = (
+    item: LessonArcadeMultipleChoiceItem,
+    selectedOptions: string[],
+    itemId: string,
+    submittedAt?: number
+  ) => {
     // Check if answer is correct
     const isCorrect =
       selectedOptions.length === item.correctOptionIds.length &&
       selectedOptions.every(option => item.correctOptionIds.includes(option))
     
-    // Calculate points
-    const points = isCorrect ? (item.points || 1) : 0
+    // Calculate base points
+    const basePoints = isCorrect ? (item.points || 1) : 0
     
-    return { isCorrect, points }
+    // Calculate bonus points for Arcade mode
+    let bonusPoints = 0
+    if (scoringState.mode === "arcade" && isCorrect && submittedAt) {
+      const firstShownAt = scoringState.itemFirstShown[itemId]
+      if (firstShownAt) {
+        const timeTaken = (submittedAt - firstShownAt) / 1000 // Convert to seconds
+        if (timeTaken <= 6) {
+          bonusPoints = 1
+        }
+      }
+    }
+    
+    const totalPoints = basePoints + bonusPoints
+    
+    return { isCorrect, basePoints, bonusPoints, totalPoints }
   }
 
-  const updateScoringState = (itemId: string, item: LessonArcadeItem, isCorrect: boolean, points: number) => {
+  const updateScoringState = (
+    itemId: string,
+    item: LessonArcadeItem,
+    isCorrect: boolean,
+    basePoints: number,
+    bonusPoints: number
+  ) => {
     // Find which level this item belongs to
     const level = lesson.levels.find(l => l.items.some(i => i.id === itemId))
     const levelId = level?.id || ''
     
     setScoringState(prev => {
       const newLevelScores = { ...prev.levelScores }
-      newLevelScores[levelId] = (newLevelScores[levelId] || 0) + points
+      const newLevelBaseScores = { ...prev.levelBaseScores }
+      const newLevelBonusScores = { ...prev.levelBonusScores }
+      
+      const totalPoints = basePoints + bonusPoints
+      
+      newLevelScores[levelId] = (newLevelScores[levelId] || 0) + totalPoints
+      newLevelBaseScores[levelId] = (newLevelBaseScores[levelId] || 0) + basePoints
+      newLevelBonusScores[levelId] = (newLevelBonusScores[levelId] || 0) + bonusPoints
       
       // Update streak based on multiple choice correctness
       let newStreak = prev.streak
@@ -75,10 +146,14 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
       }
       
       return {
-        totalScore: prev.totalScore + points,
+        ...prev,
+        totalScore: prev.totalScore + totalPoints,
+        baseScore: prev.baseScore + basePoints,
+        bonusScore: prev.bonusScore + bonusPoints,
         levelScores: newLevelScores,
-        streak: newStreak,
-        answeredItems: prev.answeredItems
+        levelBaseScores: newLevelBaseScores,
+        levelBonusScores: newLevelBonusScores,
+        streak: newStreak
       }
     })
   }
@@ -114,39 +189,54 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     const currentAnswer = scoringState.answeredItems[itemId]
     if (!currentAnswer || currentAnswer.isSubmitted) return
     
-    if (item.kind === 'multiple_choice') {
-      const { isCorrect, points } = calculateMultipleChoiceScore(item as LessonArcadeMultipleChoiceItem, currentAnswer.selectedOptions)
+    setScoringState(prev => {
+      const submittedAt = Date.now()
       
-      // Update answered items
-      setScoringState(prev => ({
-        ...prev,
-        answeredItems: {
-          ...prev.answeredItems,
-          [itemId]: {
-            ...currentAnswer,
-            isSubmitted: true,
-            isCorrect,
-            pointsEarned: points
+      if (item.kind === 'multiple_choice') {
+        const { isCorrect, basePoints, bonusPoints, totalPoints } = calculateMultipleChoiceScore(
+          item as LessonArcadeMultipleChoiceItem,
+          currentAnswer.selectedOptions,
+          itemId,
+          submittedAt
+        )
+        
+        // Update scoring state
+        updateScoringState(itemId, item, isCorrect, basePoints, bonusPoints)
+        
+        return {
+          ...prev,
+          answeredItems: {
+            ...prev.answeredItems,
+            [itemId]: {
+              ...currentAnswer,
+              isSubmitted: true,
+              isCorrect,
+              pointsEarned: totalPoints,
+              basePointsEarned: basePoints,
+              bonusPointsEarned: bonusPoints,
+              submittedAt
+            }
           }
         }
-      }))
-      
-      // Update scoring state
-      updateScoringState(itemId, item, isCorrect, points)
-    } else if (item.kind === 'open_ended') {
-      // Mark as answered but no points
-      setScoringState(prev => ({
-        ...prev,
-        answeredItems: {
-          ...prev.answeredItems,
-          [itemId]: {
-            ...currentAnswer,
-            isSubmitted: true,
-            pointsEarned: 0
+      } else if (item.kind === 'open_ended') {
+        return {
+          ...prev,
+          answeredItems: {
+            ...prev.answeredItems,
+            [itemId]: {
+              ...currentAnswer,
+              isSubmitted: true,
+              pointsEarned: 0,
+              basePointsEarned: 0,
+              bonusPointsEarned: 0,
+              submittedAt
+            }
           }
         }
-      }))
-    }
+      }
+      
+      return prev
+    })
   }
 
   const handleOpenEndedChange = (itemId: string, value: string) => {
@@ -171,6 +261,11 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
 
   const renderItem = (item: LessonArcadeItem) => {
     const currentAnswer = scoringState.answeredItems[item.id] || { selectedOptions: [], isSubmitted: false }
+    
+    // Track when item is shown for Arcade mode
+    if (item.kind === 'multiple_choice' && !currentAnswer.isSubmitted) {
+      trackItemShown(item.id)
+    }
 
     switch (item.kind) {
       case 'multiple_choice':
@@ -180,6 +275,8 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             item={item}
             selectedOptions={currentAnswer.selectedOptions}
             isLocked={currentAnswer.isSubmitted}
+            mode={scoringState.mode}
+            firstShownAt={scoringState.itemFirstShown[item.id]}
             onSelectionChange={(optionIds: string[]) => handleAnswerSelect(item.id, optionIds)}
             onSubmit={() => handleAnswerSubmit(item.id)}
           />
@@ -228,6 +325,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             <LessonSummary
               lesson={lesson}
               scoringState={scoringState}
+              onModeChange={handleModeChange}
             />
 
             {/* Level Header */}

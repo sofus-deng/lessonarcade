@@ -4,18 +4,28 @@ import { motion } from 'motion/react'
 import { type LessonArcadeLevel } from '@/lib/lessonarcade/schema'
 import { cn } from '@/lib/ui/cn'
 
+type LessonMode = "focus" | "arcade"
+
 interface AnswerState {
   selectedOptions: string[]
   isSubmitted: boolean
   isCorrect?: boolean
   pointsEarned?: number
+  basePointsEarned?: number
+  bonusPointsEarned?: number
 }
 
 interface ScoringState {
+  mode: LessonMode
   totalScore: number
+  baseScore: number
+  bonusScore: number
   levelScores: Record<string, number>
+  levelBaseScores: Record<string, number>
+  levelBonusScores: Record<string, number>
   streak: number
   answeredItems: Record<string, AnswerState>
+  itemFirstShown: Record<string, number>
 }
 
 interface LevelSidebarProps {

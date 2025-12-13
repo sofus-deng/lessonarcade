@@ -4,18 +4,28 @@ import { motion } from 'motion/react'
 import { type LessonArcadeLevel } from '@/lib/lessonarcade/schema'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
+type LessonMode = "focus" | "arcade"
+
 interface AnswerState {
   selectedOptions: string[]
   isSubmitted: boolean
   isCorrect?: boolean
   pointsEarned?: number
+  basePointsEarned?: number
+  bonusPointsEarned?: number
 }
 
 interface ScoringState {
+  mode: LessonMode
   totalScore: number
+  baseScore: number
+  bonusScore: number
   levelScores: Record<string, number>
+  levelBaseScores: Record<string, number>
+  levelBonusScores: Record<string, number>
   streak: number
   answeredItems: Record<string, AnswerState>
+  itemFirstShown: Record<string, number>
 }
 
 interface LevelHeaderProps {
@@ -95,13 +105,15 @@ function LevelStats({ levelId, level, scoringState }: {
   ).length
   
   const levelScore = scoringState.levelScores[levelId] || 0
+  const levelBaseScore = scoringState.levelBaseScores[levelId] || 0
+  const levelBonusScore = scoringState.levelBonusScores[levelId] || 0
   
   return (
     <motion.div
       className="flex flex-wrap items-center gap-4 text-sm pt-2 border-t border-la-border/20"
       initial={{ opacity: 0, y: -5 }}
       animate={{ opacity: 1, y: 0 }}
-      key={`${levelId}-${answeredCount}-${levelScore}-${scoringState.streak}`}
+      key={`${levelId}-${answeredCount}-${levelScore}-${scoringState.streak}-${scoringState.mode}`}
     >
       <div className="flex items-center gap-2">
         <span className="text-la-muted">Answered:</span>
@@ -109,7 +121,15 @@ function LevelStats({ levelId, level, scoringState }: {
       </div>
       <div className="flex items-center gap-2">
         <span className="text-la-muted">Points:</span>
-        <span className="font-medium text-la-primary">{levelScore}</span>
+        {scoringState.mode === "arcade" ? (
+          <div className="flex items-center gap-1">
+            <span className="font-medium text-la-bg">{levelBaseScore}</span>
+            <span className="text-la-accent">+{levelBonusScore}</span>
+            <span className="font-medium text-la-primary">={levelScore}</span>
+          </div>
+        ) : (
+          <span className="font-medium text-la-primary">{levelScore}</span>
+        )}
       </div>
       <div className="flex items-center gap-2">
         <span className="text-la-muted">Streak:</span>

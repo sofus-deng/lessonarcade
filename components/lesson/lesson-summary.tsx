@@ -3,27 +3,40 @@
 import { motion } from 'motion/react'
 import { type LessonArcadeLesson } from '@/lib/lessonarcade/schema'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/ui/cn'
+
+type LessonMode = "focus" | "arcade"
 
 interface AnswerState {
   selectedOptions: string[]
   isSubmitted: boolean
   isCorrect?: boolean
   pointsEarned?: number
+  basePointsEarned?: number
+  bonusPointsEarned?: number
 }
 
 interface ScoringState {
+  mode: LessonMode
   totalScore: number
+  baseScore: number
+  bonusScore: number
   levelScores: Record<string, number>
+  levelBaseScores: Record<string, number>
+  levelBonusScores: Record<string, number>
   streak: number
   answeredItems: Record<string, AnswerState>
+  itemFirstShown: Record<string, number>
 }
 
 interface LessonSummaryProps {
   lesson: LessonArcadeLesson
   scoringState: ScoringState
+  onModeChange: (mode: LessonMode) => void
 }
 
-export function LessonSummary({ lesson, scoringState }: LessonSummaryProps) {
+export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSummaryProps) {
   // Calculate lesson metrics
   const metrics = calculateLessonMetrics(lesson, scoringState)
   
@@ -34,6 +47,32 @@ export function LessonSummary({ lesson, scoringState }: LessonSummaryProps) {
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-4 mb-6"
     >
+      {/* Mode Toggle */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+      >
+        <Card className="bg-la-surface border-la-border">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium text-la-muted mb-1">Lesson Mode</h3>
+                <p className="text-xs text-la-muted">
+                  {scoringState.mode === "focus"
+                    ? "No time pressure, focus on learning"
+                    : "Beat the clock for bonus points"}
+                </p>
+              </div>
+              <ModeToggle
+                currentMode={scoringState.mode}
+                onModeChange={onModeChange}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Completion Card */}
         <motion.div
@@ -90,21 +129,63 @@ export function LessonSummary({ lesson, scoringState }: LessonSummaryProps) {
               <CardTitle className="text-lg text-la-bg">Score</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-la-muted">Points</span>
-                <motion.div
-                  key={`score-${metrics.earnedPoints}-${metrics.totalPossiblePoints}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-right"
-                >
-                  <span className="font-medium text-la-primary">
-                    {metrics.earnedPoints}
-                  </span>
-                  <span className="text-la-muted mx-1">/</span>
-                  <span className="text-la-muted">{metrics.totalPossiblePoints}</span>
-                </motion.div>
-              </div>
+              {scoringState.mode === "arcade" ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-la-muted">Base</span>
+                    <motion.span
+                      key={`base-${scoringState.baseScore}`}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="font-medium text-la-bg"
+                    >
+                      {scoringState.baseScore}
+                    </motion.span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-la-muted">Bonus</span>
+                    <motion.span
+                      key={`bonus-${scoringState.bonusScore}`}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="font-medium text-la-accent"
+                    >
+                      +{scoringState.bonusScore}
+                    </motion.span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-la-muted">Total</span>
+                    <motion.div
+                      key={`total-${scoringState.totalScore}-${metrics.totalPossiblePoints}`}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="text-right"
+                    >
+                      <span className="font-medium text-la-primary">
+                        {scoringState.totalScore}
+                      </span>
+                      <span className="text-la-muted mx-1">/</span>
+                      <span className="text-la-muted">{metrics.totalPossiblePoints}</span>
+                    </motion.div>
+                  </div>
+                </>
+              ) : (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-la-muted">Score</span>
+                  <motion.div
+                    key={`score-${scoringState.totalScore}-${metrics.totalPossiblePoints}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-right"
+                  >
+                    <span className="font-medium text-la-primary">
+                      {scoringState.totalScore}
+                    </span>
+                    <span className="text-la-muted mx-1">/</span>
+                    <span className="text-la-muted">{metrics.totalPossiblePoints}</span>
+                  </motion.div>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <span className="text-sm text-la-muted">Percentage</span>
                 <motion.span
@@ -268,4 +349,40 @@ function calculateStarRating(scorePercentage: number): { stars: number; label: s
   } else {
     return { stars: 1, label: "Keep going" }
   }
+}
+
+function ModeToggle({ currentMode, onModeChange }: {
+  currentMode: LessonMode
+  onModeChange: (mode: LessonMode) => void
+}) {
+  return (
+    <div className="flex bg-la-border/20 rounded-lg p-1">
+      <Button
+        variant={currentMode === "focus" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => onModeChange("focus")}
+        className={cn(
+          "flex-1 transition-all duration-200",
+          currentMode === "focus"
+            ? "bg-la-primary text-white shadow-sm"
+            : "text-la-muted hover:text-la-bg"
+        )}
+      >
+        Focus
+      </Button>
+      <Button
+        variant={currentMode === "arcade" ? "default" : "ghost"}
+        size="sm"
+        onClick={() => onModeChange("arcade")}
+        className={cn(
+          "flex-1 transition-all duration-200",
+          currentMode === "arcade"
+            ? "bg-la-primary text-white shadow-sm"
+            : "text-la-muted hover:text-la-bg"
+        )}
+      >
+        Arcade
+      </Button>
+    </div>
+  )
 }

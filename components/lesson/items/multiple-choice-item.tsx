@@ -1,19 +1,72 @@
 "use client"
 
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { type LessonArcadeMultipleChoiceItem } from '@/lib/lessonarcade/schema'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/ui/cn'
 
+type LessonMode = "focus" | "arcade"
+
 interface MultipleChoiceItemProps {
   item: LessonArcadeMultipleChoiceItem
   selectedOptions: string[]
   isLocked: boolean
+  mode: LessonMode
+  firstShownAt?: number
   onSelectionChange: (optionIds: string[]) => void
   onSubmit: () => void
 }
 
-export function MultipleChoiceItem({ item, selectedOptions, isLocked, onSelectionChange, onSubmit }: MultipleChoiceItemProps) {
+export function MultipleChoiceItem({
+  item,
+  selectedOptions,
+  isLocked,
+  mode,
+  firstShownAt,
+  onSelectionChange,
+  onSubmit
+}: MultipleChoiceItemProps) {
+  const [timeLeft, setTimeLeft] = useState<number | null>(null)
+
+  // Timer effect for Arcade mode
+  useEffect(() => {
+    if (mode === "arcade" && !isLocked && firstShownAt) {
+      const calculateTimeLeft = () => {
+        const elapsed = (Date.now() - firstShownAt) / 1000
+        const remaining = Math.max(0, 12 - elapsed)
+        return Math.ceil(remaining)
+      }
+
+      // Update every second
+      const interval = setInterval(() => {
+        const newTimeLeft = calculateTimeLeft()
+        setTimeLeft(newTimeLeft)
+        
+        if (newTimeLeft <= 0) {
+          clearInterval(interval)
+        }
+      }, 1000)
+
+      // Set initial time after a brief delay to avoid synchronous setState
+      const timeoutId = setTimeout(() => {
+        setTimeLeft(calculateTimeLeft())
+      }, 0)
+
+      return () => {
+        clearInterval(interval)
+        clearTimeout(timeoutId)
+      }
+    } else {
+      // Use setTimeout to avoid synchronous setState
+      const timeoutId = setTimeout(() => {
+        setTimeLeft(null)
+      }, 0)
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [mode, isLocked, firstShownAt])
+
   const handleOptionClick = (optionId: string) => {
     if (isLocked) return
     
@@ -38,7 +91,8 @@ export function MultipleChoiceItem({ item, selectedOptions, isLocked, onSelectio
     selectedOptions.every(option => item.correctOptionIds.includes(option))
   
   // Calculate points earned
-  const pointsEarned = isLocked && isAnswerCorrect ? (item.points || 1) : 0
+  const basePoints = item.points || 1
+  const pointsEarned = isLocked && isAnswerCorrect ? basePoints : 0
 
   return (
     <motion.div
@@ -67,7 +121,21 @@ export function MultipleChoiceItem({ item, selectedOptions, isLocked, onSelectio
                     {item.difficulty}
                   </span>
                 )}
-                <span>{item.points || 1} points</span>
+                <span>{basePoints} points</span>
+                {mode === "arcade" && !isLocked && timeLeft !== null && (
+                  <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className={cn(
+                      "px-2 py-1 rounded-full text-xs font-medium",
+                      timeLeft > 6 ? "bg-blue-100 text-blue-800" :
+                      timeLeft > 0 ? "bg-yellow-100 text-yellow-800" :
+                      "bg-red-100 text-red-800"
+                    )}
+                  >
+                    Time left: {timeLeft}s
+                  </motion.span>
+                )}
                 {isLocked && (
                   <motion.span
                     initial={{ opacity: 0 }}

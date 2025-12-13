@@ -18,7 +18,7 @@ const multipleChoiceOptionSchema = z.object({
 const baseItemSchema = z.object({
   kind: z.enum(["multiple_choice", "open_ended", "checkpoint"]),
   id: z.string(),
-  prompt: z.string(),
+  prompt: z.string().optional(),
 })
 
 // Multiple choice item schema
@@ -29,7 +29,9 @@ const multipleChoiceItemSchema = baseItemSchema.extend({
   explanation: z.string().optional(),
   difficulty: z.enum(["easy", "medium", "hard"]).optional(),
   points: z.number().optional(),
-})
+}).merge(z.object({
+  prompt: z.string(),
+}))
 
 // Open ended item schema
 const openEndedItemSchema = baseItemSchema.extend({
@@ -37,7 +39,9 @@ const openEndedItemSchema = baseItemSchema.extend({
   placeholder: z.string().optional(),
   guidance: z.string().optional(),
   maxCharacters: z.number().optional(),
-})
+}).merge(z.object({
+  prompt: z.string(),
+}))
 
 // Checkpoint item schema
 const checkpointItemSchema = baseItemSchema.extend({

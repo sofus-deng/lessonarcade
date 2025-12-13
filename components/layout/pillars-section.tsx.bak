@@ -39,7 +39,7 @@ export function PillarsSection() {
             Built for everyone in learning ecosystem
           </h2>
           <p className="text-xl text-la-muted max-w-3xl mx-auto">
-            Whether you&apos;re creating content, managing teams, or hungry to learn, LessonArcade adapts to your needs
+            Whether you're creating content, managing teams, or hungry to learn, LessonArcade adapts to your needs
           </p>
         </FadeInSection>
 

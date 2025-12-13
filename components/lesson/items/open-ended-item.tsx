@@ -1,0 +1,119 @@
+"use client"
+
+import { useState, useEffect } from 'react'
+import { motion } from 'motion/react'
+import { type LessonArcadeOpenEndedItem } from '@/lib/lessonarcade/schema'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/lib/ui/cn'
+
+interface OpenEndedItemProps {
+  item: LessonArcadeOpenEndedItem
+  value: string
+  onChange: (value: string) => void
+}
+
+export function OpenEndedItem({ item, value, onChange }: OpenEndedItemProps) {
+  const [isFocused, setIsFocused] = useState(false)
+  const [characterCount, setCharacterCount] = useState(value.length)
+
+  useEffect(() => {
+    setCharacterCount(value.length)
+  }, [value])
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newValue = e.target.value
+    if (item.maxCharacters && newValue.length > item.maxCharacters) {
+      return // Prevent exceeding max characters
+    }
+    onChange(newValue)
+  }
+
+  const isNearLimit = item.maxCharacters && characterCount > item.maxCharacters * 0.9
+  const isAtLimit = item.maxCharacters && characterCount >= item.maxCharacters
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
+      <Card className="bg-la-surface border-la-border">
+        <CardHeader>
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-la-primary/10 text-la-primary font-semibold text-sm mt-1">
+              A
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-la-bg mb-2">
+                {item.prompt}
+              </h3>
+              {item.guidance && (
+                <div className="flex items-start gap-2 text-sm text-la-muted">
+                  <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p>{item.guidance}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="space-y-3">
+            <Textarea
+              value={value}
+              onChange={handleChange}
+              placeholder={item.placeholder || "Enter your answer here..."}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              className={cn(
+                "min-h-[120px] resize-none border-la-border bg-la-surface text-la-bg",
+                "placeholder:text-la-muted/50 focus:border-la-accent focus:ring-la-accent/20",
+                isFocused && "ring-2 ring-la-accent/20"
+              )}
+            />
+            
+            {item.maxCharacters && (
+              <motion.div
+                className={cn(
+                  "flex justify-between items-center text-sm",
+                  isAtLimit
+                    ? "text-red-600"
+                    : isNearLimit
+                    ? "text-yellow-600"
+                    : "text-la-muted"
+                )}
+                animate={{ 
+                  color: isAtLimit ? "#dc2626" : isNearLimit ? "#ca8a04" : "#64748b"
+                }}
+              >
+                <span>Character limit</span>
+                <span className={cn(
+                  "font-medium",
+                  isAtLimit && "font-semibold"
+                )}>
+                  {characterCount} / {item.maxCharacters}
+                </span>
+              </motion.div>
+            )}
+            
+            {value.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 text-sm text-la-accent"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Answer saved locally</span>
+              </motion.div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}

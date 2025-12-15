@@ -1,4 +1,5 @@
 import { lessonArcadeLessonSchema, type LessonArcadeLesson } from './schema'
+import { loadUserLessonBySlug } from './storage'
 
 // Import demo lesson
 import demoLesson from '@/data/demo-lessons/react-hooks-intro.json'
@@ -10,7 +11,7 @@ function validateLesson(data: unknown): LessonArcadeLesson {
   const result = lessonArcadeLessonSchema.safeParse(data)
   
   if (!result.success) {
-    const errorMessages = result.error.issues.map(issue => 
+    const errorMessages = result.error.issues.map(issue =>
       `${issue.path.join('.')}: ${issue.message}`
     ).join('; ')
     
@@ -44,13 +45,20 @@ export const lessonRegistry: LessonRegistry = {
 }
 
 /**
- * Loads a lesson by slug from the registry
+ * Loads a lesson by slug, checking user lessons first, then falling back to demo lessons
  */
-export function loadLessonBySlug(slug: string): LessonArcadeLesson {
-  const loader = lessonRegistry[slug]
-  if (!loader) {
+export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson> {
+  // First try to load from user-generated lessons
+  try {
+    return await loadUserLessonBySlug(slug)
+  } catch {
+    // If user lesson not found, try demo lessons
+    const loader = lessonRegistry[slug]
+    if (loader) {
+      return loader()
+    }
+    
+    // If neither found, throw the original user error
     throw new Error(`Lesson not found: ${slug}`)
   }
-  
-  return loader()
 }

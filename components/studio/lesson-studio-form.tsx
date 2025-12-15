@@ -82,22 +82,45 @@ export function LessonStudioForm() {
         }),
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
+      const result = await response.json()
+      
+      if (!result.ok) {
+        // Handle structured error responses
+        const errorCode = result.error?.code
+        const errorMessage = result.error?.message || "Failed to generate lesson"
         
-        if (response.status === 429) {
-          const retryAfter = errorData.retryAfter
-          const message = retryAfter
-            ? `Rate limit exceeded. Please try again in ${retryAfter} seconds.`
-            : "Rate limit exceeded. Please try again later."
-          throw new Error(message)
+        let userFriendlyMessage = errorMessage
+        let nextStep = ""
+        
+        switch (errorCode) {
+          case "RATE_LIMIT":
+            const retryAfter = result.error?.retryAfter
+            userFriendlyMessage = retryAfter
+              ? `You've reached the generation limit. Please wait ${retryAfter} seconds before trying again.`
+              : "You've reached the generation limit. Please wait a while before trying again."
+            nextStep = "Consider upgrading your plan or try again later."
+            break
+            
+          case "VALIDATION":
+            userFriendlyMessage = "Please check your input and try again."
+            nextStep = "Make sure the YouTube URL is valid and transcript text is provided for Accurate mode."
+            break
+            
+          case "GEMINI_ERROR":
+            userFriendlyMessage = "There was an issue with the AI service."
+            nextStep = "Please try again in a few moments. If the problem persists, contact support."
+            break
+            
+          default:
+            userFriendlyMessage = errorMessage
+            nextStep = "Please try again or contact support if the issue persists."
         }
         
-        throw new Error(errorData.error || "Failed to generate lesson")
+        const fullMessage = nextStep ? `${userFriendlyMessage} ${nextStep}` : userFriendlyMessage
+        throw new Error(fullMessage)
       }
 
-      const result = await response.json()
-      setFormState(prev => ({ ...prev, generatedLesson: result.lesson, isGenerating: false }))
+      setFormState(prev => ({ ...prev, generatedLesson: result.data.lesson, isGenerating: false }))
     } catch (error) {
       setFormState(prev => ({
         ...prev,
@@ -121,12 +144,48 @@ export function LessonStudioForm() {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to publish lesson")
+      const result = await response.json()
+      
+      if (!result.ok) {
+        // Handle structured error responses
+        const errorCode = result.error?.code
+        const errorMessage = result.error?.message || "Failed to publish lesson"
+        
+        let userFriendlyMessage = errorMessage
+        let nextStep = ""
+        
+        switch (errorCode) {
+          case "RATE_LIMIT":
+            const retryAfter = result.error?.retryAfter
+            userFriendlyMessage = retryAfter
+              ? `You've reached the publishing limit. Please wait ${retryAfter} seconds before trying again.`
+              : "You've reached the publishing limit. Please wait a while before trying again."
+            nextStep = "Consider upgrading your plan or try again later."
+            break
+            
+          case "VALIDATION":
+            userFriendlyMessage = "The lesson data is invalid."
+            nextStep = "Please regenerate the lesson or check the lesson content."
+            break
+            
+          case "SLUG_COLLISION":
+            const suggestedSlug = result.error?.suggestion
+            userFriendlyMessage = `The lesson slug "${result.error?.reservedSlug}" is already in use.`
+            nextStep = suggestedSlug
+              ? `Try using "${suggestedSlug}" as the slug instead.`
+              : "Please choose a different slug for your lesson."
+            break
+            
+          default:
+            userFriendlyMessage = errorMessage
+            nextStep = "Please try again or contact support if the issue persists."
+        }
+        
+        const fullMessage = nextStep ? `${userFriendlyMessage} ${nextStep}` : userFriendlyMessage
+        throw new Error(fullMessage)
       }
 
-      const result = await response.json()
-      setFormState(prev => ({ ...prev, publishedSlug: result.slug }))
+      setFormState(prev => ({ ...prev, publishedSlug: result.data.slug }))
     } catch (error) {
       setFormState(prev => ({
         ...prev,

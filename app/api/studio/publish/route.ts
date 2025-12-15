@@ -1,9 +1,32 @@
 import { NextRequest, NextResponse } from "next/server"
 import { saveUserLesson } from "@/lib/lessonarcade/storage"
 import { lessonArcadeLessonSchema } from "@/lib/lessonarcade/schema"
+import { publishRateLimiter } from "@/lib/utils/rate-limiter"
+import { lessonRegistry } from "@/lib/lessonarcade/loaders"
+
+// Explicitly declare Node.js runtime for filesystem access
+export const runtime = "nodejs"
 
 export async function POST(request: NextRequest) {
   try {
+    // Check rate limit
+    const rateLimitResult = publishRateLimiter.checkLimit(request)
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          error: "Rate limit exceeded. Please try again later.",
+          retryAfter: rateLimitResult.retryAfter
+        },
+        { 
+          status: 429,
+          headers: rateLimitResult.retryAfter 
+            ? { 'Retry-After': rateLimitResult.retryAfter.toString() }
+            : undefined
+        }
+      )
+    }
+
     const body = await request.json()
     const { lesson } = body
 
@@ -18,6 +41,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: `Invalid lesson data: ${errorMessages}` },
         { status: 400 }
+      )
+    }
+
+    // Check if the slug collides with any demo lesson
+    if (lessonRegistry[validationResult.data.slug]) {
+      return NextResponse.json(
+        { 
+          error: `The slug "${validationResult.data.slug}" is reserved for a demo lesson. Please choose a different slug.`,
+          reservedSlug: validationResult.data.slug,
+          suggestion: `${validationResult.data.slug}-user`
+        },
+        { status: 409 } // Conflict status code
       )
     }
 

@@ -45,20 +45,26 @@ export const lessonRegistry: LessonRegistry = {
 }
 
 /**
- * Loads a lesson by slug, checking user lessons first, then falling back to demo lessons
+ * Loads a lesson by slug, checking demo lessons first, then falling back to user lessons
+ * Demo lessons always take precedence over user lessons
  */
 export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson> {
-  // First try to load from user-generated lessons
+  // First try to load from demo lessons (highest priority)
+  const demoLoader = lessonRegistry[slug]
+  if (demoLoader) {
+    try {
+      return demoLoader()
+    } catch (error) {
+      console.error(`Error loading demo lesson "${slug}":`, error)
+      // Continue to try user lessons if demo lesson fails
+    }
+  }
+
+  // If no demo lesson found or demo lesson failed, try user lessons
   try {
     return await loadUserLessonBySlug(slug)
   } catch {
-    // If user lesson not found, try demo lessons
-    const loader = lessonRegistry[slug]
-    if (loader) {
-      return loader()
-    }
-    
-    // If neither found, throw the original user error
+    // If neither found, throw error
     throw new Error(`Lesson not found: ${slug}`)
   }
 }

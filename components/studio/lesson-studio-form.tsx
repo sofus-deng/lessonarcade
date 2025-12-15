@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
-import { generateLessonDualMode, type GenerationMode } from "@/lib/lessonarcade/generate"
+import { type GenerationMode } from "@/lib/lessonarcade/generate"
 import { type LessonArcadeLesson } from "@/lib/lessonarcade/schema"
 import { LessonPlayer } from "@/components/lesson/lesson-player"
 
@@ -67,16 +67,37 @@ export function LessonStudioForm() {
     setFormState(prev => ({ ...prev, isGenerating: true, error: null, generatedLesson: null }))
 
     try {
-      const lesson = await generateLessonDualMode({
-        youtubeUrl: formState.data.youtubeUrl,
-        generationMode: formState.data.generationMode,
-        transcriptText: formState.data.transcriptText || undefined,
-        language: formState.data.language,
-        desiredLevelCount: formState.data.desiredLevelCount,
-        desiredItemsPerLevel: formState.data.desiredItemsPerLevel,
+      const response = await fetch("/api/studio/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          youtubeUrl: formState.data.youtubeUrl,
+          generationMode: formState.data.generationMode,
+          transcriptText: formState.data.transcriptText || undefined,
+          language: formState.data.language,
+          desiredLevelCount: formState.data.desiredLevelCount,
+          desiredItemsPerLevel: formState.data.desiredItemsPerLevel,
+        }),
       })
 
-      setFormState(prev => ({ ...prev, generatedLesson: lesson, isGenerating: false }))
+      if (!response.ok) {
+        const errorData = await response.json()
+        
+        if (response.status === 429) {
+          const retryAfter = errorData.retryAfter
+          const message = retryAfter
+            ? `Rate limit exceeded. Please try again in ${retryAfter} seconds.`
+            : "Rate limit exceeded. Please try again later."
+          throw new Error(message)
+        }
+        
+        throw new Error(errorData.error || "Failed to generate lesson")
+      }
+
+      const result = await response.json()
+      setFormState(prev => ({ ...prev, generatedLesson: result.lesson, isGenerating: false }))
     } catch (error) {
       setFormState(prev => ({
         ...prev,

@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { type LessonArcadeLesson, type LessonArcadeItem, type LessonArcadeMultipleChoiceItem } from '@/lib/lessonarcade/schema'
+import { type LessonArcadeLesson, type LessonArcadeItem, type LessonArcadeMultipleChoiceItem, type LanguageCode } from '@/lib/lessonarcade/schema'
 import { LevelSidebar } from './level-sidebar'
 import { LevelHeader } from './level-header'
 import { LessonSummary } from './lesson-summary'
 import { MultipleChoiceItem } from './items/multiple-choice-item'
 import { OpenEndedItem } from './items/open-ended-item'
 import { CheckpointItem } from './items/checkpoint-item'
+import { LanguageToggle } from '@/components/ui/language-toggle'
 
 interface LessonPlayerProps {
   lesson: LessonArcadeLesson
@@ -42,6 +43,13 @@ interface ScoringState {
 
 export function LessonPlayer({ lesson }: LessonPlayerProps) {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0)
+  const [displayLanguage, setDisplayLanguage] = useState<LanguageCode>(() => {
+    // Initialize displayLanguage from localStorage during initial render
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('la:displayLanguage') || 'en'
+    }
+    return 'en'
+  })
   const [scoringState, setScoringState] = useState<ScoringState>({
     mode: "focus",
     totalScore: 0,
@@ -54,6 +62,14 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     answeredItems: {},
     itemFirstShown: {}
   })
+
+  // Handle language change with localStorage persistence
+  const handleLanguageChange = (language: LanguageCode) => {
+    setDisplayLanguage(language)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('la:displayLanguage', language)
+    }
+  }
 
   const currentLevel = lesson.levels[currentLevelIndex]
 
@@ -277,6 +293,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             isLocked={currentAnswer.isSubmitted}
             mode={scoringState.mode}
             firstShownAt={scoringState.itemFirstShown[item.id]}
+            displayLanguage={displayLanguage}
             onSelectionChange={(optionIds: string[]) => handleAnswerSelect(item.id, optionIds)}
             onSubmit={() => handleAnswerSubmit(item.id)}
           />
@@ -287,12 +304,13 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             key={item.id}
             item={item}
             value={currentAnswer.selectedOptions[0] || ''}
+            displayLanguage={displayLanguage}
             onChange={(value: string) => handleOpenEndedChange(item.id, value)}
             onSubmit={() => handleAnswerSubmit(item.id)}
           />
         )
       case 'checkpoint':
-        return <CheckpointItem key={item.id} item={item} />
+        return <CheckpointItem key={item.id} item={item} displayLanguage={displayLanguage} />
       default:
         return null
     }
@@ -321,12 +339,25 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="max-w-4xl mx-auto space-y-6"
           >
-            {/* Lesson Summary */}
-            <LessonSummary
-              lesson={lesson}
-              scoringState={scoringState}
-              onModeChange={handleModeChange}
-            />
+            {/* Header with Language Toggle */}
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                {/* Lesson Summary */}
+                <LessonSummary
+                  lesson={lesson}
+                  scoringState={scoringState}
+                  onModeChange={handleModeChange}
+                />
+              </div>
+              
+              {/* Language Toggle */}
+              <div className="ml-4 flex-shrink-0">
+                <LanguageToggle
+                  currentLanguage={displayLanguage}
+                  onLanguageChange={handleLanguageChange}
+                />
+              </div>
+            </div>
 
             {/* Level Header */}
             <LevelHeader

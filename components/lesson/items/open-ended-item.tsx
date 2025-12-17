@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { type LessonArcadeOpenEndedItem } from '@/lib/lessonarcade/schema'
+import { type LessonArcadeOpenEndedItem, type LanguageCode } from '@/lib/lessonarcade/schema'
+import { getLocalizedText } from '@/lib/lessonarcade/i18n'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/ui/cn'
@@ -10,11 +11,12 @@ import { cn } from '@/lib/ui/cn'
 interface OpenEndedItemProps {
   item: LessonArcadeOpenEndedItem
   value: string
+  displayLanguage: LanguageCode
   onChange: (value: string) => void
   onSubmit: () => void
 }
 
-export function OpenEndedItem({ item, value, onChange, onSubmit }: OpenEndedItemProps) {
+export function OpenEndedItem({ item, value, displayLanguage, onChange, onSubmit }: OpenEndedItemProps) {
   const [isFocused, setIsFocused] = useState(false)
   const [characterCount, setCharacterCount] = useState(value.length)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -57,14 +59,14 @@ export function OpenEndedItem({ item, value, onChange, onSubmit }: OpenEndedItem
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-la-bg mb-2">
-                {item.prompt}
+                {getLocalizedText(item.promptI18n, item.prompt, displayLanguage)}
               </h3>
               {item.guidance && (
                 <div className="flex items-start gap-2 text-sm text-la-muted">
                   <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <p>{item.guidance}</p>
+                  <p>{getLocalizedText(item.guidanceI18n, item.guidance, displayLanguage)}</p>
                 </div>
               )}
             </div>
@@ -76,7 +78,7 @@ export function OpenEndedItem({ item, value, onChange, onSubmit }: OpenEndedItem
             <Textarea
               value={value}
               onChange={handleChange}
-              placeholder={item.placeholder || "Enter your answer here..."}
+              placeholder={getLocalizedText(item.placeholderI18n, item.placeholder || "Enter your answer here...", displayLanguage)}
               onFocus={() => setIsFocused(true)}
               onBlur={handleBlur}
               disabled={isSubmitted}

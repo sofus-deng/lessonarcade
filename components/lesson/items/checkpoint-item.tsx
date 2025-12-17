@@ -1,14 +1,16 @@
 "use client"
 
 import { motion } from 'motion/react'
-import { type LessonArcadeCheckpointItem } from '@/lib/lessonarcade/schema'
+import { type LessonArcadeCheckpointItem, type LanguageCode } from '@/lib/lessonarcade/schema'
+import { getLocalizedText } from '@/lib/lessonarcade/i18n'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 
 interface CheckpointItemProps {
   item: LessonArcadeCheckpointItem
+  displayLanguage: LanguageCode
 }
 
-export function CheckpointItem({ item }: CheckpointItemProps) {
+export function CheckpointItem({ item, displayLanguage }: CheckpointItemProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -41,7 +43,7 @@ export function CheckpointItem({ item }: CheckpointItemProps) {
                 </motion.div>
               </div>
               <p className="text-la-bg leading-relaxed">
-                {item.message}
+                {getLocalizedText(item.messageI18n, item.message, displayLanguage)}
               </p>
             </div>
           </div>
@@ -58,7 +60,7 @@ export function CheckpointItem({ item }: CheckpointItemProps) {
               <svg className="w-4 h-4 text-la-accent mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
               </svg>
-              <p className="text-sm text-la-muted">{item.actionHint}</p>
+              <p className="text-sm text-la-muted">{getLocalizedText(item.actionHintI18n, item.actionHint || '', displayLanguage)}</p>
             </motion.div>
           </CardContent>
         )}

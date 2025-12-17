@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
-import { type LessonArcadeMultipleChoiceItem } from '@/lib/lessonarcade/schema'
+import { type LessonArcadeMultipleChoiceItem, type LanguageCode } from '@/lib/lessonarcade/schema'
+import { getLocalizedText } from '@/lib/lessonarcade/i18n'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { cn } from '@/lib/ui/cn'
 
@@ -14,6 +15,7 @@ interface MultipleChoiceItemProps {
   isLocked: boolean
   mode: LessonMode
   firstShownAt?: number
+  displayLanguage: LanguageCode
   onSelectionChange: (optionIds: string[]) => void
   onSubmit: () => void
 }
@@ -24,6 +26,7 @@ export function MultipleChoiceItem({
   isLocked,
   mode,
   firstShownAt,
+  displayLanguage,
   onSelectionChange,
   onSubmit
 }: MultipleChoiceItemProps) {
@@ -108,7 +111,7 @@ export function MultipleChoiceItem({
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-la-bg mb-2">
-                {item.prompt}
+                {getLocalizedText(item.promptI18n, item.prompt, displayLanguage)}
               </h3>
               <div className="flex items-center gap-4 text-sm text-la-muted">
                 {item.difficulty && (
@@ -195,7 +198,7 @@ export function MultipleChoiceItem({
                     {String.fromCharCode(65 + index)}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium">{option.text}</p>
+                    <p className="font-medium">{getLocalizedText(option.textI18n, option.text, displayLanguage)}</p>
                     {showFeedback && optionIsCorrect && (
                       <motion.p
                         initial={{ opacity: 0, height: 0 }}
@@ -227,7 +230,7 @@ export function MultipleChoiceItem({
               className="mt-4 p-4 bg-la-accent/10 border border-la-accent/20 rounded-lg"
             >
               <p className="text-sm text-la-accent font-medium mb-1">Explanation:</p>
-              <p className="text-sm text-la-bg">{item.explanation}</p>
+              <p className="text-sm text-la-bg">{getLocalizedText(item.explanationI18n, item.explanation || '', displayLanguage)}</p>
             </motion.div>
           )}
         </CardContent>

@@ -40,28 +40,46 @@
           "kind": "multiple_choice",
           "id": "q1",
           "prompt": "What is the most important element to include in a meeting invitation?",
+          "promptI18n": {
+            "zh": "会议邀请中最重要的元素是什么？"
+          },
           "options": [
             {
               "id": "a",
-              "text": "A list of all potential topics"
+              "text": "A list of all potential topics",
+              "textI18n": {
+                "zh": "所有潜在主题的列表"
+              }
             },
             {
               "id": "b",
-              "text": "Clear objectives and a focused agenda"
+              "text": "Clear objectives and a focused agenda",
+              "textI18n": {
+                "zh": "明确的目标和专注的议程"
+              }
             },
             {
               "id": "c",
-              "text": "The meeting duration only"
+              "text": "The meeting duration only",
+              "textI18n": {
+                "zh": "仅会议时长"
+              }
             },
             {
               "id": "d",
-              "text": "All team members regardless of relevance"
+              "text": "All team members regardless of relevance",
+              "textI18n": {
+                "zh": "所有团队成员，无论是否相关"
+              }
             }
           ],
           "correctOptionIds": [
             "b"
           ],
           "explanation": "Clear objectives and a focused agenda help participants prepare and ensure the meeting stays on track.",
+          "explanationI18n": {
+            "zh": "明确的目标和专注的议程有助于参与者准备，并确保会议按计划进行。"
+          },
           "difficulty": "easy",
           "points": 10
         },
@@ -69,15 +87,30 @@
           "kind": "open_ended",
           "id": "q2",
           "prompt": "Describe a situation where you attended an unprepared meeting. What could have been done differently to make it more effective?",
+          "promptI18n": {
+            "zh": "描述一次您参加的没有准备的会议。本可以采取什么不同的做法来使其更有效？"
+          },
           "placeholder": "Share your experience and what improvements would have helped...",
+          "placeholderI18n": {
+            "zh": "分享您的经历以及哪些改进措施会有帮助..."
+          },
           "guidance": "Think about agenda, preparation, participant selection, and clear objectives.",
+          "guidanceI18n": {
+            "zh": "考虑议程、准备、参与者选择和明确目标。"
+          },
           "maxCharacters": 500
         },
         {
           "kind": "checkpoint",
           "id": "cp1",
           "message": "Great! You understand the importance of meeting preparation. Let's move on to running the meeting effectively.",
-          "actionHint": "Ready to learn about meeting facilitation? Continue to the next section."
+          "messageI18n": {
+            "zh": "很好！您了解了会议准备的重要性。让我们继续学习如何有效地主持会议。"
+          },
+          "actionHint": "Ready to learn about meeting facilitation? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "准备好学习会议主持技巧了吗？继续到下一部分。"
+          }
         }
       ]
     },

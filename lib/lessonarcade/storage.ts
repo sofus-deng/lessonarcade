@@ -1,6 +1,7 @@
 import { writeFile, readFile, mkdir } from "fs/promises"
 import { join } from "path"
 import { lessonArcadeLessonSchema, type LessonArcadeLesson } from "./schema"
+import { LessonLoadError } from "./loaders"
 
 /**
  * Directory where user-generated lessons are stored
@@ -62,10 +63,18 @@ export async function saveUserLesson(lesson: LessonArcadeLesson): Promise<string
   // Validate the lesson before saving
   const validationResult = lessonArcadeLessonSchema.safeParse(lesson)
   if (!validationResult.success) {
-    const errorMessages = validationResult.error.issues.map(issue => 
+    const errorMessages = validationResult.error.issues.map(issue =>
       `${issue.path.join('.')}: ${issue.message}`
-    ).join('; ')
-    throw new Error(`Invalid lesson data: ${errorMessages}`)
+    )
+    throw new LessonLoadError(
+      'VALIDATION',
+      'There is an issue with the lesson data that prevents it from being saved.',
+      {
+        slug: lesson.slug,
+        source: 'user',
+        issues: errorMessages
+      }
+    )
   }
 
   // Sanitize the slug for filesystem use
@@ -81,8 +90,12 @@ export async function saveUserLesson(lesson: LessonArcadeLesson): Promise<string
     // Write the lesson to file
     await writeFile(filePath, JSON.stringify(validationResult.data, null, 2), 'utf-8')
     return safeSlug
-  } catch (error) {
-    throw new Error(`Failed to save lesson: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  } catch {
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to save lesson',
+      { slug: lesson.slug, source: 'user' }
+    )
   }
 }
 
@@ -103,22 +116,55 @@ export async function loadUserLessonBySlug(slug: string): Promise<LessonArcadeLe
     const fileContent = await readFile(filePath, 'utf-8')
     const lessonData = JSON.parse(fileContent)
 
+    // Check for version mismatch before validation
+    if (lessonData && typeof lessonData === 'object' && 'schemaVersion' in lessonData) {
+      const version = lessonData.schemaVersion
+      if (typeof version === 'number' && version !== 1) {
+        throw new LessonLoadError(
+          'VERSION_MISMATCH',
+          'This lesson was created with a newer version of LessonArcade and cannot be loaded.',
+          { slug, source: 'user' }
+        )
+      }
+    }
+
     // Validate the loaded data
     const validationResult = lessonArcadeLessonSchema.safeParse(lessonData)
     if (!validationResult.success) {
-      const errorMessages = validationResult.error.issues.map(issue => 
+      const errorMessages = validationResult.error.issues.map(issue =>
         `${issue.path.join('.')}: ${issue.message}`
-      ).join('; ')
-      throw new Error(`Invalid lesson data in file: ${errorMessages}`)
+      )
+      throw new LessonLoadError(
+        'VALIDATION',
+        'There is an issue with the lesson data that prevents it from loading properly.',
+        {
+          slug,
+          source: 'user',
+          issues: errorMessages
+        }
+      )
     }
 
     return validationResult.data
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException
-    if (err.code === 'ENOENT') {
-      throw new Error(`Lesson not found: ${slug}`)
+  } catch (caughtError) {
+    if (caughtError instanceof LessonLoadError) {
+      throw caughtError
     }
-    throw new Error(`Failed to load lesson: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    
+    const err = caughtError as NodeJS.ErrnoException
+    if (err.code === 'ENOENT') {
+      throw new LessonLoadError(
+        'NOT_FOUND',
+        'The lesson you\'re looking for doesn\'t exist or may have been removed.',
+        { slug, source: 'user' }
+      )
+    }
+    
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load lesson',
+      { slug, source: 'user' }
+    )
   }
 }
 

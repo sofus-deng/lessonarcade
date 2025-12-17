@@ -6,17 +6,55 @@ import reactHooksLesson from '@/data/demo-lessons/react-hooks-intro.json'
 import effectiveMeetingsLesson from '@/data/demo-lessons/effective-meetings.json'
 
 /**
+ * Typed error for lesson loading failures
+ */
+export class LessonLoadError extends Error {
+  constructor(
+    public code: 'NOT_FOUND' | 'VALIDATION' | 'VERSION_MISMATCH' | 'LOAD_FAILED',
+    message: string,
+    public debug: {
+      slug: string;
+      source: 'demo' | 'user';
+      issues?: string[];
+    }
+  ) {
+    super(message);
+    this.name = 'LessonLoadError';
+  }
+}
+
+/**
  * Validates a lesson object against the schema
  */
-function validateLesson(data: unknown): LessonArcadeLesson {
+function validateLesson(data: unknown, slug: string, source: 'demo' | 'user'): LessonArcadeLesson {
+  // Check for version mismatch before validation
+  if (data && typeof data === 'object' && 'schemaVersion' in data) {
+    const version = (data as { schemaVersion?: unknown }).schemaVersion
+    if (typeof version === 'number' && version !== 1) {
+      throw new LessonLoadError(
+        'VERSION_MISMATCH',
+        'This lesson was created with a newer version of LessonArcade and cannot be loaded.',
+        { slug, source }
+      )
+    }
+  }
+
   const result = lessonArcadeLessonSchema.safeParse(data)
   
   if (!result.success) {
     const errorMessages = result.error.issues.map(issue =>
       `${issue.path.join('.')}: ${issue.message}`
-    ).join('; ')
+    )
     
-    throw new Error(`Invalid lesson data: ${errorMessages}`)
+    throw new LessonLoadError(
+      'VALIDATION',
+      'There is an issue with the lesson data that prevents it from loading properly.',
+      {
+        slug,
+        source,
+        issues: errorMessages
+      }
+    )
   }
   
   return result.data
@@ -27,9 +65,16 @@ function validateLesson(data: unknown): LessonArcadeLesson {
  */
 export function loadReactHooksLesson(): LessonArcadeLesson {
   try {
-    return validateLesson(reactHooksLesson)
+    return validateLesson(reactHooksLesson, 'react-hooks-intro', 'demo')
   } catch (error) {
-    throw new Error(`Failed to load React Hooks demo lesson: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    if (error instanceof LessonLoadError) {
+      throw error
+    }
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load React Hooks demo lesson',
+      { slug: 'react-hooks-intro', source: 'demo' }
+    )
   }
 }
 
@@ -38,9 +83,16 @@ export function loadReactHooksLesson(): LessonArcadeLesson {
  */
 export function loadEffectiveMeetingsLesson(): LessonArcadeLesson {
   try {
-    return validateLesson(effectiveMeetingsLesson)
+    return validateLesson(effectiveMeetingsLesson, 'effective-meetings', 'demo')
   } catch (error) {
-    throw new Error(`Failed to load Effective Meetings demo lesson: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    if (error instanceof LessonLoadError) {
+      throw error
+    }
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load Effective Meetings demo lesson',
+      { slug: 'effective-meetings', source: 'demo' }
+    )
   }
 }
 
@@ -68,6 +120,10 @@ export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson
     try {
       return demoLoader()
     } catch (error) {
+      if (error instanceof LessonLoadError) {
+        // Re-throw LessonLoadError from demo lesson
+        throw error
+      }
       console.error(`Error loading demo lesson "${slug}":`, error)
       // Continue to try user lessons if demo lesson fails
     }
@@ -76,9 +132,18 @@ export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson
   // If no demo lesson found or demo lesson failed, try user lessons
   try {
     return await loadUserLessonBySlug(slug)
-  } catch {
-    // If neither found, throw error
-    throw new Error(`Lesson not found: ${slug}`)
+  } catch (error) {
+    if (error instanceof LessonLoadError) {
+      // Re-throw LessonLoadError from user lesson
+      throw error
+    }
+    
+    // If neither found, throw NOT_FOUND error
+    throw new LessonLoadError(
+      'NOT_FOUND',
+      'The lesson you\'re looking for doesn\'t exist or may have been removed.',
+      { slug, source: 'demo' } // Default to demo since we tried demo first
+    )
   }
 }
 

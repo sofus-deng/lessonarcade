@@ -1,4 +1,4 @@
-import { loadDemoLesson } from '@/lib/lessonarcade/loaders'
+import { loadReactHooksLesson } from '@/lib/lessonarcade/loaders'
 import { type LessonArcadeLesson } from '@/lib/lessonarcade/schema'
 
 export default function DebugLessonPage() {
@@ -6,7 +6,7 @@ export default function DebugLessonPage() {
   let error: string | null = null
   
   try {
-    lesson = loadDemoLesson()
+    lesson = loadReactHooksLesson()
   } catch (e) {
     error = e instanceof Error ? e.message : 'Unknown error'
   }

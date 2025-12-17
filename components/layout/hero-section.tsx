@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import { FadeInSection } from "./fade-in-section"
 import { motion } from "motion/react"
 import { Play, CheckCircle, BarChart3 } from "lucide-react"
+import Link from "next/link"
 
 export function HeroSection() {
   return (
@@ -23,14 +24,17 @@ export function HeroSection() {
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button 
-                  size="lg" 
+                <Button
+                  asChild
+                  size="lg"
                   className="bg-la-accent text-la-bg hover:bg-la-accent/90 text-lg px-8 py-3"
                 >
-                  Play a demo lesson
+                  <Link href="/demo">
+                    Play a demo lesson
+                  </Link>
                 </Button>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   size="lg"
                   className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3"
                 >

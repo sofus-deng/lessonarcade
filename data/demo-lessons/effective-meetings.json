@@ -1,0 +1,207 @@
+{
+  "id": "effective-meetings-guide",
+  "slug": "effective-meetings",
+  "title": "How to Run Effective Meetings",
+  "shortDescription": "Master the art of running productive, efficient meetings that drive results and respect everyone's time.",
+  "longDescription": "Learn proven strategies for planning, conducting, and following up on meetings that actually accomplish their goals. This comprehensive guide covers meeting preparation, facilitation techniques, and post-meeting action items to ensure your meetings are valuable and impactful.",
+  "estimatedDurationMinutes": 30,
+  "tags": [
+    "business",
+    "soft-skills",
+    "meetings",
+    "productivity",
+    "leadership"
+  ],
+  "language": "en",
+  "video": {
+    "provider": "youtube",
+    "videoId": "bzA1L0GwFUA",
+    "startAtSeconds": 0,
+    "endAtSeconds": 1800
+  },
+  "levels": [
+    {
+      "id": "level-1",
+      "index": 0,
+      "title": "Meeting Preparation",
+      "summary": "Learn how to properly prepare for meetings to ensure they're productive and focused",
+      "timeRange": {
+        "startSeconds": 0,
+        "endSeconds": 600
+      },
+      "keyPoints": [
+        "Define clear meeting objectives and outcomes",
+        "Create and share a focused agenda in advance",
+        "Invite only necessary participants",
+        "Schedule appropriate time blocks"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q1",
+          "prompt": "What is the most important element to include in a meeting invitation?",
+          "options": [
+            {
+              "id": "a",
+              "text": "A list of all potential topics"
+            },
+            {
+              "id": "b",
+              "text": "Clear objectives and a focused agenda"
+            },
+            {
+              "id": "c",
+              "text": "The meeting duration only"
+            },
+            {
+              "id": "d",
+              "text": "All team members regardless of relevance"
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Clear objectives and a focused agenda help participants prepare and ensure the meeting stays on track.",
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q2",
+          "prompt": "Describe a situation where you attended an unprepared meeting. What could have been done differently to make it more effective?",
+          "placeholder": "Share your experience and what improvements would have helped...",
+          "guidance": "Think about agenda, preparation, participant selection, and clear objectives.",
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp1",
+          "message": "Great! You understand the importance of meeting preparation. Let's move on to running the meeting effectively.",
+          "actionHint": "Ready to learn about meeting facilitation? Continue to the next section."
+        }
+      ]
+    },
+    {
+      "id": "level-2",
+      "index": 1,
+      "title": "Running the Meeting",
+      "summary": "Master facilitation techniques to keep meetings on track and engaging",
+      "timeRange": {
+        "startSeconds": 600,
+        "endSeconds": 1200
+      },
+      "keyPoints": [
+        "Start on time and establish ground rules",
+        "Keep discussions focused on agenda items",
+        "Encourage participation from all attendees",
+        "Manage time effectively and summarize decisions"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q3",
+          "prompt": "What should you do if a meeting discussion goes off-topic?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Let the discussion continue naturally"
+            },
+            {
+              "id": "b",
+              "text": "Immediately shut down the off-topic discussion"
+            },
+            {
+              "id": "c",
+              "text": "Acknowledge the point and redirect to agenda items"
+            },
+            {
+              "id": "d",
+              "text": "Schedule another meeting for the off-topic"
+            }
+          ],
+          "correctOptionIds": [
+            "c"
+          ],
+          "explanation": "Acknowledging the point shows respect while redirecting maintains focus on the meeting's objectives.",
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "open_ended",
+          "id": "q4",
+          "prompt": "What techniques would you use to encourage quiet team members to participate in a meeting?",
+          "placeholder": "Think about facilitation strategies...",
+          "guidance": "Consider direct but gentle invitations, round-robin formats, or creating safe spaces for input.",
+          "maxCharacters": 400
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp2",
+          "message": "Excellent! You're mastering meeting facilitation. Now let's ensure meetings lead to action.",
+          "actionHint": "Ready to learn about effective follow-up? Continue to the next section."
+        }
+      ]
+    },
+    {
+      "id": "level-3",
+      "index": 2,
+      "title": "Meeting Follow-up",
+      "summary": "Ensure meetings lead to concrete actions and accountability",
+      "timeRange": {
+        "startSeconds": 1200,
+        "endSeconds": 1800
+      },
+      "keyPoints": [
+        "Document decisions and action items clearly",
+        "Assign owners and deadlines for action items",
+        "Share meeting notes promptly",
+        "Track progress on action items"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q5",
+          "prompt": "When should meeting minutes and action items be distributed?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Within the next week"
+            },
+            {
+              "id": "b",
+              "text": "Within 24 hours of the meeting"
+            },
+            {
+              "id": "c",
+              "text": "Only if someone requests them"
+            },
+            {
+              "id": "d",
+              "text": "At the next meeting"
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Prompt distribution within 24 hours ensures everyone remembers the context and can act on decisions while they're fresh.",
+          "difficulty": "medium",
+          "points": 20
+        },
+        {
+          "kind": "open_ended",
+          "id": "q6",
+          "prompt": "Describe a system you would implement to track action items from multiple meetings across your team.",
+          "placeholder": "Think about tools and processes that work for your team...",
+          "guidance": "Consider shared documents, project management tools, or regular check-ins.",
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp3",
+          "message": "Congratulations! You've mastered the complete lifecycle of effective meetings.",
+          "actionHint": "Ready to transform your team's meeting culture?"
+        }
+      ]
+    }
+  ]
+}

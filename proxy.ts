@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server"
  * Middleware to protect Studio routes with HTTP Basic Authentication
  * Applies to /studio and /api/studio routes
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Check if the path requires authentication

@@ -14,7 +14,8 @@ interface VoiceLessonPlayerProps {
   lesson: LessonArcadeLesson
 }
 
-type SpeechStatus = 'idle' | 'speaking' | 'paused' | 'unsupported'
+type SpeechStatus = 'idle' | 'speaking' | 'paused' | 'unsupported' | 'loading'
+type VoiceEngine = 'browser' | 'ai'
 
 export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0)
@@ -28,17 +29,51 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [speechStatus, setSpeechStatus] = useState<SpeechStatus>('idle')
   const [speechRate, setSpeechRate] = useState(1.0)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [voiceEngine, setVoiceEngine] = useState<VoiceEngine>('browser')
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('')
+  const [isAIVoiceAvailable, setIsAIVoiceAvailable] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const currentAudioUrlRef = useRef<string | null>(null)
 
-  // Initialize speech synthesis
+  // Initialize speech synthesis and check AI voice availability
   useEffect(() => {
+    // Check browser speech synthesis support
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       speechSynthesisRef.current = window.speechSynthesis
     } else {
       setSpeechStatus('unsupported')
     }
+    
+    // Check if AI voice is available by checking if API key is configured
+    // This is a client-side check, actual validation happens server-side
+    const checkAIVoiceAvailability = async () => {
+      try {
+        // Make a simple request to check if API is configured
+        const response = await fetch('/api/voice/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: 'test' })
+        })
+        
+        // If we get a 500 with AUTH error, API key is not configured
+        const data = await response.json()
+        if (data.error?.code === 'AUTH') {
+          setIsAIVoiceAvailable(false)
+        } else {
+          // Any other response means API is available
+          setIsAIVoiceAvailable(true)
+        }
+      } catch (error) {
+        // Network error means API might be available
+        setIsAIVoiceAvailable(true)
+      }
+    }
+    
+    checkAIVoiceAvailability()
   }, [])
 
   // Handle language change with localStorage persistence
@@ -47,6 +82,19 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('la:displayLanguage', language)
     }
+  }
+
+  // Handle voice engine change
+  const handleVoiceEngineChange = (engine: VoiceEngine) => {
+    // Stop any current playback
+    stopSpeech()
+    setVoiceEngine(engine)
+    setError(null)
+  }
+
+  // Handle voice ID change
+  const handleVoiceIdChange = (voiceId: string) => {
+    setSelectedVoiceId(voiceId)
   }
 
   // Get the current level and item
@@ -135,37 +183,147 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     })
   }
 
+  // Play AI voice using ElevenLabs API
+  const playAIVoice = async (text: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const controller = new AbortController()
+      
+      // Clean up previous audio
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.src = ''
+      }
+      
+      // Clean up previous blob URL
+      if (currentAudioUrlRef.current) {
+        URL.revokeObjectURL(currentAudioUrlRef.current)
+        currentAudioUrlRef.current = null
+      }
+      
+      // Create new audio element
+      const audio = new Audio()
+      audioRef.current = audio
+      
+      // Handle audio events
+      const handleEnded = () => {
+        audio.removeEventListener('ended', handleEnded)
+        audio.removeEventListener('error', handleError)
+        resolve()
+      }
+      
+      const handleError = (e: Event) => {
+        audio.removeEventListener('ended', handleEnded)
+        audio.removeEventListener('error', handleError)
+        
+        // Try to parse error response
+        const target = e.target as HTMLAudioElement
+        if (target && target.error) {
+          reject(new Error(`Audio playback error: ${target.error.message}`))
+        } else {
+          reject(new Error('Audio playback failed'))
+        }
+      }
+      
+      audio.addEventListener('ended', handleEnded)
+      audio.addEventListener('error', handleError)
+      
+      // Fetch audio from TTS API
+      const fetchAudio = async () => {
+        try {
+          setSpeechStatus('loading')
+          
+          const response = await fetch('/api/voice/tts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              text,
+              voiceId: selectedVoiceId,
+              rate: speechRate,
+              lang: displayLanguage
+            }),
+            signal: controller.signal
+          })
+          
+          if (!response.ok) {
+            const data = await response.json()
+            
+            if (data.error?.code === 'RATE_LIMIT') {
+              const retryMinutes = Math.ceil((data.error.retryAfterSeconds || 3600) / 60)
+              reject(new Error(`Rate limit exceeded. Please try again in ${retryMinutes} minutes.`))
+            } else {
+              reject(new Error(data.error?.message || 'Failed to generate audio'))
+            }
+            return
+          }
+          
+          // Create blob URL from response
+          const blob = await response.blob()
+          const audioUrl = URL.createObjectURL(blob)
+          currentAudioUrlRef.current = audioUrl
+          
+          // Set audio source and play
+          audio.src = audioUrl
+          setSpeechStatus('speaking')
+          await audio.play()
+          
+        } catch (error) {
+          if (error instanceof Error && error.name !== 'AbortError') {
+            reject(error)
+          }
+        }
+      }
+      
+      fetchAudio()
+    })
+  }
+
   // Play the entire script for current item
   const playCurrentItem = async () => {
-    if (!isSpeechSupported) return
+    if (!isSpeechSupported && voiceEngine === 'browser') return
     
     setIsPlaying(true)
-    setSpeechStatus('speaking')
+    setError(null)
+    
+    if (voiceEngine === 'browser') {
+      setSpeechStatus('speaking')
+    } else {
+      setSpeechStatus('loading')
+    }
     
     try {
       const script = generateVoiceScript()
+      const fullText = script.join(' ')
       
-      for (const text of script) {
-        if (speechStatus === 'paused') {
-          // Wait if paused
-          await new Promise(resolve => {
-            const checkInterval = setInterval(() => {
-              if (speechStatus !== 'paused') {
-                clearInterval(checkInterval)
-                resolve(undefined)
-              }
-            }, 100)
-          })
+      if (voiceEngine === 'browser') {
+        // Browser speech synthesis
+        for (const text of script) {
+          if (speechStatus === 'paused') {
+            // Wait if paused
+            await new Promise(resolve => {
+              const checkInterval = setInterval(() => {
+                if (speechStatus !== 'paused') {
+                  clearInterval(checkInterval)
+                  resolve(undefined)
+                }
+              }, 100)
+            })
+          }
+          
+          if (speechStatus === 'idle') {
+            break
+          }
+          
+          await speakText(text)
         }
-        
-        if (speechStatus === 'idle') {
-          break
-        }
-        
-        await speakText(text)
+      } else {
+        // AI voice via ElevenLabs API
+        await playAIVoice(fullText)
       }
     } catch (error) {
       console.error('Error playing voice:', error)
+      setError(error instanceof Error ? error.message : 'An error occurred during playback')
     } finally {
       setIsPlaying(false)
       setSpeechStatus('idle')
@@ -177,20 +335,37 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     if (speechSynthesisRef.current) {
       speechSynthesisRef.current.cancel()
     }
+    
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+    }
+    
     setIsPlaying(false)
     setSpeechStatus('idle')
+    setError(null)
   }
 
   // Pause/Resume speech
   const togglePause = () => {
-    if (!speechSynthesisRef.current) return
-    
-    if (speechStatus === 'speaking') {
-      speechSynthesisRef.current.pause()
-      setSpeechStatus('paused')
-    } else if (speechStatus === 'paused') {
-      speechSynthesisRef.current.resume()
-      setSpeechStatus('speaking')
+    if (voiceEngine === 'browser' && speechSynthesisRef.current) {
+      // Browser speech synthesis
+      if (speechStatus === 'speaking') {
+        speechSynthesisRef.current.pause()
+        setSpeechStatus('paused')
+      } else if (speechStatus === 'paused') {
+        speechSynthesisRef.current.resume()
+        setSpeechStatus('speaking')
+      }
+    } else if (voiceEngine === 'ai' && audioRef.current) {
+      // AI voice audio playback
+      if (speechStatus === 'speaking') {
+        audioRef.current.pause()
+        setSpeechStatus('paused')
+      } else if (speechStatus === 'paused') {
+        audioRef.current.play()
+        setSpeechStatus('speaking')
+      }
     }
   }
 
@@ -326,20 +501,87 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       <Card className="bg-la-surface border-la-border">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4">
+            {/* Voice Engine Toggle */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-la-muted">Voice Engine:</span>
+                <div className="flex gap-1">
+                  <Button
+                    variant={voiceEngine === 'browser' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleVoiceEngineChange('browser')}
+                    className="text-xs"
+                  >
+                    Browser
+                  </Button>
+                  <Button
+                    variant={voiceEngine === 'ai' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handleVoiceEngineChange('ai')}
+                    disabled={!isAIVoiceAvailable}
+                    className="text-xs"
+                    title={!isAIVoiceAvailable ? "AI Voice is not configured" : undefined}
+                  >
+                    AI Voice
+                  </Button>
+                </div>
+              </div>
+              
+              {!isAIVoiceAvailable && voiceEngine === 'ai' && (
+                <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+                  AI Voice is not available. Please configure ElevenLabs API key.
+                </div>
+              )}
+              
+              {/* Voice Language Selector for AI Voice */}
+              {voiceEngine === 'ai' && isAIVoiceAvailable && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-la-muted">Voice Language:</span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant={displayLanguage === 'en' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleVoiceIdChange('')}
+                      className="text-xs"
+                    >
+                      EN
+                    </Button>
+                    <Button
+                      variant={displayLanguage === 'zh' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => handleVoiceIdChange('')}
+                      className="text-xs"
+                    >
+                      中文
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Status indicator */}
             <div className="flex items-center gap-2">
               <div className={cn(
                 "w-3 h-3 rounded-full",
                 speechStatus === 'speaking' ? "bg-green-500" :
                 speechStatus === 'paused' ? "bg-yellow-500" :
+                speechStatus === 'loading' ? "bg-blue-500" :
                 "bg-gray-400"
               )} />
               <span className="text-sm text-la-muted">
                 {speechStatus === 'speaking' ? "Speaking..." :
                  speechStatus === 'paused' ? "Paused" :
+                 speechStatus === 'loading' ? "Loading..." :
                  "Ready"}
               </span>
             </div>
+
+            {/* Error display */}
+            {error && (
+              <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+                {error}
+              </div>
+            )}
 
             {/* Control buttons */}
             <div className="flex items-center gap-2">

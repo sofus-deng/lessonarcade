@@ -47,6 +47,63 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
       transition={{ duration: 0.4, ease: "easeOut" }}
       className="space-y-4 mb-6"
     >
+      {/* Overall Progress Indicator */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: 0.05 }}
+      >
+        <Card className="bg-la-surface border-la-border overflow-hidden">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-la-primary/10 flex items-center justify-center">
+                  <svg className="w-4 h-4 text-la-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-la-bg">Overall Progress</h3>
+                  <p className="text-xs text-la-muted">
+                    {metrics.completedLevels} of {metrics.totalLevels} levels complete
+                  </p>
+                </div>
+              </div>
+              <motion.div
+                key={`overall-progress-${metrics.itemsCompletionPercentage}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-right"
+              >
+                <span className="text-lg font-semibold text-la-primary">
+                  {metrics.itemsCompletionPercentage}%
+                </span>
+              </motion.div>
+            </div>
+            <div className="w-full bg-la-border/20 rounded-full h-2 overflow-hidden">
+              <motion.div
+                key={`overall-progress-bar-${metrics.itemsCompletionPercentage}`}
+                initial={{ width: 0 }}
+                animate={{ width: `${metrics.itemsCompletionPercentage}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="h-full bg-gradient-to-r from-la-primary to-la-accent rounded-full relative"
+              >
+                <motion.div
+                  className="absolute inset-0 bg-white/20 rounded-full"
+                  animate={{ x: ["0%", "100%"] }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    repeatType: "loop",
+                    ease: "linear"
+                  }}
+                />
+              </motion.div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Mode Toggle */}
       <motion.div
         initial={{ opacity: 0, y: -10 }}
@@ -356,33 +413,75 @@ function ModeToggle({ currentMode, onModeChange }: {
   onModeChange: (mode: LessonMode) => void
 }) {
   return (
-    <div className="flex bg-la-border/20 rounded-lg p-1">
-      <Button
-        variant={currentMode === "focus" ? "default" : "ghost"}
-        size="sm"
-        onClick={() => onModeChange("focus")}
-        className={cn(
-          "flex-1 transition-all duration-200",
-          currentMode === "focus"
-            ? "bg-la-primary text-white shadow-sm"
-            : "text-la-muted hover:text-la-bg"
-        )}
-      >
-        Focus
-      </Button>
-      <Button
-        variant={currentMode === "arcade" ? "default" : "ghost"}
-        size="sm"
-        onClick={() => onModeChange("arcade")}
-        className={cn(
-          "flex-1 transition-all duration-200",
-          currentMode === "arcade"
-            ? "bg-la-primary text-white shadow-sm"
-            : "text-la-muted hover:text-la-bg"
-        )}
-      >
-        Arcade
-      </Button>
-    </div>
+    <motion.div
+      className="flex bg-la-border/20 rounded-lg p-1 relative"
+      whileHover={{ scale: 1.02 }}
+      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    >
+      {currentMode === "focus" ? (
+        <motion.div
+          layoutId="activeMode"
+          className="absolute inset-1 bg-la-primary rounded-md shadow-sm z-0"
+          initial={false}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 30
+          }}
+        />
+      ) : (
+        <motion.div
+          layoutId="activeMode"
+          className="absolute inset-1 bg-la-primary rounded-md shadow-sm z-0"
+          initial={false}
+          transition={{
+            type: "spring",
+            stiffness: 500,
+            damping: 30
+          }}
+          style={{ left: "50%" }}
+        />
+      )}
+      <div className="relative z-10 flex flex-1">
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex-1"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onModeChange("focus")}
+            className={cn(
+              "w-full transition-all duration-200 relative",
+              currentMode === "focus"
+                ? "text-white font-medium"
+                : "text-la-muted hover:text-la-bg"
+            )}
+          >
+            Focus
+          </Button>
+        </motion.div>
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex-1"
+        >
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onModeChange("arcade")}
+            className={cn(
+              "w-full transition-all duration-200 relative",
+              currentMode === "arcade"
+                ? "text-white font-medium"
+                : "text-la-muted hover:text-la-bg"
+            )}
+          >
+            Arcade
+          </Button>
+        </motion.div>
+      </div>
+    </motion.div>
   )
 }

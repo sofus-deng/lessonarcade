@@ -49,14 +49,16 @@ export function LevelSidebar({ levels, currentLevelIndex, onLevelSelect, scoring
               key={level.id}
               onClick={() => onLevelSelect(index)}
               className={cn(
-                "w-full text-left p-4 rounded-lg border transition-all duration-200",
-                "hover:bg-la-surface/10 hover:border-la-accent/50",
+                "w-full text-left p-4 rounded-lg border transition-all duration-300",
+                "hover:bg-la-surface/10 hover:border-la-accent/50 hover:shadow-md",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg",
                 index === currentLevelIndex
                   ? "bg-la-surface/20 border-la-accent shadow-sm"
                   : "border-la-border/30 bg-la-surface/5"
               )}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.02, y: -1 }}
               whileTap={{ scale: 0.98 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">

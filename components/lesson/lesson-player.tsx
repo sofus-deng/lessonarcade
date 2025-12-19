@@ -340,8 +340,8 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             className="max-w-4xl mx-auto space-y-6"
           >
             {/* Header with Language Toggle */}
-            <div className="flex justify-between items-start">
-              <div className="flex-1">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex-1 w-full">
                 {/* Lesson Summary */}
                 <LessonSummary
                   lesson={lesson}
@@ -351,7 +351,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
               </div>
               
               {/* Language Toggle */}
-              <div className="ml-4 flex-shrink-0">
+              <div className="flex-shrink-0">
                 <LanguageToggle
                   currentLanguage={displayLanguage}
                   onLanguageChange={handleLanguageChange}

@@ -126,18 +126,36 @@ export function MultipleChoiceItem({
                 )}
                 <span>{basePoints} points</span>
                 {mode === "arcade" && !isLocked && timeLeft !== null && (
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className={cn(
-                      "px-2 py-1 rounded-full text-xs font-medium",
-                      timeLeft > 6 ? "bg-blue-100 text-blue-800" :
-                      timeLeft > 0 ? "bg-yellow-100 text-yellow-800" :
-                      "bg-red-100 text-red-800"
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border",
+                      timeLeft > 6 ? "bg-blue-50 text-blue-700 border-blue-200" :
+                      timeLeft > 3 ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+                      timeLeft > 0 ? "bg-orange-50 text-orange-700 border-orange-200" :
+                      "bg-red-50 text-red-700 border-red-200"
                     )}
                   >
-                    Time left: {timeLeft}s
-                  </motion.span>
+                    <motion.svg
+                      className="w-3.5 h-3.5"
+                      animate={{ rotate: timeLeft <= 3 ? [0, 10, -10, 0] : 0 }}
+                      transition={{ duration: 0.5, repeat: timeLeft <= 3 ? Infinity : 0 }}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </motion.svg>
+                    <motion.span
+                      key={`timer-${timeLeft}`}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 10 }}
+                    >
+                      {timeLeft}s
+                    </motion.span>
+                  </motion.div>
                 )}
                 {isLocked && (
                   <motion.span
@@ -168,21 +186,22 @@ export function MultipleChoiceItem({
                 onClick={() => handleOptionClick(option.id)}
                 disabled={isLocked}
                 className={cn(
-                  "w-full text-left p-4 rounded-lg border transition-all duration-200",
-                  isLocked ? "cursor-not-allowed" : "hover:shadow-md hover:border-la-accent/50 cursor-pointer",
+                  "w-full text-left p-4 rounded-lg border transition-all duration-300",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-surface",
+                  isLocked ? "cursor-not-allowed" : "hover:shadow-lg hover:border-la-accent/50 hover:-translate-y-0.5 cursor-pointer",
                   optionIsSelected
                     ? showFeedback
                       ? optionIsCorrect
                         ? "bg-green-50 border-green-300 text-green-900"
                         : "bg-red-50 border-red-300 text-red-900"
-                      : "bg-la-accent/10 border-la-accent text-la-bg"
+                      : "bg-la-accent/10 border-la-accent text-la-bg shadow-md"
                     : "bg-la-surface border-la-border text-la-bg hover:bg-la-muted/10"
                 )}
-                whileHover={isLocked ? {} : { scale: 1.01 }}
-                whileTap={isLocked ? {} : { scale: 0.99 }}
+                whileHover={isLocked ? {} : { scale: 1.02, y: -2 }}
+                whileTap={isLocked ? {} : { scale: 0.98 }}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.2 }}
+                transition={{ delay: index * 0.1, duration: 0.3, type: "spring", stiffness: 400, damping: 17 }}
               >
                 <div className="flex items-start gap-3">
                   <div className={cn(

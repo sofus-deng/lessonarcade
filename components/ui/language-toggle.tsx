@@ -26,7 +26,11 @@ export function LanguageToggle({
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={cn("inline-flex rounded-lg border border-la-border bg-la-surface p-1", className)}
+      className={cn(
+        "inline-flex rounded-lg border border-la-border bg-la-surface p-1 shadow-sm",
+        "focus-within:ring-2 focus-within:ring-la-accent/50 focus-within:ring-offset-2 focus-within:ring-offset-la-bg",
+        className
+      )}
     >
       {languages.map((lang) => (
         <motion.div key={lang.code} className="relative">
@@ -41,6 +45,7 @@ export function LanguageToggle({
               onClick={() => onLanguageChange(lang.code)}
               className={cn(
                 "relative z-10 px-3 py-1.5 text-sm font-medium transition-all duration-200",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-1 focus-visible:ring-offset-la-surface",
                 currentLanguage === lang.code
                   ? "bg-la-primary text-white shadow-sm"
                   : "text-la-muted hover:text-la-bg hover:bg-la-muted/20"
@@ -54,7 +59,7 @@ export function LanguageToggle({
           {currentLanguage === lang.code && (
             <motion.div
               layoutId="activeLanguage"
-              className="absolute inset-0 z-0 rounded-md bg-la-primary"
+              className="absolute inset-0 z-0 rounded-md bg-la-primary shadow-sm"
               initial={false}
               transition={{
                 type: "spring",

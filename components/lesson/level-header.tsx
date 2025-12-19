@@ -58,22 +58,38 @@ export function LevelHeader({ level, scoringState }: LevelHeaderProps) {
           </p>
           
           {level.keyPoints.length > 0 && (
-            <div>
-              <h3 className="text-sm font-medium text-la-muted mb-2">Key Points</h3>
-              <div className="flex flex-wrap gap-2">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 rounded-full bg-la-accent/10 flex items-center justify-center">
+                  <svg className="w-3 h-3 text-la-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-sm font-medium text-la-muted">Key Points</h3>
+              </div>
+              <div className="space-y-2">
                 {level.keyPoints.map((point, index) => (
                   <motion.div
                     key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1, duration: 0.3 }}
-                    className="inline-flex items-center px-3 py-1 rounded-full bg-la-accent/10 text-la-accent text-sm border border-la-accent/20"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + index * 0.1, duration: 0.3 }}
+                    className="flex items-start gap-3 p-3 rounded-lg bg-la-accent/5 border border-la-accent/10 hover:bg-la-accent/10 transition-colors duration-200 group"
                   >
-                    {point}
+                    <div className="flex-shrink-0 w-5 h-5 rounded-full bg-la-accent/20 flex items-center justify-center mt-0.5 group-hover:bg-la-accent/30 transition-colors duration-200">
+                      <svg className="w-2.5 h-2.5 text-la-accent" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-la-bg leading-relaxed">{point}</p>
                   </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
           
           {level.timeRange && (

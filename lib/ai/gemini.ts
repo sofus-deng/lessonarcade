@@ -9,13 +9,8 @@ import { GoogleGenAI } from "@google/genai"
 // Get API key from environment variables
 const apiKey = process.env.GEMINI_API_KEY
 
-if (!apiKey) {
-  // During build time, we don't want to fail the build
-  // The actual validation will happen at runtime
-  console.warn("GEMINI_API_KEY environment variable is not set. This is required for lesson generation.")
-}
-
 // Initialize Gemini client only if API key is available
+// Don't log warnings during build time - only when API is actually invoked
 export const geminiClient = apiKey ? new GoogleGenAI({ apiKey }) : null
 
 /**
@@ -34,6 +29,8 @@ export async function generateContent(
   } = {}
 ) {
   if (!geminiClient) {
+    // Only log when the API is actually invoked, not during module import/build time
+    console.warn("GEMINI_API_KEY environment variable is not set. This is required for lesson generation.")
     throw new Error("GEMINI_API_KEY environment variable is not set. Please configure it to use lesson generation.")
   }
 

@@ -67,7 +67,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           // Any other response means API is available
           setIsAIVoiceAvailable(true)
         }
-      } catch (error) {
+      } catch {
         // Network error means API might be available
         setIsAIVoiceAvailable(true)
       }

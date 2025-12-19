@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
     let body: Record<string, unknown>
     try {
       body = await request.json()
-    } catch (error) {
+    } catch {
       logTTSEvent(
         request,
         false,

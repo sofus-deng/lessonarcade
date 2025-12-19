@@ -4,7 +4,7 @@ This document provides a concise reference for all design tokens used in the Les
 
 ## Colors
 
-Color tokens use the `la-` prefix and are defined as CSS custom properties in [`globals.css`](../app/globals.css).
+Color tokens use the `la-` prefix and are exposed as Tailwind utilities via @theme inline configuration in [`globals.css`](../app/globals.css).
 
 ### Core Palette
 - `--la-bg`: #1e293b - Deep blue-slate background
@@ -35,11 +35,15 @@ Color tokens use the `la-` prefix and are defined as CSS custom properties in [`
 <button className="border border-la-border text-la-surface">
   Outline button
 </button>
+
+// Note: When using bg-la-surface, pair with appropriate text color for contrast
+<div className="bg-la-surface text-la-bg">High contrast text</div>
+<div className="bg-la-surface text-slate-900">Alternative high contrast text</div>
 ```
 
 ## Typography
 
-Typography tokens are defined in the @theme inline configuration in [`globals.css`](../app/globals.css).
+Typography tokens are exposed as Tailwind utilities via @theme inline configuration in [`globals.css`](../app/globals.css).
 
 ### Font Families
 - `--font-sans`: Geist Sans (system UI fallback)
@@ -73,7 +77,7 @@ Typography tokens are defined in the @theme inline configuration in [`globals.cs
 
 ## Spacing
 
-Spacing tokens provide consistent gaps and padding throughout the interface.
+Spacing variables are plain CSS custom properties defined in [`globals.css`](../app/globals.css). They should be used via Tailwind arbitrary values when you want exact token usage, while standard Tailwind spacing classes can be used as "equivalents" when appropriate.
 
 ### Layout Spacing
 - `--container-padding`: 1rem - Default container padding
@@ -82,17 +86,28 @@ Spacing tokens provide consistent gaps and padding throughout the interface.
 
 ### Usage Examples
 ```tsx
-// Section spacing
-<section className="py-16 lg:py-24">
+// Using exact token values with arbitrary values
+<section className="py-[var(--section-gap)]">
+  {/* Content with exact section-gap */}
+</section>
+
+<div className="px-[var(--container-padding)]">
+  {/* Content with exact container-padding */}
+</div>
+
+<div className="grid gap-[var(--card-gap)]">
+  {/* Cards with exact card-gap */}
+</div>
+
+// Using equivalent Tailwind spacing classes
+<section className="py-16">
   {/* Content with section-gap equivalent */}
 </section>
 
-// Container with consistent padding
 <div className="px-4 sm:px-6 lg:px-8">
-  {/* Content with container-padding */}
+  {/* Content with container-padding equivalent */}
 </div>
 
-// Card spacing
 <div className="grid gap-8 lg:gap-12">
   {/* Cards with card-gap equivalent */}
 </div>
@@ -145,12 +160,13 @@ Shadows are used to create depth and hierarchy in the interface.
 
 ## Motion
 
-Motion tokens are defined through consistent animation patterns using Framer Motion.
+Motion tokens are defined through consistent animation patterns using Motion for React (motion/react).
 
 ### Duration
 - `0.3s`: Quick transitions (hover states, micro-interactions)
 - `0.6s`: Standard transitions (fade-ins, slide animations)
 - `1.5s`: Slow animations (progress bars, loading states)
+- `3s`: Extended animations (floating elements, loading loops)
 
 ### Easing
 - `easeOut`: Most animations (natural deceleration)
@@ -180,7 +196,7 @@ Motion tokens are defined through consistent animation patterns using Framer Mot
 // Floating animation
 <motion.div
   animate={{ y: [0, -10, 0] }}
-  transition={{ 
+  transition={{
     duration: 3,
     repeat: Infinity,
     ease: "easeInOut"
@@ -208,8 +224,10 @@ Motion tokens are defined through consistent animation patterns using Framer Mot
 
 ## Implementation Notes
 
-- All tokens are defined in [`app/globals.css`](../app/globals.css) using CSS custom properties
-- Tailwind v4 @theme inline configuration maps these tokens to utility classes
+- Colors, fonts, and type scale are exposed as Tailwind utilities via @theme inline configuration in [`app/globals.css`](../app/globals.css)
+- Spacing variables (--container-padding, --section-gap, --card-gap) are plain CSS custom properties and should be used via Tailwind arbitrary values for exact token usage
+- Border radius and shadows use Tailwind defaults
+- Motion timing is a documented convention rather than CSS tokens
 - Dark mode variations are handled through media queries in the CSS
-- Components should reference tokens by their Tailwind utility names (e.g., `bg-la-primary`)
+- Components should reference tokens by their Tailwind utility names (e.g., `bg-la-primary`, `text-la-muted`)
 - When adding new tokens, follow the established naming convention with the `la-` prefix

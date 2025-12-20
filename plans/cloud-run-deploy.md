@@ -7,7 +7,7 @@ This guide explains how to deploy the LessonArcade Next.js 16 application to Goo
 The application uses:
 - Next.js 16 with App Router
 - pnpm as package manager
-- Node.js 24 runtime (required for Next.js 16)
+- Node.js 24 runtime (Next.js 16 requires Node.js 20.9+, we're using Node 24)
 - Basic Authentication for /studio routes
 - Optional AI services (Gemini, ElevenLabs)
 
@@ -28,6 +28,8 @@ The application uses:
 ### Cloud Run Specific
 - `PORT` - Automatically set by Cloud Run (typically 8080)
 - `HOSTNAME` - Set to 0.0.0.0 for Cloud Run compatibility
+
+**Note:** Cloud Run injects the PORT environment variable and the container must listen on 0.0.0.0:$PORT. This is handled in our Dockerfile and Next.js configuration.
 
 ## Local Docker Development
 
@@ -158,7 +160,7 @@ The Dockerfile uses a multi-stage build:
 - Includes proxy.ts middleware for Basic Authentication (no renaming needed)
 - Runs as non-root user for security
 - Listens on PORT environment variable (Cloud Run compatible)
-- Uses Node.js 24 for Next.js 16 compatibility
+- Uses Node.js 24 for Next.js 16 compatibility (Next.js 16 requires Node.js 20.9+)
 
 ## Troubleshooting
 
@@ -175,7 +177,7 @@ The Dockerfile uses a multi-stage build:
 
 3. **Build Failures**
    - Ensure pnpm-lock.yaml is present
-   - Check Node.js version compatibility (24+)
+   - Check Node.js version compatibility (20.9+)
 
 4. **Memory Issues**
    - Increase memory allocation if AI processing fails

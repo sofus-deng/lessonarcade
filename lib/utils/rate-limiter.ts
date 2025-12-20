@@ -21,7 +21,7 @@ class RateLimiter {
   }
 
   /**
-   * Checks if a request from the given IP is allowed
+   * Checks if a request from given IP is allowed
    * @param request - The Next.js request object
    * @returns Object with allowed status and retry information
    */
@@ -39,7 +39,7 @@ class RateLimiter {
       return { allowed: true }
     }
     
-    // Check if the window has expired
+    // Check if window has expired
     if (now > entry.resetTime) {
       // Reset the counter
       entry.count = 1
@@ -167,10 +167,12 @@ class RateLimiter {
 export const generateRateLimiter = new RateLimiter(10, 60 * 60 * 1000) // 10 requests per hour
 export const publishRateLimiter = new RateLimiter(10, 60 * 60 * 1000) // 10 requests per hour
 export const ttsRateLimiter = new RateLimiter(10, 60 * 60 * 1000) // 10 requests per hour for IP
+export const telemetryRateLimiter = new RateLimiter(60, 60 * 1000) // 60 requests per minute for telemetry
 
 // Cleanup expired entries every 5 minutes
 setInterval(() => {
   generateRateLimiter.cleanup()
   publishRateLimiter.cleanup()
   ttsRateLimiter.cleanup()
+  telemetryRateLimiter.cleanup()
 }, 5 * 60 * 1000)

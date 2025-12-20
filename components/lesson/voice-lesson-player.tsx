@@ -7,6 +7,7 @@ import { getLocalizedText } from '@/lib/lessonarcade/i18n'
 import { buildVoiceScript } from '@/lib/lessonarcade/voice/build-script'
 import { chunkTextForTts } from '@/lib/lessonarcade/voice/chunk-text'
 import { getTtsMaxChars } from '@/lib/lessonarcade/voice/constants'
+import { createTextHash, createSessionId } from '@/lib/lessonarcade/voice/telemetry'
 import { LanguageToggle } from '@/components/ui/language-toggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -80,6 +81,19 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [lastPlayedItem, setLastPlayedItem] = useState<LastPlayedItem | null>(null)
   const [inFlightRequests, setInFlightRequests] = useState<Map<string, Promise<Blob>>>(new Map())
   
+  // Session ID for telemetry
+  const [sessionId] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      let existingSessionId = sessionStorage.getItem('la:voiceSessionId')
+      if (!existingSessionId) {
+        existingSessionId = createSessionId()
+        sessionStorage.setItem('la:voiceSessionId', existingSessionId)
+      }
+      return existingSessionId
+    }
+    return ''
+  })
+  
   const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -91,6 +105,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const textChunksRef = useRef<string[]>([])
   const isBufferingRef = useRef(false)
   const prefetchPromiseRef = useRef<Promise<void> | null>(null)
+  const currentScriptRef = useRef<string>('')
 
   // Check if speech synthesis is supported
   const isSpeechSupported = speechStatus !== 'unsupported'
@@ -106,6 +121,59 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const createItemKey = useCallback((): string => {
     return `${lesson.slug}-${currentLevelIndex}-${currentItemIndex}-${displayLanguage}-${selectedPresetKey}-${speechRate}`
   }, [lesson.slug, currentLevelIndex, currentItemIndex, displayLanguage, selectedPresetKey, speechRate])
+
+  // Send telemetry event
+  const sendTelemetryEvent = useCallback((
+    event: 'voice_play' | 'voice_pause' | 'voice_resume' | 'voice_stop' | 'voice_end' | 'voice_error',
+    reason?: 'user_stop' | 'navigation' | 'rate_limited' | 'cooldown_blocked' | 'error',
+    useBeacon: boolean = false
+  ) => {
+    try {
+      // Get current script text for hashing
+      const scriptText = currentScriptRef.current || ''
+      
+      const telemetryData = {
+        schemaVersion: 1,
+        ts: new Date().toISOString(),
+        event,
+        lessonSlug: lesson.slug,
+        levelIndex: currentLevelIndex,
+        itemIndex: currentItemIndex,
+        engine: voiceEngine,
+        languageCode: displayLanguage,
+        voicePresetKey: selectedPresetKey || undefined,
+        rate: speechRate,
+        textLen: scriptText.length,
+        textHash: createTextHash(scriptText), // Hash of script text only
+        sessionId
+      }
+
+      // Add reason if provided
+      if (reason) {
+        (telemetryData as Record<string, unknown>).reason = reason
+      }
+
+      const jsonData = JSON.stringify(telemetryData)
+
+      // Use sendBeacon for stop/navigation events (survives page unload)
+      if (useBeacon && navigator.sendBeacon) {
+        navigator.sendBeacon('/api/voice/telemetry', jsonData)
+      } else {
+        // Use fetch with keepalive for other events
+        fetch('/api/voice/telemetry', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: jsonData,
+          keepalive: true
+        }).catch(() => {
+          // Silently fail - telemetry should never break playback
+        })
+      }
+    } catch (error) {
+      // Silently fail - telemetry should never break playback
+      console.warn('Failed to send telemetry event:', error)
+    }
+  }, [lesson.slug, currentLevelIndex, currentItemIndex, voiceEngine, displayLanguage, selectedPresetKey, speechRate, sessionId])
 
   // Handle AI Voice acknowledgment
   const handleAcknowledgeAI = useCallback(() => {
@@ -245,6 +313,9 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         includeKeyPoints: true
       })
       
+      // Store script for telemetry
+      currentScriptRef.current = script
+      
       const maxChars = getTtsMaxChars()
       textChunksRef.current = chunkTextForTts(script, maxChars)
       
@@ -264,6 +335,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         if (chunkIndex >= textChunksRef.current.length) {
           setSpeechStatus('idle')
           setIsPlaying(false)
+          sendTelemetryEvent('voice_end')
           resolve()
           return
         }
@@ -292,6 +364,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
             audioQueueRef.current.push(audioItem)
           } catch (err) {
             if (err instanceof Error && err.name !== 'AbortError') {
+              sendTelemetryEvent('voice_error', 'error')
               reject(err)
             }
             return
@@ -313,7 +386,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
             audio.removeEventListener('error', handleError)
             audio.pause()
             
-            // Clean up the blob URL after playing
+            // Clean up blob URL after playing
             URL.revokeObjectURL(audioItem!.url)
             
             // Remove from queue
@@ -336,8 +409,10 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
             } else {
               const target = e.target as HTMLAudioElement
               if (target && target.error) {
+                sendTelemetryEvent('voice_error', 'error')
                 audioReject(new Error(`Audio playback error: ${target.error.message}`))
               } else {
+                sendTelemetryEvent('voice_error', 'error')
                 audioReject(new Error('Audio playback failed'))
               }
             }
@@ -356,10 +431,10 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       // Start with the first chunk
       playNextChunk(0).catch(reject)
     })
-  }, [lesson, currentLevelIndex, currentItemIndex, displayLanguage, fetchAudioChunk, prefetchNextChunk])
+  }, [lesson, currentLevelIndex, currentItemIndex, displayLanguage, fetchAudioChunk, prefetchNextChunk, sendTelemetryEvent])
 
   // Stop speech with enhanced cleanup
-  const stopSpeech = useCallback(() => {
+  const stopSpeech = useCallback((reason?: 'user_stop' | 'navigation') => {
     // Cancel browser speech
     if (speechSynthesisRef.current) {
       speechSynthesisRef.current.cancel()
@@ -394,7 +469,13 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     isBufferingRef.current = false
     currentChunkIndexRef.current = 0
     textChunksRef.current = []
-  }, [])
+    currentScriptRef.current = ''
+    
+    // Send telemetry if we were playing
+    if (isPlaying) {
+      sendTelemetryEvent('voice_stop', reason, true) // Use beacon for stop events
+    }
+  }, [isPlaying, sendTelemetryEvent])
 
   // Handle preset change
   const handlePresetChange = useCallback((presetKey: string) => {
@@ -469,6 +550,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       if (lastPlayedItem && lastPlayedItem.itemKey === itemKey && (now - lastPlayedItem.timestamp) < 2000) {
         setError('Please wait a moment before playing the same item again.')
         setTimeout(() => setError(null), 3000)
+        sendTelemetryEvent('voice_error', 'cooldown_blocked')
         return
       }
       
@@ -492,8 +574,13 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           includeKeyPoints: true
         })
         
+        // Store script for telemetry
+        currentScriptRef.current = script
+        
         // Split into sentences for browser engine
         const sentences = script.match(/[^.!?。！？]+[.!?。！？]*/g) || [script]
+        
+        sendTelemetryEvent('voice_play')
         
         for (const sentence of sentences) {
           if (speechStatus === 'paused') {
@@ -517,6 +604,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       } catch (err) {
         console.error('Error playing voice:', err)
         setError(err instanceof Error ? err.message : 'An error occurred during playback')
+        sendTelemetryEvent('voice_error', 'error')
       } finally {
         setIsPlaying(false)
         setSpeechStatus('idle')
@@ -524,6 +612,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     } else {
       // AI voice with chunking
       try {
+        sendTelemetryEvent('voice_play')
         await playAIVoiceChunked()
       } catch (err) {
         console.error('Error playing AI voice:', err)
@@ -532,7 +621,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         setSpeechStatus('idle')
       }
     }
-  }, [speechStatus, isSpeechSupported, voiceEngine, currentLevelIndex, currentItemIndex, displayLanguage, lesson, playAIVoiceChunked, speakText, aiVoiceAcknowledged, createItemKey, lastPlayedItem])
+  }, [speechStatus, isSpeechSupported, voiceEngine, currentLevelIndex, currentItemIndex, displayLanguage, lesson, playAIVoiceChunked, speakText, aiVoiceAcknowledged, createItemKey, lastPlayedItem, sendTelemetryEvent])
 
   // Initialize speech synthesis and check AI voice availability
   useEffect(() => {
@@ -623,18 +712,22 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       if (speechStatus === 'speaking') {
         speechSynthesisRef.current.pause()
         setSpeechStatus('paused')
+        sendTelemetryEvent('voice_pause')
       } else if (speechStatus === 'paused') {
         speechSynthesisRef.current.resume()
         setSpeechStatus('speaking')
+        sendTelemetryEvent('voice_resume')
       }
     } else if (voiceEngine === 'ai' && audioRef.current) {
       // AI voice audio playback
       if (speechStatus === 'speaking') {
         audioRef.current.pause()
         setSpeechStatus('paused')
+        sendTelemetryEvent('voice_pause')
       } else if (speechStatus === 'paused') {
         audioRef.current.play()
         setSpeechStatus('speaking')
+        sendTelemetryEvent('voice_resume')
       }
     }
   }
@@ -649,6 +742,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
 
   // Navigate to next item
   const nextItem = () => {
+    // Send telemetry before stopping if we're currently playing
+    if (isPlaying) {
+      sendTelemetryEvent('voice_stop', 'navigation', true) // Use beacon for navigation
+    }
+    
     stopSpeech()
     
     if (currentItemIndex < currentLevel.items.length - 1) {
@@ -661,6 +759,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
 
   // Navigate to previous item
   const previousItem = () => {
+    // Send telemetry before stopping if we're currently playing
+    if (isPlaying) {
+      sendTelemetryEvent('voice_stop', 'navigation', true) // Use beacon for navigation
+    }
+    
     stopSpeech()
     
     if (currentItemIndex > 0) {
@@ -938,7 +1041,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
               )}
               
               <Button
-                onClick={stopSpeech}
+                onClick={() => stopSpeech('user_stop')}
                 variant="outline"
                 size="sm"
               >

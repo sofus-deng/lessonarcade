@@ -3,6 +3,7 @@ import { ttsRateLimiter } from "@/lib/utils/rate-limiter"
 import { Timer } from "@/lib/utils/logger"
 import { createHash } from "crypto"
 import { getTtsMaxChars } from "@/lib/lessonarcade/voice/constants"
+import { resolvePreset, validateVoiceId, getDefaultVoiceId } from "@/lib/lessonarcade/voice/preset-registry"
 
 // Configure runtime for Node.js
 export const runtime = "nodejs"
@@ -27,6 +28,7 @@ interface TTSLogEntry {
   elapsedMs: number
   errorCode?: TTSErrorCode
   cached?: boolean
+  voicePreset?: string
 }
 
 /**
@@ -72,7 +74,8 @@ function logTTSEvent(
   rate: number,
   elapsedMs?: number,
   errorCode?: TTSErrorCode,
-  cached?: boolean
+  cached?: boolean,
+  voicePreset?: string
 ): void {
   const ip = getClientIP(request)
   const ipHash = hashIP(ip)
@@ -95,6 +98,10 @@ function logTTSEvent(
   
   if (cached !== undefined) {
     logEntry.cached = cached
+  }
+  
+  if (voicePreset) {
+    logEntry.voicePreset = voicePreset
   }
   
   // Output as a single JSON line
@@ -185,8 +192,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate required fields
-    const { text, voiceId, rate = 1.0, lang = "en" } = body as {
+    const { text, voicePreset, voiceId, rate = 1.0, lang = "en" } = body as {
       text: string
+      voicePreset?: string
       voiceId?: string
       rate: number
       lang: string
@@ -198,11 +206,13 @@ export async function POST(request: NextRequest) {
         false,
         0,
         "",
-        voiceId || "",
+        "",
         lang,
         rate,
         timer.getElapsed(),
-        "VALIDATION"
+        "VALIDATION",
+        undefined,
+        voicePreset
       )
       return NextResponse.json(
         { 
@@ -223,11 +233,13 @@ export async function POST(request: NextRequest) {
         false,
         text.length,
         createHash('sha256').update(text).digest('hex'),
-        voiceId || "",
+        "",
         lang,
         rate,
         timer.getElapsed(),
-        "VALIDATION"
+        "VALIDATION",
+        undefined,
+        voicePreset
       )
       return NextResponse.json(
         { 
@@ -249,11 +261,13 @@ export async function POST(request: NextRequest) {
         false,
         text.length,
         createHash('sha256').update(text).digest('hex'),
-        (voiceId as string) || "",
+        "",
         lang,
         rate,
         timer.getElapsed(),
-        "VALIDATION"
+        "VALIDATION",
+        undefined,
+        voicePreset
       )
       return NextResponse.json(
         { 
@@ -274,11 +288,13 @@ export async function POST(request: NextRequest) {
         false,
         text.length,
         createHash('sha256').update(text).digest('hex'),
-        (voiceId as string) || "",
+        "",
         lang,
         rate,
         timer.getElapsed(),
-        "VALIDATION"
+        "VALIDATION",
+        undefined,
+        voicePreset
       )
       return NextResponse.json(
         { 
@@ -292,12 +308,72 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Determine voice ID based on language if not provided
-    const finalVoiceId = (voiceId as string) || (
-      lang === "zh"
-        ? process.env.ELEVENLABS_VOICE_ID_ZH || "Zhao"
-        : process.env.ELEVENLABS_VOICE_ID_EN || "Adam"
-    )
+    // Resolve voice ID from preset or validate provided voiceId
+    let finalVoiceId: string
+    let finalLanguage = lang as 'en' | 'zh'
+    
+    if (voicePreset) {
+      // Resolve preset to voice ID
+      const presetResult = resolvePreset(voicePreset)
+      if (!presetResult) {
+        logTTSEvent(
+          request,
+          false,
+          text.length,
+          createHash('sha256').update(text).digest('hex'),
+          "",
+          lang,
+          rate,
+          timer.getElapsed(),
+          "VALIDATION",
+          undefined,
+          voicePreset
+        )
+        return NextResponse.json(
+          { 
+            ok: false, 
+            error: { 
+              code: "VALIDATION", 
+              message: `Invalid voice preset: ${voicePreset}` 
+            } 
+          },
+          { status: 400 }
+        )
+      }
+      
+      finalVoiceId = presetResult.voiceId
+      finalLanguage = presetResult.languageCode
+    } else if (voiceId) {
+      // Validate provided voice ID
+      if (!validateVoiceId(voiceId)) {
+        logTTSEvent(
+          request,
+          false,
+          text.length,
+          createHash('sha256').update(text).digest('hex'),
+          voiceId,
+          lang,
+          rate,
+          timer.getElapsed(),
+          "VALIDATION"
+        )
+        return NextResponse.json(
+          { 
+            ok: false, 
+            error: { 
+              code: "VALIDATION", 
+              message: `Invalid voice ID: ${voiceId}` 
+            } 
+          },
+          { status: 400 }
+        )
+      }
+      
+      finalVoiceId = voiceId
+    } else {
+      // Use default voice ID for language
+      finalVoiceId = getDefaultVoiceId(lang as 'en' | 'zh')
+    }
 
     // Apply two-tier rate limiting
     const rateLimitResult = ttsRateLimiter.checkMultipleLimits(request, [
@@ -313,10 +389,12 @@ export async function POST(request: NextRequest) {
         text.length,
         textHash,
         finalVoiceId,
-        lang,
+        finalLanguage,
         rate,
         timer.getElapsed(),
-        "RATE_LIMIT"
+        "RATE_LIMIT",
+        undefined,
+        voicePreset
       )
       return NextResponse.json(
         { 
@@ -332,7 +410,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create cache key and check cache
-    const cacheKey = createCacheKey(text, lang, finalVoiceId as string, rate)
+    const cacheKey = createCacheKey(text, finalLanguage, finalVoiceId, rate)
     const cachedEntry = ttsCache.get(cacheKey)
     
     if (cachedEntry && Date.now() - cachedEntry.timestamp < CACHE_TTL_MS) {
@@ -342,14 +420,15 @@ export async function POST(request: NextRequest) {
         true,
         text.length,
         textHash,
-        finalVoiceId as string,
-        lang,
+        finalVoiceId,
+        finalLanguage,
         rate,
         timer.getElapsed(),
         undefined,
-        true // cached
+        true, // cached
+        voicePreset
       )
-      
+       
       return new NextResponse(cachedEntry.data as BodyInit, {
         headers: {
           'Content-Type': 'audio/mpeg',
@@ -365,7 +444,7 @@ export async function POST(request: NextRequest) {
     const requestBody = {
       text,
       model_id: modelId,
-      language_code: lang === "zh" ? "zh" : "en",
+      language_code: finalLanguage === "zh" ? "zh" : "en",
       voice_settings: {
         stability: 0.75,
         similarity_boost: 0.75,
@@ -390,11 +469,13 @@ export async function POST(request: NextRequest) {
         false,
         text.length,
         textHash,
-        finalVoiceId as string,
-        lang,
+        finalVoiceId,
+        finalLanguage,
         rate,
         timer.getElapsed(),
-        "ELEVENLABS_ERROR"
+        "ELEVENLABS_ERROR",
+        undefined,
+        voicePreset
       )
       
       return NextResponse.json(
@@ -426,9 +507,12 @@ export async function POST(request: NextRequest) {
       text.length,
       textHash,
       finalVoiceId,
-      lang,
+      finalLanguage,
       rate,
-      timer.getElapsed()
+      timer.getElapsed(),
+      undefined,
+      undefined,
+      voicePreset
     )
 
     // Return audio response

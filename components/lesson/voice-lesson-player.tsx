@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { type LessonArcadeLesson, type LanguageCode } from '@/lib/lessonarcade/schema'
 import { getLocalizedText } from '@/lib/lessonarcade/i18n'
@@ -27,6 +27,13 @@ interface AudioQueueItem {
   text: string
 }
 
+// Available preset interface
+interface AvailablePreset {
+  presetKey: string
+  label: string
+  languageCode: 'en' | 'zh'
+}
+
 export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0)
   const [currentItemIndex, setCurrentItemIndex] = useState(0)
@@ -40,9 +47,19 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [speechRate, setSpeechRate] = useState(1.0)
   const [isPlaying, setIsPlaying] = useState(false)
   const [voiceEngine, setVoiceEngine] = useState<VoiceEngine>('browser')
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>('')
+  const [selectedPresetKey, setSelectedPresetKey] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('la:voicePresetKey') || ''
+    }
+    return ''
+  })
   const [isAIVoiceAvailable, setIsAIVoiceAvailable] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Preset-related state
+  const [availablePresets, setAvailablePresets] = useState<AvailablePreset[]>([])
+  const [presetsLoading, setPresetsLoading] = useState(true)
+  const [presetsError, setPresetsError] = useState<string | null>(null)
   
   const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
@@ -56,78 +73,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const isBufferingRef = useRef(false)
   const prefetchPromiseRef = useRef<Promise<void> | null>(null)
 
-  // Initialize speech synthesis and check AI voice availability
-  useEffect(() => {
-    // Check browser speech synthesis support
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      speechSynthesisRef.current = window.speechSynthesis
-    } else {
-      setSpeechStatus('unsupported')
-    }
-    
-    // Check if AI voice is available by checking if API key is configured
-    // This is a client-side check, actual validation happens server-side
-    const checkAIVoiceAvailability = async () => {
-      try {
-        // Make a simple request to check if API is configured
-        const response = await fetch('/api/voice/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: 'test' })
-        })
-        
-        // If we get a 500 with AUTH error, API key is not configured
-        const data = await response.json()
-        if (data.error?.code === 'AUTH') {
-          setIsAIVoiceAvailable(false)
-        } else {
-          // Any other response means API is available
-          setIsAIVoiceAvailable(true)
-        }
-      } catch {
-        // Network error means API might be available
-        setIsAIVoiceAvailable(true)
-      }
-    }
-    
-    checkAIVoiceAvailability()
-    
-    // Cleanup on unmount
-    return () => {
-      stopSpeech()
-    }
-  }, [])
-
-  // Handle language change with localStorage persistence
-  const handleLanguageChange = (language: LanguageCode) => {
-    setDisplayLanguage(language)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('la:displayLanguage', language)
-    }
-  }
-
-  // Handle voice engine change
-  const handleVoiceEngineChange = (engine: VoiceEngine) => {
-    // Stop any current playback
-    stopSpeech()
-    setVoiceEngine(engine)
-    setError(null)
-  }
-
-  // Handle voice ID change
-  const handleVoiceIdChange = (voiceId: string) => {
-    setSelectedVoiceId(voiceId)
-  }
-
-  // Get the current level and item
-  const currentLevel = lesson.levels[currentLevelIndex]
-  const currentItem = currentLevel.items[currentItemIndex]
-
   // Check if speech synthesis is supported
   const isSpeechSupported = speechStatus !== 'unsupported'
 
   // Speak text with current settings (browser engine)
-  const speakText = (text: string): Promise<void> => {
+  const speakText = useCallback((text: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (!speechSynthesisRef.current || !isSpeechSupported) {
         reject(new Error('Speech synthesis not supported'))
@@ -148,21 +98,27 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       currentUtteranceRef.current = utterance
       speechSynthesisRef.current.speak(utterance)
     })
-  }
+  }, [isSpeechSupported, speechRate])
 
   // Fetch audio for a text chunk
-  const fetchAudioChunk = async (text: string, signal: AbortSignal): Promise<Blob> => {
+  const fetchAudioChunk = useCallback(async (text: string, signal: AbortSignal): Promise<Blob> => {
+    const requestBody: Record<string, unknown> = {
+      text,
+      rate: speechRate,
+      lang: displayLanguage
+    }
+    
+    // Use preset if available, otherwise use default behavior
+    if (selectedPresetKey) {
+      requestBody.voicePreset = selectedPresetKey
+    }
+    
     const response = await fetch('/api/voice/tts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        text,
-        voiceId: selectedVoiceId,
-        rate: speechRate,
-        lang: displayLanguage
-      }),
+      body: JSON.stringify(requestBody),
       signal
     })
     
@@ -178,10 +134,10 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     }
     
     return await response.blob()
-  }
+  }, [speechRate, displayLanguage, selectedPresetKey])
 
-  // Prefetch the next chunk while current one is playing
-  const prefetchNextChunk = async (chunkIndex: number): Promise<void> => {
+  // Prefetch: next chunk while current one is playing
+  const prefetchNextChunk = useCallback(async (chunkIndex: number): Promise<void> => {
     if (
       chunkIndex + 1 >= textChunksRef.current.length || 
       audioQueueRef.current.some(item => item.text === textChunksRef.current[chunkIndex + 1])
@@ -199,14 +155,14 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         url,
         text: nextChunkText
       })
-    } catch (error) {
+    } catch (err) {
       // Silently fail prefetch errors, they'll be handled when playing the chunk
-      console.warn('Failed to prefetch next chunk:', error)
+      console.warn('Failed to prefetch next chunk:', err)
     }
-  }
+  }, [fetchAudioChunk])
 
   // Play AI voice using buffered chunking
-  const playAIVoiceChunked = async (): Promise<void> => {
+  const playAIVoiceChunked = useCallback(async (): Promise<void> => {
     return new Promise((resolve, reject) => {
       // Create new abort controller for this session
       abortControllerRef.current = new AbortController()
@@ -268,9 +224,9 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
             }
             
             audioQueueRef.current.push(audioItem)
-          } catch (error) {
-            if (error instanceof Error && error.name !== 'AbortError') {
-              reject(error)
+          } catch (err) {
+            if (err instanceof Error && err.name !== 'AbortError') {
+              reject(err)
             }
             return
           }
@@ -334,10 +290,100 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       // Start with the first chunk
       playNextChunk(0).catch(reject)
     })
-  }
+  }, [lesson, currentLevelIndex, currentItemIndex, displayLanguage, fetchAudioChunk, prefetchNextChunk])
 
-  // Play the current item
-  const playCurrentItem = async () => {
+  // Stop speech
+  const stopSpeech = useCallback(() => {
+    // Cancel browser speech
+    if (speechSynthesisRef.current) {
+      speechSynthesisRef.current.cancel()
+    }
+    
+    // Abort AI voice fetches
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    
+    // Stop and clean up audio
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current.currentTime = 0
+      audioRef.current = null
+    }
+    
+    // Clean up all blob URLs
+    audioQueueRef.current.forEach(item => {
+      URL.revokeObjectURL(item.url)
+    })
+    audioQueueRef.current = []
+    
+    // Reset state
+    setIsPlaying(false)
+    setSpeechStatus('idle')
+    setError(null)
+    isBufferingRef.current = false
+    currentChunkIndexRef.current = 0
+    textChunksRef.current = []
+  }, [])
+
+  // Handle preset change
+  const handlePresetChange = useCallback((presetKey: string) => {
+    setSelectedPresetKey(presetKey)
+    
+    // Persist to localStorage
+    if (typeof window !== 'undefined') {
+      if (presetKey) {
+        localStorage.setItem('la:voicePresetKey', presetKey)
+      } else {
+        localStorage.removeItem('la:voicePresetKey')
+      }
+    }
+    
+    // Stop any current playback to apply new voice
+    stopSpeech()
+  }, [stopSpeech])
+
+  // Fetch presets function
+  const fetchPresets = useCallback(async () => {
+    setPresetsLoading(true)
+    setPresetsError(null)
+    
+    try {
+      const response = await fetch('/api/voice/presets')
+      const data = await response.json()
+      
+      if (data.ok) {
+        setAvailablePresets(data.presets)
+        
+        // Validate selected preset is still available
+        if (selectedPresetKey) {
+          const isStillAvailable = data.presets.some(
+            (preset: AvailablePreset) => preset.presetKey === selectedPresetKey
+          )
+          
+          if (!isStillAvailable) {
+            // Fall back to first available preset for current language
+            const fallbackPreset = data.presets.find(
+              (preset: AvailablePreset) => preset.languageCode === displayLanguage
+            )
+            if (fallbackPreset) {
+              handlePresetChange(fallbackPreset.presetKey)
+            }
+          }
+        }
+      } else {
+        setPresetsError(data.error?.message || 'Failed to load presets')
+      }
+    } catch {
+      setPresetsError('Network error loading presets')
+    } finally {
+      setPresetsLoading(false)
+    }
+  }, [selectedPresetKey, displayLanguage, handlePresetChange])
+
+  // Play current item
+  const playCurrentItem = useCallback(async () => {
     if (!isSpeechSupported && voiceEngine === 'browser') return
     
     setIsPlaying(true)
@@ -378,9 +424,9 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           
           await speakText(sentence.trim())
         }
-      } catch (error) {
-        console.error('Error playing voice:', error)
-        setError(error instanceof Error ? error.message : 'An error occurred during playback')
+      } catch (err) {
+        console.error('Error playing voice:', err)
+        setError(err instanceof Error ? err.message : 'An error occurred during playback')
       } finally {
         setIsPlaying(false)
         setSpeechStatus('idle')
@@ -389,49 +435,88 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       // AI voice with chunking
       try {
         await playAIVoiceChunked()
-      } catch (error) {
-        console.error('Error playing AI voice:', error)
-        setError(error instanceof Error ? error.message : 'An error occurred during playback')
+      } catch (err) {
+        console.error('Error playing AI voice:', err)
+        setError(err instanceof Error ? err.message : 'An error occurred during playback')
         setIsPlaying(false)
         setSpeechStatus('idle')
       }
     }
+  }, [speechStatus, isSpeechSupported, voiceEngine, currentLevelIndex, currentItemIndex, displayLanguage, lesson, playAIVoiceChunked, speakText])
+
+  // Initialize speech synthesis and check AI voice availability
+  useEffect(() => {
+    // Check browser speech synthesis support
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      speechSynthesisRef.current = window.speechSynthesis
+    } else {
+      setSpeechStatus('unsupported')
+    }
+    
+    // Check if AI voice is available by checking if API key is configured
+    // This is a client-side check, actual validation happens server-side
+    const checkAIVoiceAvailability = async () => {
+      try {
+        // Make a simple request to check if API is configured
+        const response = await fetch('/api/voice/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: 'test' })
+        })
+        
+        // If we get a 500 with AUTH error, API key is not configured
+        const data = await response.json()
+        if (data.error?.code === 'AUTH') {
+          setIsAIVoiceAvailable(false)
+        } else {
+          // Any other response means API is available
+          setIsAIVoiceAvailable(true)
+        }
+      } catch {
+        // Network error means API might be available
+        setIsAIVoiceAvailable(true)
+      }
+    }
+    
+    checkAIVoiceAvailability()
+    
+    // Cleanup on unmount
+    return () => {
+      stopSpeech()
+    }
+  }, [stopSpeech])
+
+  // Fetch presets when AI voice engine is selected
+  useEffect(() => {
+    if (voiceEngine === 'ai' && isAIVoiceAvailable) {
+      fetchPresets()
+    }
+  }, [voiceEngine, isAIVoiceAvailable, fetchPresets])
+
+  // Handle language change with localStorage persistence
+  const handleLanguageChange = (language: LanguageCode) => {
+    setDisplayLanguage(language)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('la:displayLanguage', language)
+    }
   }
 
-  // Stop speech
-  const stopSpeech = () => {
-    // Cancel browser speech
-    if (speechSynthesisRef.current) {
-      speechSynthesisRef.current.cancel()
-    }
-    
-    // Abort AI voice fetches
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-      abortControllerRef.current = null
-    }
-    
-    // Stop and clean up audio
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current.currentTime = 0
-      audioRef.current = null
-    }
-    
-    // Clean up all blob URLs
-    audioQueueRef.current.forEach(item => {
-      URL.revokeObjectURL(item.url)
-    })
-    audioQueueRef.current = []
-    
-    // Reset state
-    setIsPlaying(false)
-    setSpeechStatus('idle')
+  // Handle voice engine change
+  const handleVoiceEngineChange = (engine: VoiceEngine) => {
+    // Stop any current playback
+    stopSpeech()
+    setVoiceEngine(engine)
     setError(null)
-    isBufferingRef.current = false
-    currentChunkIndexRef.current = 0
-    textChunksRef.current = []
   }
+
+  // Get current level and item
+  const currentLevel = lesson.levels[currentLevelIndex]
+  const currentItem = currentLevel.items[currentItemIndex]
+
+  // Get presets for current language
+  const presetsForCurrentLanguage = availablePresets.filter(
+    preset => preset.languageCode === displayLanguage
+  )
 
   // Pause/Resume speech
   const togglePause = () => {
@@ -457,12 +542,12 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   }
 
   // Replay current item
-  const replayCurrentItem = () => {
+  const replayCurrentItem = useCallback(() => {
     stopSpeech()
     setTimeout(() => {
       playCurrentItem()
     }, 100)
-  }
+  }, [stopSpeech, playCurrentItem])
 
   // Navigate to next item
   const nextItem = () => {
@@ -569,6 +654,75 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     }
   }
 
+  // Render preset selector
+  const renderPresetSelector = () => {
+    if (presetsLoading) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-la-muted">Voice:</span>
+          <div className="text-xs text-la-muted">Loading presets...</div>
+        </div>
+      )
+    }
+
+    if (presetsError) {
+      return (
+        <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
+          Voice presets unavailable: {presetsError}
+        </div>
+      )
+    }
+
+    if (presetsForCurrentLanguage.length === 0) {
+      return (
+        <div className="text-xs text-la-muted">
+          No voice presets available for {displayLanguage === 'en' ? 'English' : 'Chinese'}
+        </div>
+      )
+    }
+
+    // Use segmented control for ≤5 presets, dropdown for more
+    if (presetsForCurrentLanguage.length <= 5) {
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-la-muted">Voice:</span>
+          <div className="flex gap-1">
+            {presetsForCurrentLanguage.map(preset => (
+              <Button
+                key={preset.presetKey}
+                variant={selectedPresetKey === preset.presetKey ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePresetChange(preset.presetKey)}
+                className="text-xs"
+              >
+                {preset.label}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )
+    } else {
+      // Dropdown fallback for many presets
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-la-muted">Voice:</span>
+          <select
+            value={selectedPresetKey}
+            onChange={(e) => handlePresetChange(e.target.value)}
+            className="text-xs px-2 py-1 border border-la-border rounded"
+          >
+            <option value="">Select voice...</option>
+            {presetsForCurrentLanguage.map(preset => (
+              <option key={preset.presetKey} value={preset.presetKey}>
+                {preset.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      )
+    }
+  }
+
   // Render voice controls
   const renderVoiceControls = () => {
     if (!isSpeechSupported) {
@@ -620,29 +774,9 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 </div>
               )}
               
-              {/* Voice Language Selector for AI Voice */}
+              {/* Voice Preset Selector for AI Voice */}
               {voiceEngine === 'ai' && isAIVoiceAvailable && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-la-muted">Voice Language:</span>
-                  <div className="flex gap-1">
-                    <Button
-                      variant={displayLanguage === 'en' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleVoiceIdChange('')}
-                      className="text-xs"
-                    >
-                      EN
-                    </Button>
-                    <Button
-                      variant={displayLanguage === 'zh' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => handleVoiceIdChange('')}
-                      className="text-xs"
-                    >
-                      中文
-                    </Button>
-                  </div>
-                </div>
+                renderPresetSelector()
               )}
             </div>
 

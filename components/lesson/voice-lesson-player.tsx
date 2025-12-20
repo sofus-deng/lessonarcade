@@ -10,8 +10,10 @@ import { getTtsMaxChars } from '@/lib/lessonarcade/voice/constants'
 import { LanguageToggle } from '@/components/ui/language-toggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { cn } from '@/lib/ui/cn'
 import { Play, Pause, Square, RotateCcw, Volume2, AlertCircle } from 'lucide-react'
+import { createHash } from 'crypto'
 
 interface VoiceLessonPlayerProps {
   lesson: LessonArcadeLesson
@@ -32,6 +34,12 @@ interface AvailablePreset {
   presetKey: string
   label: string
   languageCode: 'en' | 'zh'
+}
+
+// Last played item for cooldown tracking
+interface LastPlayedItem {
+  itemKey: string
+  timestamp: number
 }
 
 export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
@@ -61,6 +69,17 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [presetsLoading, setPresetsLoading] = useState(true)
   const [presetsError, setPresetsError] = useState<string | null>(null)
   
+  // New state for TTS guardrails
+  const [aiVoiceAcknowledged, setAiVoiceAcknowledged] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('la:aiVoiceAcknowledged') === 'true'
+    }
+    return false
+  })
+  const [showAcknowledgmentDialog, setShowAcknowledgmentDialog] = useState(false)
+  const [lastPlayedItem, setLastPlayedItem] = useState<LastPlayedItem | null>(null)
+  const [inFlightRequests, setInFlightRequests] = useState<Map<string, Promise<Blob>>>(new Map())
+  
   const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -75,6 +94,27 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
 
   // Check if speech synthesis is supported
   const isSpeechSupported = speechStatus !== 'unsupported'
+
+  // Create cache key for deduplication (same as server)
+  const createCacheKey = useCallback((text: string, lang: string, voiceId: string, rate: number): string => {
+    return createHash('sha256')
+      .update(`${text}:${lang}:${voiceId}:${rate}`)
+      .digest('hex')
+  }, [])
+
+  // Create item key for cooldown tracking
+  const createItemKey = useCallback((): string => {
+    return `${lesson.slug}-${currentLevelIndex}-${currentItemIndex}-${displayLanguage}-${selectedPresetKey}-${speechRate}`
+  }, [lesson.slug, currentLevelIndex, currentItemIndex, displayLanguage, selectedPresetKey, speechRate])
+
+  // Handle AI Voice acknowledgment
+  const handleAcknowledgeAI = useCallback(() => {
+    setAiVoiceAcknowledged(true)
+    setShowAcknowledgmentDialog(false)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('la:aiVoiceAcknowledged', 'true')
+    }
+  }, [])
 
   // Speak text with current settings (browser engine)
   const speakText = useCallback((text: string): Promise<void> => {
@@ -100,41 +140,67 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     })
   }, [isSpeechSupported, speechRate])
 
-  // Fetch audio for a text chunk
+  // Fetch audio for a text chunk with deduplication
   const fetchAudioChunk = useCallback(async (text: string, signal: AbortSignal): Promise<Blob> => {
-    const requestBody: Record<string, unknown> = {
-      text,
-      rate: speechRate,
-      lang: displayLanguage
+    // Create cache key for deduplication
+    const cacheKey = createCacheKey(text, displayLanguage, selectedPresetKey || 'default', speechRate)
+    
+    // Check if request is already in-flight
+    const existingRequest = inFlightRequests.get(cacheKey)
+    if (existingRequest) {
+      return existingRequest
     }
     
-    // Use preset if available, otherwise use default behavior
-    if (selectedPresetKey) {
-      requestBody.voicePreset = selectedPresetKey
-    }
-    
-    const response = await fetch('/api/voice/tts', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-      signal
-    })
-    
-    if (!response.ok) {
-      const data = await response.json()
-      
-      if (data.error?.code === 'RATE_LIMIT') {
-        const retryMinutes = Math.ceil((data.error.retryAfterSeconds || 3600) / 60)
-        throw new Error(`Rate limit exceeded. Please try again in ${retryMinutes} minutes.`)
-      } else {
-        throw new Error(data.error?.message || 'Failed to generate audio')
+    // Create new request
+    const requestPromise = (async () => {
+      const requestBody: Record<string, unknown> = {
+        text,
+        rate: speechRate,
+        lang: displayLanguage
       }
-    }
+      
+      // Use preset if available, otherwise use default behavior
+      if (selectedPresetKey) {
+        requestBody.voicePreset = selectedPresetKey
+      }
+      
+      const response = await fetch('/api/voice/tts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+        signal
+      })
+      
+      if (!response.ok) {
+        const data = await response.json()
+        
+        if (data.error?.code === 'RATE_LIMIT') {
+          const retryMinutes = Math.ceil((data.error.retryAfterSeconds || 3600) / 60)
+          throw new Error(`Rate limit exceeded. Please try again in ${retryMinutes} minutes.`)
+        } else {
+          throw new Error(data.error?.message || 'Failed to generate audio')
+        }
+      }
+      
+      return await response.blob()
+    })()
     
-    return await response.blob()
-  }, [speechRate, displayLanguage, selectedPresetKey])
+    // Store in-flight request
+    setInFlightRequests(prev => new Map(prev).set(cacheKey, requestPromise))
+    
+    try {
+      return await requestPromise
+    } finally {
+      // Clean up in-flight request
+      setInFlightRequests(prev => {
+        const newMap = new Map(prev)
+        newMap.delete(cacheKey)
+        return newMap
+      })
+    }
+  }, [speechRate, displayLanguage, selectedPresetKey, createCacheKey, inFlightRequests])
 
   // Prefetch: next chunk while current one is playing
   const prefetchNextChunk = useCallback(async (chunkIndex: number): Promise<void> => {
@@ -292,7 +358,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     })
   }, [lesson, currentLevelIndex, currentItemIndex, displayLanguage, fetchAudioChunk, prefetchNextChunk])
 
-  // Stop speech
+  // Stop speech with enhanced cleanup
   const stopSpeech = useCallback(() => {
     // Cancel browser speech
     if (speechSynthesisRef.current) {
@@ -317,6 +383,9 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       URL.revokeObjectURL(item.url)
     })
     audioQueueRef.current = []
+    
+    // Clear all in-flight requests
+    setInFlightRequests(new Map())
     
     // Reset state
     setIsPlaying(false)
@@ -382,9 +451,30 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     }
   }, [selectedPresetKey, displayLanguage, handlePresetChange])
 
-  // Play current item
+  // Play current item with guardrails
   const playCurrentItem = useCallback(async () => {
     if (!isSpeechSupported && voiceEngine === 'browser') return
+    
+    // AI Voice guardrails
+    if (voiceEngine === 'ai') {
+      // Check acknowledgment
+      if (!aiVoiceAcknowledged) {
+        setShowAcknowledgmentDialog(true)
+        return
+      }
+      
+      // Check cooldown (2 seconds for same item)
+      const now = Date.now()
+      const itemKey = createItemKey()
+      if (lastPlayedItem && lastPlayedItem.itemKey === itemKey && (now - lastPlayedItem.timestamp) < 2000) {
+        setError('Please wait a moment before playing the same item again.')
+        setTimeout(() => setError(null), 3000)
+        return
+      }
+      
+      // Update last played item
+      setLastPlayedItem({ itemKey, timestamp: now })
+    }
     
     setIsPlaying(true)
     setError(null)
@@ -442,7 +532,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         setSpeechStatus('idle')
       }
     }
-  }, [speechStatus, isSpeechSupported, voiceEngine, currentLevelIndex, currentItemIndex, displayLanguage, lesson, playAIVoiceChunked, speakText])
+  }, [speechStatus, isSpeechSupported, voiceEngine, currentLevelIndex, currentItemIndex, displayLanguage, lesson, playAIVoiceChunked, speakText, aiVoiceAcknowledged, createItemKey, lastPlayedItem])
 
   // Initialize speech synthesis and check AI voice availability
   useEffect(() => {
@@ -501,10 +591,18 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     }
   }
 
-  // Handle voice engine change
+  // Handle voice engine change with acknowledgment check
   const handleVoiceEngineChange = (engine: VoiceEngine) => {
     // Stop any current playback
     stopSpeech()
+    
+    // Check if switching to AI Voice and not acknowledged
+    if (engine === 'ai' && !aiVoiceAcknowledged) {
+      setShowAcknowledgmentDialog(true)
+      // Don't change engine yet, wait for acknowledgment
+      return
+    }
+    
     setVoiceEngine(engine)
     setError(null)
   }
@@ -988,6 +1086,33 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* AI Voice Acknowledgment Dialog */}
+      <Dialog open={showAcknowledgmentDialog} onOpenChange={setShowAcknowledgmentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>AI Voice</DialogTitle>
+            <DialogDescription>
+              AI Voice will generate cloud TTS requests.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                setShowAcknowledgmentDialog(false)
+                // Switch back to browser if user cancels
+                setVoiceEngine('browser')
+              }}
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAcknowledgeAI}>
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -12,6 +12,9 @@ export const runtime = "nodejs"
 const ttsCache = new Map<string, { data: Buffer; timestamp: number }>()
 const CACHE_TTL_MS = 10 * 60 * 1000 // 10 minutes
 
+// In-flight request dedupe Map
+const inFlightRequests = new Map<string, Promise<Response>>()
+
 // Add TTS event type to logger
 type TTSEvent = "voice_tts"
 type TTSErrorCode = "RATE_LIMIT" | "AUTH" | "VALIDATION" | "ELEVENLABS_ERROR" | null
@@ -28,6 +31,8 @@ interface TTSLogEntry {
   elapsedMs: number
   errorCode?: TTSErrorCode
   cached?: boolean
+  deduped?: boolean
+  rateLimitWindow?: string
   voicePreset?: string
 }
 
@@ -75,6 +80,8 @@ function logTTSEvent(
   elapsedMs?: number,
   errorCode?: TTSErrorCode,
   cached?: boolean,
+  deduped?: boolean,
+  rateLimitWindow?: string,
   voicePreset?: string
 ): void {
   const ip = getClientIP(request)
@@ -98,6 +105,14 @@ function logTTSEvent(
   
   if (cached !== undefined) {
     logEntry.cached = cached
+  }
+  
+  if (deduped !== undefined) {
+    logEntry.deduped = deduped
+  }
+  
+  if (rateLimitWindow) {
+    logEntry.rateLimitWindow = rateLimitWindow
   }
   
   if (voicePreset) {
@@ -212,6 +227,8 @@ export async function POST(request: NextRequest) {
         timer.getElapsed(),
         "VALIDATION",
         undefined,
+        undefined,
+        undefined,
         voicePreset
       )
       return NextResponse.json(
@@ -238,6 +255,8 @@ export async function POST(request: NextRequest) {
         rate,
         timer.getElapsed(),
         "VALIDATION",
+        undefined,
+        undefined,
         undefined,
         voicePreset
       )
@@ -267,6 +286,8 @@ export async function POST(request: NextRequest) {
         timer.getElapsed(),
         "VALIDATION",
         undefined,
+        undefined,
+        undefined,
         voicePreset
       )
       return NextResponse.json(
@@ -293,6 +314,8 @@ export async function POST(request: NextRequest) {
         rate,
         timer.getElapsed(),
         "VALIDATION",
+        undefined,
+        undefined,
         undefined,
         voicePreset
       )
@@ -326,6 +349,8 @@ export async function POST(request: NextRequest) {
           rate,
           timer.getElapsed(),
           "VALIDATION",
+          undefined,
+          undefined,
           undefined,
           voicePreset
         )
@@ -375,14 +400,19 @@ export async function POST(request: NextRequest) {
       finalVoiceId = getDefaultVoiceId(lang as 'en' | 'zh')
     }
 
-    // Apply two-tier rate limiting
+    // Apply multi-tier rate limiting (minute + hour + day)
     const rateLimitResult = ttsRateLimiter.checkMultipleLimits(request, [
-      { key: 'ip', maxRequests: 10, windowMs: 60 * 60 * 1000 }, // 10 requests per hour per IP
+      { key: 'ip', maxRequests: 5, windowMs: 60 * 1000 },         // 5 requests per minute per IP
+      { key: 'ip', maxRequests: 10, windowMs: 60 * 60 * 1000 },      // 10 requests per hour per IP
+      { key: 'fingerprint', maxRequests: 10, windowMs: 60 * 1000 },   // 10 requests per minute per fingerprint
       { key: 'fingerprint', maxRequests: 30, windowMs: 24 * 60 * 60 * 1000 } // 30 requests per day per fingerprint
     ])
 
     if (!rateLimitResult.allowed) {
       const textHash = createHash('sha256').update(text).digest('hex')
+      const rateLimitWindow = rateLimitResult.exceededLimit?.includes('minute') ? 'minute' :
+                           rateLimitResult.exceededLimit?.includes('hour') ? 'hour' : 'day'
+      
       logTTSEvent(
         request,
         false,
@@ -394,6 +424,8 @@ export async function POST(request: NextRequest) {
         timer.getElapsed(),
         "RATE_LIMIT",
         undefined,
+        undefined,
+        rateLimitWindow,
         voicePreset
       )
       return NextResponse.json(
@@ -426,6 +458,8 @@ export async function POST(request: NextRequest) {
         timer.getElapsed(),
         undefined,
         true, // cached
+        undefined,
+        undefined,
         voicePreset
       )
        
@@ -437,91 +471,130 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Prepare ElevenLabs API request
-    const elevenLabsUrl = `https://api.elevenlabs.io/v1/text-to-speech/${finalVoiceId}`
-    const modelId = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2"
-    
-    const requestBody = {
-      text,
-      model_id: modelId,
-      language_code: finalLanguage === "zh" ? "zh" : "en",
-      voice_settings: {
-        stability: 0.75,
-        similarity_boost: 0.75,
-        rate: rate
-      }
-    }
-
-    // Call ElevenLabs API
-    const response = await fetch(elevenLabsUrl, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    })
-
-    if (!response.ok) {
+    // Check if request is already in-flight
+    const existingRequest = inFlightRequests.get(cacheKey)
+    if (existingRequest) {
       const textHash = createHash('sha256').update(text).digest('hex')
       logTTSEvent(
         request,
-        false,
+        true,
         text.length,
         textHash,
         finalVoiceId,
         finalLanguage,
         rate,
         timer.getElapsed(),
-        "ELEVENLABS_ERROR",
+        undefined,
+        undefined,
+        true, // deduped
         undefined,
         voicePreset
       )
-      
-      return NextResponse.json(
-        { 
-          ok: false, 
-          error: { 
-            code: "ELEVENLABS_ERROR", 
-            message: `ElevenLabs API error: ${response.status} ${response.statusText}` 
-          } 
-        },
-        { status: 500 }
-      )
+      return existingRequest
     }
 
-    // Get audio data
-    const audioBuffer = Buffer.from(await response.arrayBuffer())
+    // Create new request promise
+    const requestPromise = (async () => {
+      try {
+        // Prepare ElevenLabs API request
+        const elevenLabsUrl = `https://api.elevenlabs.io/v1/text-to-speech/${finalVoiceId}`
+        const modelId = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2"
+        
+        const requestBody = {
+          text,
+          model_id: modelId,
+          language_code: finalLanguage === "zh" ? "zh" : "en",
+          voice_settings: {
+            stability: 0.75,
+            similarity_boost: 0.75,
+            rate: rate
+          }
+        }
+
+        // Call ElevenLabs API
+        const response = await fetch(elevenLabsUrl, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': apiKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(requestBody),
+        })
+
+        if (!response.ok) {
+          const textHash = createHash('sha256').update(text).digest('hex')
+          logTTSEvent(
+            request,
+            false,
+            text.length,
+            textHash,
+            finalVoiceId,
+            finalLanguage,
+            rate,
+            timer.getElapsed(),
+            "ELEVENLABS_ERROR",
+            undefined,
+            undefined,
+            undefined,
+            voicePreset
+          )
+          
+          return NextResponse.json(
+            { 
+              ok: false, 
+              error: { 
+                code: "ELEVENLABS_ERROR", 
+                message: `ElevenLabs API error: ${response.status} ${response.statusText}` 
+              } 
+            },
+            { status: 500 }
+          )
+        }
+
+        // Get audio data
+        const audioBuffer = Buffer.from(await response.arrayBuffer())
+        
+        // Cache the response
+        ttsCache.set(cacheKey, {
+          data: audioBuffer,
+          timestamp: Date.now()
+        })
+
+        // Log successful request
+        const textHash = createHash('sha256').update(text).digest('hex')
+        logTTSEvent(
+          request,
+          true,
+          text.length,
+          textHash,
+          finalVoiceId,
+          finalLanguage,
+          rate,
+          timer.getElapsed(),
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          voicePreset
+        )
+
+        // Return audio response
+        return new NextResponse(audioBuffer as BodyInit, {
+          headers: {
+            'Content-Type': 'audio/mpeg',
+            'Cache-Control': 'public, max-age=600', // 10 minutes
+          },
+        })
+      } finally {
+        // Clean up in-flight request
+        inFlightRequests.delete(cacheKey)
+      }
+    })()
+
+    // Store in-flight request
+    inFlightRequests.set(cacheKey, requestPromise)
     
-    // Cache the response
-    ttsCache.set(cacheKey, {
-      data: audioBuffer,
-      timestamp: Date.now()
-    })
-
-    // Log successful request
-    const textHash = createHash('sha256').update(text).digest('hex')
-    logTTSEvent(
-      request,
-      true,
-      text.length,
-      textHash,
-      finalVoiceId,
-      finalLanguage,
-      rate,
-      timer.getElapsed(),
-      undefined,
-      undefined,
-      voicePreset
-    )
-
-    // Return audio response
-    return new NextResponse(audioBuffer as BodyInit, {
-      headers: {
-        'Content-Type': 'audio/mpeg',
-        'Cache-Control': 'public, max-age=600', // 10 minutes
-      },
-    })
+    return await requestPromise
 
   } catch (error) {
     console.error('TTS API error:', error)

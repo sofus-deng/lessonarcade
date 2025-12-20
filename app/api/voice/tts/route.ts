@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { ttsRateLimiter } from "@/lib/utils/rate-limiter"
 import { Timer } from "@/lib/utils/logger"
 import { createHash } from "crypto"
+import { getTtsMaxChars } from "@/lib/lessonarcade/voice/constants"
 
 // Configure runtime for Node.js
 export const runtime = "nodejs"
@@ -126,6 +127,7 @@ setInterval(cleanupCache, 5 * 60 * 1000)
 
 export async function POST(request: NextRequest) {
   const timer = new Timer()
+  const maxChars = getTtsMaxChars()
   
   try {
     // Check ElevenLabs API key
@@ -214,8 +216,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate text length (max 5000 characters)
-    if (text.length > 5000) {
+    // Validate text length against maxChars from constants
+    if (text.length > maxChars) {
       logTTSEvent(
         request,
         false,
@@ -232,7 +234,8 @@ export async function POST(request: NextRequest) {
           ok: false, 
           error: { 
             code: "VALIDATION", 
-            message: "Text must be 5000 characters or less" 
+            message: `Text too long. Maximum allowed is ${maxChars} characters, but received ${text.length}.`,
+            maxChars 
           } 
         },
         { status: 400 }

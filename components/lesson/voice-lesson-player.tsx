@@ -4,6 +4,9 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { type LessonArcadeLesson, type LanguageCode } from '@/lib/lessonarcade/schema'
 import { getLocalizedText } from '@/lib/lessonarcade/i18n'
+import { buildVoiceScript } from '@/lib/lessonarcade/voice/build-script'
+import { chunkTextForTts } from '@/lib/lessonarcade/voice/chunk-text'
+import { getTtsMaxChars } from '@/lib/lessonarcade/voice/constants'
 import { LanguageToggle } from '@/components/ui/language-toggle'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +19,13 @@ interface VoiceLessonPlayerProps {
 
 type SpeechStatus = 'idle' | 'speaking' | 'paused' | 'unsupported' | 'loading'
 type VoiceEngine = 'browser' | 'ai'
+
+// Audio queue item interface
+interface AudioQueueItem {
+  blob: Blob
+  url: string
+  text: string
+}
 
 export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0)
@@ -37,7 +47,14 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const speechSynthesisRef = useRef<SpeechSynthesis | null>(null)
   const currentUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-  const currentAudioUrlRef = useRef<string | null>(null)
+  
+  // AI Voice specific refs
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const audioQueueRef = useRef<AudioQueueItem[]>([])
+  const currentChunkIndexRef = useRef(0)
+  const textChunksRef = useRef<string[]>([])
+  const isBufferingRef = useRef(false)
+  const prefetchPromiseRef = useRef<Promise<void> | null>(null)
 
   // Initialize speech synthesis and check AI voice availability
   useEffect(() => {
@@ -74,6 +91,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     }
     
     checkAIVoiceAvailability()
+    
+    // Cleanup on unmount
+    return () => {
+      stopSpeech()
+    }
   }, [])
 
   // Handle language change with localStorage persistence
@@ -104,62 +126,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   // Check if speech synthesis is supported
   const isSpeechSupported = speechStatus !== 'unsupported'
 
-  // Generate voice script for current item
-  const generateVoiceScript = (): string[] => {
-    const script: string[] = []
-    
-    // Add level title
-    script.push(currentLevel.title)
-    
-    // Add key points if available
-    if (currentLevel.keyPoints && currentLevel.keyPoints.length > 0) {
-      script.push("Key points:")
-      currentLevel.keyPoints.forEach(point => {
-        script.push(point)
-      })
-    }
-    
-    // Add item content based on type
-    switch (currentItem.kind) {
-      case 'multiple_choice':
-        script.push(getLocalizedText(
-          currentItem.promptI18n,
-          currentItem.prompt,
-          displayLanguage
-        ))
-        
-        script.push("The options are:")
-        currentItem.options.forEach((option, index) => {
-          script.push(`Option ${String.fromCharCode(65 + index)}: ${getLocalizedText(
-            option.textI18n,
-            option.text,
-            displayLanguage
-          )}`)
-        })
-        break
-        
-      case 'open_ended':
-        script.push(getLocalizedText(
-          currentItem.promptI18n,
-          currentItem.prompt,
-          displayLanguage
-        ))
-        script.push("Please provide your answer.")
-        break
-        
-      case 'checkpoint':
-        script.push(getLocalizedText(
-          currentItem.messageI18n,
-          currentItem.message,
-          displayLanguage
-        ))
-        break
-    }
-    
-    return script
-  }
-
-  // Speak text with current settings
+  // Speak text with current settings (browser engine)
   const speakText = (text: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       if (!speechSynthesisRef.current || !isSpeechSupported) {
@@ -183,103 +150,193 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     })
   }
 
-  // Play AI voice using ElevenLabs API
-  const playAIVoice = async (text: string): Promise<void> => {
+  // Fetch audio for a text chunk
+  const fetchAudioChunk = async (text: string, signal: AbortSignal): Promise<Blob> => {
+    const response = await fetch('/api/voice/tts', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        text,
+        voiceId: selectedVoiceId,
+        rate: speechRate,
+        lang: displayLanguage
+      }),
+      signal
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      
+      if (data.error?.code === 'RATE_LIMIT') {
+        const retryMinutes = Math.ceil((data.error.retryAfterSeconds || 3600) / 60)
+        throw new Error(`Rate limit exceeded. Please try again in ${retryMinutes} minutes.`)
+      } else {
+        throw new Error(data.error?.message || 'Failed to generate audio')
+      }
+    }
+    
+    return await response.blob()
+  }
+
+  // Prefetch the next chunk while current one is playing
+  const prefetchNextChunk = async (chunkIndex: number): Promise<void> => {
+    if (
+      chunkIndex + 1 >= textChunksRef.current.length || 
+      audioQueueRef.current.some(item => item.text === textChunksRef.current[chunkIndex + 1])
+    ) {
+      return // No next chunk or already prefetched
+    }
+    
+    try {
+      const nextChunkText = textChunksRef.current[chunkIndex + 1]
+      const blob = await fetchAudioChunk(nextChunkText, abortControllerRef.current!.signal)
+      const url = URL.createObjectURL(blob)
+      
+      audioQueueRef.current.push({
+        blob,
+        url,
+        text: nextChunkText
+      })
+    } catch (error) {
+      // Silently fail prefetch errors, they'll be handled when playing the chunk
+      console.warn('Failed to prefetch next chunk:', error)
+    }
+  }
+
+  // Play AI voice using buffered chunking
+  const playAIVoiceChunked = async (): Promise<void> => {
     return new Promise((resolve, reject) => {
-      const controller = new AbortController()
+      // Create new abort controller for this session
+      abortControllerRef.current = new AbortController()
+      audioQueueRef.current = []
+      currentChunkIndexRef.current = 0
+      isBufferingRef.current = true
       
-      // Clean up previous audio
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.src = ''
+      // Build script and chunk it
+      const script = buildVoiceScript({
+        lesson,
+        levelIndex: currentLevelIndex,
+        itemIndex: currentItemIndex,
+        displayLanguage,
+        includeKeyPoints: true
+      })
+      
+      const maxChars = getTtsMaxChars()
+      textChunksRef.current = chunkTextForTts(script, maxChars)
+      
+      if (textChunksRef.current.length === 0) {
+        reject(new Error('No text to speak'))
+        return
       }
       
-      // Clean up previous blob URL
-      if (currentAudioUrlRef.current) {
-        URL.revokeObjectURL(currentAudioUrlRef.current)
-        currentAudioUrlRef.current = null
-      }
-      
-      // Create new audio element
-      const audio = new Audio()
-      audioRef.current = audio
-      
-      // Handle audio events
-      const handleEnded = () => {
-        audio.removeEventListener('ended', handleEnded)
-        audio.removeEventListener('error', handleError)
-        resolve()
-      }
-      
-      const handleError = (e: Event) => {
-        audio.removeEventListener('ended', handleEnded)
-        audio.removeEventListener('error', handleError)
-        
-        // Try to parse error response
-        const target = e.target as HTMLAudioElement
-        if (target && target.error) {
-          reject(new Error(`Audio playback error: ${target.error.message}`))
-        } else {
-          reject(new Error('Audio playback failed'))
+      // Start playing chunks
+      const playNextChunk = async (chunkIndex: number): Promise<void> => {
+        // Check if we should stop
+        if (abortControllerRef.current?.signal.aborted) {
+          return
         }
-      }
-      
-      audio.addEventListener('ended', handleEnded)
-      audio.addEventListener('error', handleError)
-      
-      // Fetch audio from TTS API
-      const fetchAudio = async () => {
-        try {
-          setSpeechStatus('loading')
-          
-          const response = await fetch('/api/voice/tts', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              text,
-              voiceId: selectedVoiceId,
-              rate: speechRate,
-              lang: displayLanguage
-            }),
-            signal: controller.signal
-          })
-          
-          if (!response.ok) {
-            const data = await response.json()
+        
+        // Check if we've played all chunks
+        if (chunkIndex >= textChunksRef.current.length) {
+          setSpeechStatus('idle')
+          setIsPlaying(false)
+          resolve()
+          return
+        }
+        
+        currentChunkIndexRef.current = chunkIndex
+        const chunkText = textChunksRef.current[chunkIndex]
+        
+        // Check if we already have this chunk in queue
+        let audioItem = audioQueueRef.current.find(item => item.text === chunkText)
+        
+        if (!audioItem) {
+          // Need to fetch this chunk
+          try {
+            setSpeechStatus('loading')
+            isBufferingRef.current = true
             
-            if (data.error?.code === 'RATE_LIMIT') {
-              const retryMinutes = Math.ceil((data.error.retryAfterSeconds || 3600) / 60)
-              reject(new Error(`Rate limit exceeded. Please try again in ${retryMinutes} minutes.`))
-            } else {
-              reject(new Error(data.error?.message || 'Failed to generate audio'))
+            const blob = await fetchAudioChunk(chunkText, abortControllerRef.current!.signal)
+            const url = URL.createObjectURL(blob)
+            
+            audioItem = {
+              blob,
+              url,
+              text: chunkText
+            }
+            
+            audioQueueRef.current.push(audioItem)
+          } catch (error) {
+            if (error instanceof Error && error.name !== 'AbortError') {
+              reject(error)
             }
             return
           }
-          
-          // Create blob URL from response
-          const blob = await response.blob()
-          const audioUrl = URL.createObjectURL(blob)
-          currentAudioUrlRef.current = audioUrl
-          
-          // Set audio source and play
-          audio.src = audioUrl
-          setSpeechStatus('speaking')
-          await audio.play()
-          
-        } catch (error) {
-          if (error instanceof Error && error.name !== 'AbortError') {
-            reject(error)
-          }
         }
+        
+        // Create audio element and play
+        const audio = new Audio(audioItem.url)
+        audioRef.current = audio
+        
+        // Start prefetching the next chunk while this one plays
+        if (chunkIndex + 1 < textChunksRef.current.length) {
+          prefetchPromiseRef.current = prefetchNextChunk(chunkIndex)
+        }
+        
+        return new Promise<void>((audioResolve, audioReject) => {
+          const handleEnded = () => {
+            audio.removeEventListener('ended', handleEnded)
+            audio.removeEventListener('error', handleError)
+            audio.pause()
+            
+            // Clean up the blob URL after playing
+            URL.revokeObjectURL(audioItem!.url)
+            
+            // Remove from queue
+            audioQueueRef.current = audioQueueRef.current.filter(item => item.text !== audioItem!.text)
+            
+            // Play next chunk
+            playNextChunk(chunkIndex + 1).then(audioResolve).catch(audioReject)
+          }
+          
+          const handleError = (e: Event) => {
+            audio.removeEventListener('ended', handleEnded)
+            audio.removeEventListener('error', handleError)
+            
+            // Clean up
+            URL.revokeObjectURL(audioItem!.url)
+            audioQueueRef.current = audioQueueRef.current.filter(item => item.text !== audioItem!.text)
+            
+            if (abortControllerRef.current?.signal.aborted) {
+              audioResolve()
+            } else {
+              const target = e.target as HTMLAudioElement
+              if (target && target.error) {
+                audioReject(new Error(`Audio playback error: ${target.error.message}`))
+              } else {
+                audioReject(new Error('Audio playback failed'))
+              }
+            }
+          }
+          
+          audio.addEventListener('ended', handleEnded)
+          audio.addEventListener('error', handleError)
+          
+          // Start playing
+          setSpeechStatus('speaking')
+          isBufferingRef.current = false
+          audio.play().catch(audioReject)
+        })
       }
       
-      fetchAudio()
+      // Start with the first chunk
+      playNextChunk(0).catch(reject)
     })
   }
 
-  // Play the entire script for current item
+  // Play the current item
   const playCurrentItem = async () => {
     if (!isSpeechSupported && voiceEngine === 'browser') return
     
@@ -288,17 +345,21 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     
     if (voiceEngine === 'browser') {
       setSpeechStatus('speaking')
-    } else {
-      setSpeechStatus('loading')
-    }
-    
-    try {
-      const script = generateVoiceScript()
-      const fullText = script.join(' ')
       
-      if (voiceEngine === 'browser') {
-        // Browser speech synthesis
-        for (const text of script) {
+      try {
+        // Build script for browser engine
+        const script = buildVoiceScript({
+          lesson,
+          levelIndex: currentLevelIndex,
+          itemIndex: currentItemIndex,
+          displayLanguage,
+          includeKeyPoints: true
+        })
+        
+        // Split into sentences for browser engine
+        const sentences = script.match(/[^.!?。！？]+[.!?。！？]*/g) || [script]
+        
+        for (const sentence of sentences) {
           if (speechStatus === 'paused') {
             // Wait if paused
             await new Promise(resolve => {
@@ -315,35 +376,61 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
             break
           }
           
-          await speakText(text)
+          await speakText(sentence.trim())
         }
-      } else {
-        // AI voice via ElevenLabs API
-        await playAIVoice(fullText)
+      } catch (error) {
+        console.error('Error playing voice:', error)
+        setError(error instanceof Error ? error.message : 'An error occurred during playback')
+      } finally {
+        setIsPlaying(false)
+        setSpeechStatus('idle')
       }
-    } catch (error) {
-      console.error('Error playing voice:', error)
-      setError(error instanceof Error ? error.message : 'An error occurred during playback')
-    } finally {
-      setIsPlaying(false)
-      setSpeechStatus('idle')
+    } else {
+      // AI voice with chunking
+      try {
+        await playAIVoiceChunked()
+      } catch (error) {
+        console.error('Error playing AI voice:', error)
+        setError(error instanceof Error ? error.message : 'An error occurred during playback')
+        setIsPlaying(false)
+        setSpeechStatus('idle')
+      }
     }
   }
 
   // Stop speech
   const stopSpeech = () => {
+    // Cancel browser speech
     if (speechSynthesisRef.current) {
       speechSynthesisRef.current.cancel()
     }
     
+    // Abort AI voice fetches
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+    
+    // Stop and clean up audio
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
+      audioRef.current = null
     }
     
+    // Clean up all blob URLs
+    audioQueueRef.current.forEach(item => {
+      URL.revokeObjectURL(item.url)
+    })
+    audioQueueRef.current = []
+    
+    // Reset state
     setIsPlaying(false)
     setSpeechStatus('idle')
     setError(null)
+    isBufferingRef.current = false
+    currentChunkIndexRef.current = 0
+    textChunksRef.current = []
   }
 
   // Pause/Resume speech
@@ -565,13 +652,13 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 "w-3 h-3 rounded-full",
                 speechStatus === 'speaking' ? "bg-green-500" :
                 speechStatus === 'paused' ? "bg-yellow-500" :
-                speechStatus === 'loading' ? "bg-blue-500" :
+                speechStatus === 'loading' || isBufferingRef.current ? "bg-blue-500" :
                 "bg-gray-400"
               )} />
               <span className="text-sm text-la-muted">
                 {speechStatus === 'speaking' ? "Speaking..." :
                  speechStatus === 'paused' ? "Paused" :
-                 speechStatus === 'loading' ? "Loading..." :
+                 speechStatus === 'loading' || isBufferingRef.current ? "Loading..." :
                  "Ready"}
               </span>
             </div>

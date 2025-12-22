@@ -49,7 +49,7 @@ const createMockLesson = (): LessonArcadeLesson => ({
         {
           kind: 'open_ended',
           id: 'oe-1',
-          prompt: 'Explain why the sky is blue.',
+          prompt: 'Explain why sky is blue.',
           promptI18n: { zh: '解释天空为什么是蓝色的。' }
         } as LessonArcadeOpenEndedItem
       ]
@@ -64,7 +64,7 @@ const createMockLesson = (): LessonArcadeLesson => ({
         {
           kind: 'checkpoint',
           id: 'cp-1',
-          message: 'Nice work finishing the lesson.',
+          message: 'Nice work finishing lesson.',
           messageI18n: { zh: '完成课程，做得好。' }
         } as LessonArcadeCheckpointItem
       ]
@@ -137,5 +137,168 @@ describe('chat flow state machine', () => {
     state = nextStep(state, lesson)
     expect(state.finished).toBe(true)
     expect(state.messages[state.messages.length - 1].text).toContain('Lesson complete')
+  })
+
+  // New tests for stats tracking behavior
+  describe('stats tracking', () => {
+    it('answeredCount and correctCount increment only for multiple choice', () => {
+      const lesson = createMockLesson()
+      let state = startChatFlow(initChatFlow(lesson), lesson)
+
+      // Answer multiple choice correctly
+      state = submitAnswer(state, lesson, {
+        kind: 'multiple_choice',
+        optionId: 'option-2'
+      })
+      expect(state.answeredCount).toBe(1)
+      expect(state.correctCount).toBe(1)
+
+      // Move to open ended
+      state = nextStep(state, lesson)
+      
+      // Answer open ended
+      state = submitAnswer(state, lesson, {
+        kind: 'open_ended',
+        text: 'Some answer'
+      })
+      // Stats should not change for open ended
+      expect(state.answeredCount).toBe(1)
+      expect(state.correctCount).toBe(1)
+    })
+
+    it('incorrect multiple choice increments answeredCount but not correctCount', () => {
+      const lesson = createMockLesson()
+      const state = startChatFlow(initChatFlow(lesson), lesson)
+      const answered = submitAnswer(state, lesson, {
+        kind: 'multiple_choice',
+        optionId: 'option-1' // Incorrect answer
+      })
+
+      expect(answered.answeredCount).toBe(1)
+      expect(answered.correctCount).toBe(0)
+    })
+
+    it('checkpoint items do not affect stats', () => {
+      const lesson = createMockLesson()
+      let state = startChatFlow(initChatFlow(lesson), lesson)
+      
+      // Answer multiple choice
+      state = submitAnswer(state, lesson, {
+        kind: 'multiple_choice',
+        optionId: 'option-2'
+      })
+      
+      // Move to open ended
+      state = nextStep(state, lesson)
+      
+      // Answer open ended
+      state = submitAnswer(state, lesson, {
+        kind: 'open_ended',
+        text: 'Some answer'
+      })
+      
+      // Move to checkpoint
+      state = nextStep(state, lesson)
+      
+      // Checkpoint should not affect stats
+      expect(state.answeredCount).toBe(1)
+      expect(state.correctCount).toBe(1)
+    })
+
+    it('multiple correct answers in multiple choice are handled correctly', () => {
+      const lessonWithMultipleCorrect: LessonArcadeLesson = {
+        ...createMockLesson(),
+        levels: [
+          {
+            ...createMockLesson().levels[0],
+            items: [
+              {
+                kind: 'multiple_choice',
+                id: 'mc-multi',
+                prompt: 'Select all correct options',
+                promptI18n: { zh: '选择所有正确选项' },
+                options: [
+                  { id: 'opt-1', text: 'Option 1', textI18n: { zh: '选项1' } },
+                  { id: 'opt-2', text: 'Option 2', textI18n: { zh: '选项2' } },
+                  { id: 'opt-3', text: 'Option 3', textI18n: { zh: '选项3' } }
+                ],
+                correctOptionIds: ['opt-1', 'opt-3'],
+                explanation: 'Options 1 and 3 are correct.',
+                explanationI18n: { zh: '选项1和3是正确的。' }
+              } as LessonArcadeMultipleChoiceItem
+            ]
+          }
+        ]
+      }
+
+      const state = startChatFlow(initChatFlow(lessonWithMultipleCorrect), lessonWithMultipleCorrect)
+      
+      // Select one correct answer
+      const answered1 = submitAnswer(state, lessonWithMultipleCorrect, {
+        kind: 'multiple_choice',
+        optionId: 'opt-1'
+      })
+      expect(answered1.answeredCount).toBe(1)
+      expect(answered1.correctCount).toBe(1)
+
+      // Select incorrect answer
+      const answered2 = submitAnswer(state, lessonWithMultipleCorrect, {
+        kind: 'multiple_choice',
+        optionId: 'opt-2'
+      })
+      expect(answered2.answeredCount).toBe(1)
+      expect(answered2.correctCount).toBe(0)
+    })
+
+    it('stats are preserved across level transitions', () => {
+      const lesson = createMockLesson()
+      let state = startChatFlow(initChatFlow(lesson), lesson)
+
+      // Answer multiple choice in level 1
+      state = submitAnswer(state, lesson, {
+        kind: 'multiple_choice',
+        optionId: 'option-2'
+      })
+      expect(state.answeredCount).toBe(1)
+      expect(state.correctCount).toBe(1)
+
+      // Move to open ended in level 1
+      state = nextStep(state, lesson)
+      state = submitAnswer(state, lesson, {
+        kind: 'open_ended',
+        text: 'Some answer'
+      })
+
+      // Move to checkpoint (level transition)
+      state = nextStep(state, lesson)
+      expect(state.levelIndex).toBe(1)
+      
+      // Stats should be preserved
+      expect(state.answeredCount).toBe(1)
+      expect(state.correctCount).toBe(1)
+    })
+
+    it('finished state includes summary with stats', () => {
+      const lesson = createMockLesson()
+      let state = startChatFlow(initChatFlow(lesson), lesson)
+
+      // Complete all items
+      state = submitAnswer(state, lesson, {
+        kind: 'multiple_choice',
+        optionId: 'option-2'
+      })
+      state = nextStep(state, lesson)
+      state = submitAnswer(state, lesson, {
+        kind: 'open_ended',
+        text: 'Some answer'
+      })
+      state = nextStep(state, lesson)
+      state = nextStep(state, lesson)
+
+      expect(state.finished).toBe(true)
+      expect(state.answeredCount).toBe(1)
+      expect(state.correctCount).toBe(1)
+      expect(state.messages[state.messages.length - 1].text).toContain('Score: 1/1')
+    })
   })
 })

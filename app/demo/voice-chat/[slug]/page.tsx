@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 interface VoiceChatPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
-  searchParams?: {
+  }>
+  searchParams?: Promise<{
     displayLanguage?: string
-  }
+  }>
 }
 
 const resolveDisplayLanguage = (value?: string): LanguageCode | undefined => {
@@ -62,6 +62,7 @@ export default async function VoiceChatPage({ params, searchParams }: VoiceChatP
 
   try {
     const { slug } = await params
+    const searchParamsResolved = await searchParams || {}
     lesson = await loadLessonBySlug(slug)
   } catch (e) {
     error = e
@@ -105,7 +106,7 @@ export default async function VoiceChatPage({ params, searchParams }: VoiceChatP
   }
 
   if (lesson) {
-    const displayLanguage = resolveDisplayLanguage(searchParams?.displayLanguage)
+    const displayLanguage = resolveDisplayLanguage(searchParamsResolved?.displayLanguage)
     return (
       <VoiceChatFlow lesson={lesson} initialDisplayLanguage={displayLanguage} />
     )

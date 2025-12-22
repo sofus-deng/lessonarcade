@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 import { VoiceChatFlow } from '@/components/lesson/voice-chat-flow'
 import type { LessonArcadeLesson } from '@/lib/lessonarcade/schema'
 

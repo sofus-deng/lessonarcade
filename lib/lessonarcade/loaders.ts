@@ -4,6 +4,7 @@ import { loadUserLessonBySlug } from './storage'
 // Import demo lessons
 import reactHooksLesson from '@/data/demo-lessons/react-hooks-intro.json'
 import effectiveMeetingsLesson from '@/data/demo-lessons/effective-meetings.json'
+import designFeedbackLesson from '@/data/demo-lessons/design-feedback-basics.json'
 
 /**
  * Typed error for lesson loading failures
@@ -97,6 +98,24 @@ export function loadEffectiveMeetingsLesson(): LessonArcadeLesson {
 }
 
 /**
+ * Loads and validates the Design Feedback Basics demo lesson
+ */
+export function loadDesignFeedbackLesson(): LessonArcadeLesson {
+  try {
+    return validateLesson(designFeedbackLesson, 'design-feedback-basics', 'demo')
+  } catch (error) {
+    if (error instanceof LessonLoadError) {
+      throw error
+    }
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load Design Feedback Basics demo lesson',
+      { slug: 'design-feedback-basics', source: 'demo' }
+    )
+  }
+}
+
+/**
  * Simple lesson registry for future expansion
  */
 export interface LessonRegistry {
@@ -106,6 +125,7 @@ export interface LessonRegistry {
 export const lessonRegistry: LessonRegistry = {
   'react-hooks-intro': loadReactHooksLesson,
   'effective-meetings': loadEffectiveMeetingsLesson,
+  'design-feedback-basics': loadDesignFeedbackLesson,
   // Future lessons can be added here
 }
 
@@ -193,6 +213,21 @@ export function getDemoLessonSummaries(): DemoLessonSummary[] {
     })
   } catch (error) {
     console.error('Error loading Effective Meetings lesson summary:', error)
+  }
+  
+  // Load Design Feedback Basics lesson summary
+  try {
+    const designFeedback = loadDesignFeedbackLesson()
+    lessons.push({
+      slug: designFeedback.slug,
+      title: designFeedback.title,
+      shortDescription: designFeedback.shortDescription,
+      tags: designFeedback.tags,
+      estimatedDurationMinutes: designFeedback.estimatedDurationMinutes || 0,
+      language: designFeedback.language
+    })
+  } catch (error) {
+    console.error('Error loading Design Feedback Basics lesson summary:', error)
   }
   
   return lessons

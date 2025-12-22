@@ -1,0 +1,237 @@
+{
+  "id": "design-feedback-basics-guide",
+  "slug": "design-feedback-basics",
+  "title": "Design Feedback Basics",
+  "shortDescription": "Master the art of giving and receiving constructive design feedback to improve creative collaboration.",
+  "longDescription": "Learn the essential principles of design feedback, including how to structure critique sessions, provide actionable feedback, and create a culture of constructive criticism. This comprehensive guide covers both giving and receiving feedback effectively in design contexts.",
+  "estimatedDurationMinutes": 35,
+  "tags": [
+    "design",
+    "feedback",
+    "collaboration",
+    "critique",
+    "ux",
+    "teamwork"
+  ],
+  "language": "en",
+  "video": {
+    "provider": "youtube",
+    "videoId": "VLwZc0JNAT8",
+    "startAtSeconds": 0,
+    "endAtSeconds": 1800
+  },
+  "levels": [
+    {
+      "id": "level-1",
+      "index": 0,
+      "title": "Understanding Design Feedback",
+      "summary": "Learn the fundamentals of design feedback and why it's crucial for creative work",
+      "timeRange": {
+        "startSeconds": 0,
+        "endSeconds": 600
+      },
+      "keyPoints": [
+        "Design feedback is a collaborative process, not criticism",
+        "Good feedback focuses on the work, not the person",
+        "Timing and context are crucial for effective feedback",
+        "Both giving and receiving feedback are skills that improve with practice"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q1",
+          "prompt": "What is the primary purpose of design feedback?",
+          "options": [
+            {
+              "id": "a",
+              "text": "To point out flaws in the design"
+            },
+            {
+              "id": "b",
+              "text": "To improve the design through collaborative insights"
+            },
+            {
+              "id": "c",
+              "text": "To showcase your own design expertise"
+            },
+            {
+              "id": "d",
+              "text": "To determine if the design is ready for launch"
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Design feedback aims to improve the work through collaborative insights, not just criticize or judge it.",
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q2",
+          "prompt": "Describe a situation where design feedback was given poorly. What made it ineffective, and how could it have been improved?",
+          "placeholder": "Share your experience with ineffective feedback...",
+          "guidance": "Consider factors like timing, delivery, specificity, and the focus of the feedback.",
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp1",
+          "message": "Great! You understand the fundamentals of design feedback. Let's explore how to give feedback effectively.",
+          "actionHint": "Ready to learn about giving constructive feedback? Continue to the next section."
+        }
+      ]
+    },
+    {
+      "id": "level-2",
+      "index": 1,
+      "title": "Giving Effective Feedback",
+      "summary": "Master techniques for providing constructive, actionable design feedback",
+      "timeRange": {
+        "startSeconds": 600,
+        "endSeconds": 1200
+      },
+      "keyPoints": [
+        "Use specific, objective language rather than subjective opinions",
+        "Focus on goals and user needs rather than personal preferences",
+        "Balance positive observations with areas for improvement",
+        "Provide suggestions or alternatives when identifying issues"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q3",
+          "prompt": "Which approach is most effective when giving design feedback?",
+          "options": [
+            {
+              "id": "a",
+              "text": "I don't like this color, it feels wrong"
+            },
+            {
+              "id": "b",
+              "text": "This doesn't meet our accessibility guidelines"
+            },
+            {
+              "id": "c",
+              "text": "The contrast ratio here is 2.1:1, which doesn't meet WCAG AA standards"
+            },
+            {
+              "id": "d",
+              "text": "You should change this to blue instead"
+            }
+          ],
+          "correctOptionIds": [
+            "c"
+          ],
+          "explanation": "Specific, objective feedback with measurable criteria is most effective because it's actionable and non-personal.",
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q4",
+          "prompt": "What's the best way to frame feedback about a design element that isn't working?",
+          "options": [
+            {
+              "id": "a",
+              "text": "This button is too small and users will miss it"
+            },
+            {
+              "id": "b",
+              "text": "Have we considered how this button size might affect discoverability?"
+            },
+            {
+              "id": "c",
+              "text": "Why did you make this button so small?"
+            },
+            {
+              "id": "d",
+              "text": "This button needs to be bigger"
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Framing feedback as a collaborative question invites discussion and shows respect for the designer's decisions.",
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "open_ended",
+          "id": "q5",
+          "prompt": "How would you give feedback on a homepage design that feels cluttered and unfocused?",
+          "placeholder": "Describe your approach to giving this feedback constructively...",
+          "guidance": "Think about how to identify specific issues while respecting the designer's intent and offering helpful direction.",
+          "maxCharacters": 400
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp2",
+          "message": "Excellent! You're mastering the art of giving effective feedback. Now let's explore how to receive feedback gracefully.",
+          "actionHint": "Ready to learn about receiving feedback? Continue to the next section."
+        }
+      ]
+    },
+    {
+      "id": "level-3",
+      "index": 2,
+      "title": "Receiving Feedback Gracefully",
+      "summary": "Learn how to accept and process feedback to improve your design work",
+      "timeRange": {
+        "startSeconds": 1200,
+        "endSeconds": 1800
+      },
+      "keyPoints": [
+        "Listen fully before responding or defending your decisions",
+        "Ask clarifying questions to understand the feedback better",
+        "Separate yourself from your work - feedback is not personal",
+        "Decide which feedback to act on based on project goals and user needs"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q6",
+          "prompt": "What's the best immediate response when receiving unexpected critical feedback?",
+          "options": [
+            {
+              "id": "a",
+              "text": "Explain why you made those design choices"
+            },
+            {
+              "id": "b",
+              "text": "Thank them for their input and ask for specific examples"
+            },
+            {
+              "id": "c",
+              "text": "Defend your design decisions with data"
+            },
+            {
+              "id": "d",
+              "text": "Take notes without saying anything"
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Acknowledging feedback and asking for specifics shows openness while helping you understand the issues better.",
+          "difficulty": "medium",
+          "points": 20
+        },
+        {
+          "kind": "open_ended",
+          "id": "q7",
+          "prompt": "Describe a system you would use to track and prioritize feedback from multiple stakeholders on a design project.",
+          "placeholder": "Think about tools and processes that work for organizing feedback...",
+          "guidance": "Consider how to categorize, prioritize, and resolve conflicting feedback from different sources.",
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp3",
+          "message": "Congratulations! You've mastered the complete cycle of design feedback - from understanding principles to giving and receiving feedback effectively.",
+          "actionHint": "Ready to transform your team's design feedback culture?"
+        }
+      ]
+    }
+  ]
+}

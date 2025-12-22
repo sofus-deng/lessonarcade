@@ -4,7 +4,7 @@ import { motion } from "motion/react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Clock, Tag, Play, ArrowRight, Volume2 } from "lucide-react"
+import { Clock, Tag, Play, ArrowRight, Volume2, MessageCircle } from "lucide-react"
 import type { DemoLessonSummary } from "@/lib/lessonarcade/loaders"
 
 interface DemoLessonGridProps {
@@ -84,6 +84,12 @@ export function DemoLessonGrid({ lessons }: DemoLessonGridProps) {
                 <Link href={`/demo/voice/${lesson.slug}`}>
                   <Volume2 className="w-4 h-4 mr-2 text-la-accent" />
                   <span>Voice Mode</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="w-full text-la-muted hover:text-la-accent group">
+                <Link href={`/demo/voice-chat/${lesson.slug}`}>
+                  <MessageCircle className="w-4 h-4 mr-2 text-la-accent/70 transition-colors group-hover:text-la-accent" />
+                  <span>Voice Chat</span>
                 </Link>
               </Button>
             </CardFooter>

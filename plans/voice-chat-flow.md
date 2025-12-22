@@ -23,3 +23,8 @@
 - Transcript only stores message text; no per-question selections beyond what’s in the chat log.
 - Minimal stats are limited to `answeredCount` and `correctCount` for multiple choice.
 - **No autoplay guarantee:** voice playback never starts on engine toggle, preset change, language change, route change, or item navigation. Only explicit Play triggers audio.
+
+## Demo Entry + CI Smoke + Telemetry Parity
+- Demo cards now include a "Voice Chat" CTA linking to `/demo/voice-chat/[slug]`.
+- Cloud Run smoke script checks `/demo/voice-chat/effective-meetings` returns 200 post-deploy.
+- Minimal voice controls emit the same privacy-safe telemetry events as voice mode without autoplay.

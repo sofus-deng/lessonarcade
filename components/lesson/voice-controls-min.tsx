@@ -5,7 +5,8 @@ import { type LessonArcadeLesson, type LanguageCode } from '@/lib/lessonarcade/s
 import { buildVoiceScript } from '@/lib/lessonarcade/voice/build-script'
 import { chunkTextForTts } from '@/lib/lessonarcade/voice/chunk-text'
 import { getTtsMaxChars } from '@/lib/lessonarcade/voice/constants'
-import { createTextHash, createSessionId } from '@/lib/lessonarcade/voice/telemetry-client'
+import { createSessionId } from '@/lib/lessonarcade/voice/telemetry-client'
+import { emitVoiceTelemetryEvent } from '@/lib/lessonarcade/voice/telemetry-emitter'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
@@ -82,6 +83,7 @@ export function VoiceControlsMin({
   const isBufferingRef = useRef(false)
   const prefetchPromiseRef = useRef<Promise<void> | null>(null)
   const currentScriptRef = useRef<string>('')
+  const stopRequestedRef = useRef(false)
 
   const isSpeechSupported = speechStatus !== 'unsupported'
 
@@ -100,44 +102,20 @@ export function VoiceControlsMin({
     reason?: 'user_stop' | 'navigation' | 'rate_limited' | 'cooldown_blocked' | 'error',
     useBeacon: boolean = false
   ) => {
-    try {
-      const scriptText = currentScriptRef.current || ''
-
-      const telemetryData = {
-        schemaVersion: 1,
-        ts: new Date().toISOString(),
-        event,
-        lessonSlug: lesson.slug,
-        levelIndex,
-        itemIndex,
-        engine,
-        languageCode: displayLanguage,
-        voicePresetKey: presetKey || undefined,
-        rate,
-        textLen: scriptText.length,
-        textHash: createTextHash(scriptText),
-        sessionId
-      }
-
-      if (reason) {
-        (telemetryData as Record<string, unknown>).reason = reason
-      }
-
-      const jsonData = JSON.stringify(telemetryData)
-
-      if (useBeacon && navigator.sendBeacon) {
-        navigator.sendBeacon('/api/voice/telemetry', jsonData)
-      } else {
-        fetch('/api/voice/telemetry', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: jsonData,
-          keepalive: true
-        }).catch(() => {})
-      }
-    } catch (telemetryError) {
-      console.warn('Failed to send telemetry event:', telemetryError)
-    }
+    emitVoiceTelemetryEvent({
+      event,
+      reason,
+      useBeacon,
+      lessonSlug: lesson.slug,
+      levelIndex,
+      itemIndex,
+      engine,
+      languageCode: displayLanguage,
+      voicePresetKey: presetKey || undefined,
+      rate,
+      sessionId,
+      text: currentScriptRef.current || '',
+    })
   }, [lesson.slug, levelIndex, itemIndex, engine, displayLanguage, presetKey, rate, sessionId])
 
   const handleAcknowledgeAI = useCallback(() => {
@@ -368,6 +346,8 @@ export function VoiceControlsMin({
   }, [lesson, levelIndex, itemIndex, displayLanguage, fetchAudioChunk, prefetchNextChunk, sendTelemetryEvent])
 
   const stopSpeech = useCallback((reason?: 'user_stop' | 'navigation') => {
+    stopRequestedRef.current = true
+
     if (speechSynthesisRef.current) {
       speechSynthesisRef.current.cancel()
     }
@@ -429,6 +409,7 @@ export function VoiceControlsMin({
 
     setIsPlaying(true)
     setError(null)
+    stopRequestedRef.current = false
 
     if (engine === 'browser') {
       setSpeechStatus('speaking')
@@ -465,6 +446,10 @@ export function VoiceControlsMin({
           }
 
           await speakText(sentence.trim())
+        }
+
+        if (!stopRequestedRef.current) {
+          sendTelemetryEvent('voice_end')
         }
       } catch (playError) {
         console.error('Error playing voice:', playError)

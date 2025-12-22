@@ -23,6 +23,9 @@ const navigatorStub = {
   ...(globalThis.navigator ?? {}),
   sendBeacon: vi.fn(() => true),
 }
+if (!navigatorStub.userAgent) {
+  navigatorStub.userAgent = 'jsdom'
+}
 vi.stubGlobal('navigator', navigatorStub)
 
 // Create a proper Response instance for the fetch stub

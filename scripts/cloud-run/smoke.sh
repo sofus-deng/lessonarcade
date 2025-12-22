@@ -79,18 +79,23 @@ main() {
     if ! assert_status "$SERVICE_URL/demo/voice/effective-meetings" "200" "" "Demo voice lesson"; then
         test_failed=1
     fi
+
+    # Test 3: GET /demo/voice-chat/effective-meetings returns 200
+    if ! assert_status "$SERVICE_URL/demo/voice-chat/effective-meetings" "200" "" "Demo voice chat lesson"; then
+        test_failed=1
+    fi
     
-    # Test 3: GET /studio returns 401 without auth
+    # Test 4: GET /studio returns 401 without auth
     if ! assert_status "$SERVICE_URL/studio" "401" "" "Studio without auth"; then
         test_failed=1
     fi
     
-    # Test 4: GET /studio/voice-analytics returns 401 without auth
+    # Test 5: GET /studio/voice-analytics returns 401 without auth
     if ! assert_status "$SERVICE_URL/studio/voice-analytics" "401" "" "Studio voice-analytics without auth"; then
         test_failed=1
     fi
     
-    # Test 5: GET /studio returns 200 with Basic Auth (optional)
+    # Test 6: GET /studio returns 200 with Basic Auth (optional)
     if [ -n "$STUDIO_BASIC_AUTH_USER" ] && [ -n "$STUDIO_BASIC_AUTH_PASS" ]; then
         log_info "Auth credentials provided; testing authenticated access"
         

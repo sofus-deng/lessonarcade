@@ -46,3 +46,4 @@ Thumbs.db
 
 # Voice telemetry runtime logs
 data/voice-analytics/*.jsonl
+data/voice-analytics/**/*.jsonl

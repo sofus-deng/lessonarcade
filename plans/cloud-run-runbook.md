@@ -24,6 +24,7 @@ gcloud config set project $PROJECT_ID
 gcloud services enable run.googleapis.com
 gcloud services enable artifactregistry.googleapis.com
 gcloud services enable cloudbuild.googleapis.com
+gcloud services enable iamcredentials.googleapis.com
 ```
 
 ### 2. Create Artifact Registry Repository
@@ -54,6 +55,67 @@ gcloud auth login
 
 # For automated deployments, set up service account authentication
 gcloud auth application-default login
+```
+
+### 5. Workload Identity Federation (GitHub Actions) Setup
+
+This one-time setup enables GitHub Actions to authenticate to GCP without storing service account keys:
+
+```bash
+# Set your variables
+export PROJECT_ID="your-project-id"
+export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+
+# Create a service account for GitHub Actions
+gcloud iam service-accounts create github-actions \
+    --description="Service account for GitHub Actions deployments" \
+    --display-name="GitHub Actions"
+
+# Grant the service account necessary permissions
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="roles/run.admin"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="roles/artifactregistry.writer"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
+    --role="roles/iam.workloadIdentityUser"
+
+# Create the Workload Identity Pool
+gcloud iam workload-identity-pools create github-pool \
+    --location="global" \
+    --description="GitHub Actions pool"
+
+# Get the pool ID and create the provider
+POOL_ID=$(gcloud iam workload-identity-pools describe github-pool \
+    --location="global" \
+    --format="value(name)")
+
+gcloud iam workload-identity-pools providers create github-provider \
+    --location="global" \
+    --workload-identity-pool="github-pool" \
+    --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
+    --issuer-url="https://token.actions.githubusercontent.com"
+
+# Get the provider name for GitHub configuration
+PROVIDER_NAME=$(gcloud iam workload-identity-pools providers describe github-provider \
+    --location="global" \
+    --workload-identity-pool="github-pool" \
+    --format="value(name)")
+
+# Allow the GitHub repository to impersonate the service account
+gcloud iam service-accounts add-iam-policy-binding github-actions@${PROJECT_ID}.iam.gserviceaccount.com \
+    --role="roles/iam.workloadIdentityUser" \
+    --member="principalSet://iam.googleapis.com/${POOL_ID}/attribute.repository/YOUR_GITHUB_USERNAME/YOUR_REPO_NAME"
+
+echo "Workload Identity Federation setup complete!"
+echo "Add these to your GitHub repository secrets:"
+echo "GCP_WIF_PROVIDER: ${PROVIDER_NAME}"
+echo "GCP_SERVICE_ACCOUNT: github-actions@${PROJECT_ID}.iam.gserviceaccount.com"
+echo "GCP_PROJECT_ID: ${PROJECT_ID}"
 ```
 
 ## Deployment Process
@@ -137,6 +199,44 @@ gcloud run deploy lessonarcade \
     --set-env-vars STUDIO_BASIC_AUTH_PASS=secure-password \
     --set-env-vars LOGGING_SALT=random-salt-string
 ```
+
+## CI Deploy (GitHub Actions)
+
+The project includes an automated CI/CD pipeline using GitHub Actions that deploys to Cloud Run on every push to the main branch.
+
+### Required GitHub Variables/Secrets
+
+Configure these in your GitHub repository settings under Secrets and variables > Actions:
+
+**Secrets** (encrypted, not visible in logs):
+- `GCP_WIF_PROVIDER`: The Workload Identity Provider name from the setup step
+- `GCP_SERVICE_ACCOUNT`: The service account email (e.g., `github-actions@your-project.iam.gserviceaccount.com`)
+- `GCP_PROJECT_ID`: Your Google Cloud project ID
+
+**Variables** (visible, not secret):
+- `GCP_REGION`: Cloud Run region (default: `us-central1`)
+- `AR_REPO`: Artifact Registry repository name (default: `lessonarcade`)
+- `CLOUD_RUN_SERVICE`: Cloud Run service name (default: `lessonarcade`)
+
+### CI/CD Flow
+
+1. **Quality Gate** (runs on every push to main):
+   - Checks out code
+   - Sets up Node.js (>=20.9) and pnpm
+   - Installs dependencies with frozen lockfile
+   - Runs linting, tests, build, and presskit checks
+
+2. **Deploy** (only on successful quality gate):
+   - Authenticates to GCP using Workload Identity Federation
+   - Builds Docker image with git SHA as tag
+   - Pushes image to Artifact Registry
+   - Deploys to Cloud Run with existing environment variables
+
+### Important Notes
+
+- **No secrets in logs**: The workflow never prints or logs secret values
+- **Environment variables**: All Cloud Run environment variables (STUDIO_BASIC_AUTH_*, LOGGING_SALT, API keys) are assumed to be already configured in the Cloud Run service
+- **Manual triggers**: The workflow can also be triggered manually via the GitHub Actions UI
 
 ## Setting Environment Variables Safely
 
@@ -262,6 +362,11 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
    - Verify all required environment variables are set
    - Ensure the application is listening on the PORT provided by Cloud Run
 
+5. **GitHub Actions Issues**
+   - Verify Workload Identity Federation setup is correct
+   - Check that service account has required permissions
+   - Ensure GitHub secrets are properly configured
+
 ### Getting Help
 
 1. Check the [Cloud Run documentation](https://cloud.google.com/run/docs)
@@ -283,3 +388,6 @@ gcloud artifacts repositories delete $AR_REPO --location=$REGION
 gcloud secrets delete studio-auth-user
 gcloud secrets delete studio-auth-pass
 gcloud secrets delete logging-salt
+
+# Delete Workload Identity Pool (if no longer needed)
+gcloud iam workload-identity-pools delete github-pool --location=global

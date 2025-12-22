@@ -1,11 +1,20 @@
 // @vitest-environment node
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { 
   parseJsonl, 
   aggregate, 
+  readTelemetryFiles,
   type AnalyticsFilters 
 } from '@/lib/lessonarcade/voice/analytics'
 import { type VoiceTelemetryEvent } from '@/lib/lessonarcade/voice/telemetry'
+
+// Mock file system modules for testing missing files
+const mockReadFile = vi.fn()
+const mockAccess = vi.fn()
+vi.mock('node:fs/promises', () => ({
+  readFile: mockReadFile,
+  access: mockAccess
+}))
 
 describe('Voice Analytics', () => {
   describe('parseJsonl', () => {
@@ -48,6 +57,116 @@ describe('Voice Analytics', () => {
 
       expect(result.events).toHaveLength(2)
       expect(result.parseErrors).toBe(1)
+    })
+
+    // Additional robustness tests for malformed JSONL lines
+    it('should handle empty lines gracefully', () => {
+      const jsonlLines = [
+        '{"schemaVersion":1,"ts":"2025-12-20T10:00:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}',
+        '', // Empty line
+        '   ', // Whitespace only line
+        '{"schemaVersion":1,"ts":"2025-12-20T10:01:00.000Z","event":"voice_end","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}'
+      ]
+
+      const result = parseJsonl(jsonlLines)
+
+      expect(result.events).toHaveLength(2)
+      expect(result.parseErrors).toBe(0) // Empty/whitespace lines are filtered out before parsing
+    })
+
+    it('should handle truncated JSON lines', () => {
+      const jsonlLines = [
+        '{"schemaVersion":1,"ts":"2025-12-20T10:00:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}',
+        '{"schemaVersion":1,"ts":"2025-12-20T10:01:00.000Z","event":"voice_end","lessonSlug":"test-lesson"', // Truncated JSON
+        '{"schemaVersion":1,"ts":"2025-12-20T10:02:00.000Z","event":"voice_end","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}'
+      ]
+
+      const result = parseJsonl(jsonlLines)
+
+      expect(result.events).toHaveLength(2)
+      expect(result.parseErrors).toBe(1)
+    })
+
+    it('should handle JSON with extra commas', () => {
+      const jsonlLines = [
+        '{"schemaVersion":1,"ts":"2025-12-20T10:00:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123",}', // Extra comma
+        '{"schemaVersion":1,"ts":"2025-12-20T10:01:00.000Z","event":"voice_end","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}'
+      ]
+
+      const result = parseJsonl(jsonlLines)
+
+      expect(result.events).toHaveLength(1)
+      expect(result.parseErrors).toBe(1)
+    })
+  })
+
+  describe('readTelemetryFiles', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
+    it('should handle missing directory gracefully', async () => {
+      // Mock access to throw error for all files (simulating missing directory)
+      mockAccess.mockRejectedValue(new Error('ENOENT: no such file or directory'))
+
+      const result = await readTelemetryFiles({ days: 7 })
+
+      expect(result.events).toHaveLength(0)
+      expect(result.parseErrors).toBe(0)
+      expect(mockAccess).toHaveBeenCalledTimes(7) // Should check all 7 days
+    })
+
+    it('should handle mixed missing and existing files', async () => {
+      // Mock access to succeed for some files and fail for others
+      mockAccess
+        .mockResolvedValueOnce(undefined) // Day 0 - exists
+        .mockRejectedValueOnce(new Error('ENOENT')) // Day 1 - missing
+        .mockResolvedValueOnce(undefined) // Day 2 - exists
+        .mockRejectedValueOnce(new Error('ENOENT')) // Day 3 - missing
+        .mockRejectedValueOnce(new Error('ENOENT')) // Day 4 - missing
+        .mockResolvedValueOnce(undefined) // Day 5 - exists
+        .mockRejectedValueOnce(new Error('ENOENT')) // Day 6 - missing
+
+      // Mock readFile for existing files
+      mockReadFile
+        .mockResolvedValueOnce('{"schemaVersion":1,"ts":"2025-12-20T10:00:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}\n')
+        .mockResolvedValueOnce('{"schemaVersion":1,"ts":"2025-12-20T10:01:00.000Z","event":"voice_end","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}\n')
+        .mockResolvedValueOnce('{"schemaVersion":1,"ts":"2025-12-20T10:02:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":2,"engine":"ai","languageCode":"zh","rate":1.2,"textLen":150,"textHash":"def456","sessionId":"sess_test456"}\n')
+
+      const result = await readTelemetryFiles({ days: 7 })
+
+      expect(result.events).toHaveLength(3)
+      expect(result.parseErrors).toBe(0)
+      expect(mockAccess).toHaveBeenCalledTimes(7)
+      expect(mockReadFile).toHaveBeenCalledTimes(3)
+    })
+
+    it('should handle file read errors gracefully', async () => {
+      // Mock access to succeed but readFile to fail
+      mockAccess.mockResolvedValue(undefined)
+      mockReadFile.mockRejectedValue(new Error('EACCES: permission denied'))
+
+      const result = await readTelemetryFiles({ days: 1 })
+
+      expect(result.events).toHaveLength(0)
+      expect(result.parseErrors).toBe(0)
+      expect(mockAccess).toHaveBeenCalledTimes(1)
+      expect(mockReadFile).toHaveBeenCalledTimes(1)
+    })
+
+    it('should accumulate parse errors across multiple files', async () => {
+      mockAccess.mockResolvedValue(undefined)
+      
+      // Mock files with various levels of corruption
+      mockReadFile
+        .mockResolvedValueOnce('{"schemaVersion":1,"ts":"2025-12-20T10:00:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}\n') // Valid
+        .mockResolvedValueOnce('{"invalid": json}\n{"schemaVersion":1,"ts":"2025-12-20T10:01:00.000Z","event":"voice_end","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":1,"engine":"browser","languageCode":"en","rate":1,"textLen":100,"textHash":"abc123","sessionId":"sess_test123"}\n') // 1 error
+        .mockResolvedValueOnce('not json at all\n{"schemaVersion":1,"ts":"2025-12-20T10:02:00.000Z","event":"voice_play","lessonSlug":"test-lesson","levelIndex":0,"itemIndex":2,"engine":"ai","languageCode":"zh","rate":1.2,"textLen":150,"textHash":"def456","sessionId":"sess_test456"}\n{"invalid": json}\n') // 2 errors
+
+      const result = await readTelemetryFiles({ days: 3 })
+
+      expect(result.events).toHaveLength(3) // 3 valid events
+      expect(result.parseErrors).toBe(3) // 3 parse errors total
     })
   })
 
@@ -371,6 +490,88 @@ describe('Voice Analytics', () => {
 
       expect(result.itemLeaderboard.mostPlayed).toHaveLength(10)
       expect(result.itemLeaderboard.mostStopped).toHaveLength(0) // No stops
+    })
+
+    // Additional robustness tests
+    it('should handle events with missing optional fields gracefully', () => {
+      const eventsWithMissingFields: VoiceTelemetryEvent[] = [
+        {
+          schemaVersion: 1,
+          ts: '2025-12-20T10:00:00.000Z',
+          event: 'voice_play',
+          lessonSlug: 'lesson-1',
+          levelIndex: 0,
+          itemIndex: 1,
+          engine: 'browser',
+          languageCode: 'en',
+          rate: 1.0,
+          textLen: 100,
+          textHash: 'hash1',
+          sessionId: 'sess1'
+          // Missing voicePresetKey
+        },
+        {
+          schemaVersion: 1,
+          ts: '2025-12-20T10:01:00.000Z',
+          event: 'voice_stop',
+          lessonSlug: 'lesson-1',
+          levelIndex: 0,
+          itemIndex: 1,
+          engine: 'browser',
+          languageCode: 'en',
+          rate: 1.0,
+          textLen: 100,
+          textHash: 'hash1',
+          sessionId: 'sess1'
+          // Missing reason field
+        }
+      ]
+
+      const result = aggregate(eventsWithMissingFields)
+
+      expect(result.totals.totalPlays).toBe(1)
+      expect(result.totals.totalStops).toBe(1)
+      expect(result.completionRate).toBe(0) // No end events
+      expect(result.replayRate).toBe(0) // No replays
+    })
+
+    it('should handle stop events without reason field', () => {
+      const eventsWithStopWithoutReason: VoiceTelemetryEvent[] = [
+        {
+          schemaVersion: 1,
+          ts: '2025-12-20T10:00:00.000Z',
+          event: 'voice_play',
+          lessonSlug: 'lesson-1',
+          levelIndex: 0,
+          itemIndex: 1,
+          engine: 'browser',
+          languageCode: 'en',
+          rate: 1.0,
+          textLen: 100,
+          textHash: 'hash1',
+          sessionId: 'sess1'
+        },
+        {
+          schemaVersion: 1,
+          ts: '2025-12-20T10:01:00.000Z',
+          event: 'voice_stop',
+          lessonSlug: 'lesson-1',
+          levelIndex: 0,
+          itemIndex: 1,
+          engine: 'browser',
+          languageCode: 'en',
+          rate: 1.0,
+          textLen: 100,
+          textHash: 'hash1',
+          sessionId: 'sess1'
+          // No reason field
+        }
+      ]
+
+      const result = aggregate(eventsWithStopWithoutReason)
+
+      expect(result.totals.totalStops).toBe(1)
+      expect(result.topInterruptionPoints).toHaveLength(0) // No stops with reason
     })
   })
 })

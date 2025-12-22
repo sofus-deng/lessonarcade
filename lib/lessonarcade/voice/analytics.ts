@@ -1,3 +1,4 @@
+import 'server-only'
 import { readFile, access } from 'node:fs/promises'
 import path from 'node:path'
 import { VoiceTelemetryEventSchema, type VoiceTelemetryEvent } from './telemetry'

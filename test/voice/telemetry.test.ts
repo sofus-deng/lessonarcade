@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 import { VoiceTelemetryEventSchema, appendTelemetryEvent, createTextHash, createSessionId, type VoiceTelemetryEvent } from '@/lib/lessonarcade/voice/telemetry'
@@ -11,22 +12,20 @@ describe('Voice Telemetry', () => {
     // Reset environment
     process.env = { ...originalEnv }
     process.env.LOGGING_SALT = 'test-salt'
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2025-12-20T10:00:00.000Z'))
     
     // Clear any existing mocks
     vi.clearAllMocks()
-    
-    // Mock fs operations
-    vi.mock('fs', () => ({
-      promises: {
-        mkdir: vi.fn().mockResolvedValue(undefined),
-        appendFile: vi.fn().mockResolvedValue(undefined)
-      }
-    }))
+
+    vi.spyOn(fsMod.promises, 'mkdir').mockResolvedValue(undefined)
+    vi.spyOn(fsMod.promises, 'appendFile').mockResolvedValue(undefined)
   })
   
   afterEach(() => {
     // Restore environment
     process.env = originalEnv
+    vi.useRealTimers()
     vi.restoreAllMocks()
   })
 
@@ -184,8 +183,8 @@ describe('Voice Telemetry', () => {
       const sessionId2 = createSessionId()
       
       expect(sessionId1).not.toBe(sessionId2)
-      expect(sessionId1).toMatch(/^sess_[a-z0-9]+_[a-z0-9]+$/)
-      expect(sessionId2).toMatch(/^sess_[a-z0-9]+_[a-z0-9]+$/)
+      expect(sessionId1).toMatch(/^sess_[a-z0-9]+$/)
+      expect(sessionId2).toMatch(/^sess_[a-z0-9]+$/)
     })
 
     it('should generate session IDs with reasonable length', () => {

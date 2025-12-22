@@ -2,9 +2,16 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/voice/telemetry/route'
 import { telemetryRateLimiter } from '@/lib/utils/rate-limiter'
+import * as fsMod from 'fs'
 
 // Mock environment variables
 const originalEnv = process.env
+
+vi.mock('@/lib/utils/rate-limiter', () => ({
+  telemetryRateLimiter: {
+    checkLimit: vi.fn().mockReturnValue({ allowed: true })
+  }
+}))
 
 describe('Telemetry Endpoint', () => {
   beforeEach(() => {
@@ -14,13 +21,9 @@ describe('Telemetry Endpoint', () => {
     
     // Clear any existing mocks
     vi.clearAllMocks()
-    
-    // Mock rate limiter
-    vi.mock('@/lib/utils/rate-limiter', () => ({
-      telemetryRateLimiter: {
-        checkLimit: vi.fn().mockReturnValue({ allowed: true })
-      }
-    }))
+
+    vi.spyOn(fsMod.promises, 'mkdir').mockResolvedValue(undefined)
+    vi.spyOn(fsMod.promises, 'appendFile').mockResolvedValue(undefined)
   })
   
   afterEach(() => {

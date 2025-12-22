@@ -1,0 +1,235 @@
+# Cloud Run Deployment Architecture
+
+```mermaid
+graph TB
+    %% Development Workflow
+    subgraph "Development"
+        Dev[Developer Machine]
+        Git[GitHub Repository]
+        Dev -->|1. Push Code| Git
+    end
+
+    %% CI/CD Pipeline
+    subgraph "CI/CD Pipeline"
+        Build[Cloud Build / GitHub Actions]
+        Git -->|2. Trigger Build| Build
+        Build -->|3. Build Docker Image| Docker
+        Build -->|4. Push to Registry| Registry
+    end
+
+    %% Container Registry
+    subgraph "Google Cloud"
+        Registry[Artifact Registry]
+        Docker[Docker Build]
+        Registry -->|5. Deploy Image| CloudRun
+    end
+
+    %% Cloud Run Service
+    subgraph "Cloud Run Service"
+        CloudRun[Cloud Run Instance]
+        CloudRun -->|6a. Public Routes| Public
+        CloudRun -->|6b. Protected Routes| Auth
+    end
+
+    %% Application Components
+    subgraph "Next.js Application"
+        App[LessonArcade App]
+        App -->|7a. API Routes| API
+        App -->|7b. Static Assets| Static
+        App -->|7c. Studio Pages| Studio
+    end
+
+    %% Authentication Layer
+    subgraph "Authentication"
+        Auth[Basic Auth Middleware]
+        Studio -->|8. Verify Credentials| Auth
+        Auth -->|9. Grant Access| Studio
+    end
+
+    %% External Services
+    subgraph "External APIs"
+        ElevenLabs[ElevenLabs API]
+        Gemini[Gemini API]
+        API -->|10. Voice Synthesis| ElevenLabs
+        API -->|11. Content Generation| Gemini
+    end
+
+    %% Data Storage
+    subgraph "Data Storage"
+        Analytics[Voice Analytics]
+        FileSystem[Local File System]
+        API -->|12. Store Telemetry| Analytics
+        API -->|13. Cache Data| FileSystem
+    end
+
+    %% Monitoring & Logging
+    subgraph "Monitoring"
+        Logging[Cloud Logging]
+        Monitoring[Cloud Monitoring]
+        CloudRun -->|14. Export Logs| Logging
+        CloudRun -->|15. Metrics| Monitoring
+    end
+
+    %% User Access
+    subgraph "User Access"
+        Public[Public Demo]
+        Admin[Studio Admin]
+        Public -->|16. HTTP/HTTPS| CloudRun
+        Admin -->|17. HTTP/HTTPS + Auth| CloudRun
+    end
+
+    %% Environment Configuration
+    subgraph "Configuration"
+        EnvVars[Environment Variables]
+        Secrets[Secret Manager]
+        CloudRun -->|18. Load Config| EnvVars
+        CloudRun -->|19. Fetch Secrets| Secrets
+    end
+
+    %% Styling
+    classDef dev fill:#e3f2fd
+    classDef cicd fill:#f3e5f5
+    classDef gcp fill:#e8f5e9
+    classDef app fill:#fff3e0
+    classDef auth fill:#fce4ec
+    classDef external fill:#f1f8e9
+    classDef storage fill:#e0f2f1
+    classDef monitor fill:#fff8e1
+    classDef user fill:#e8eaf6
+    classDef config fill:#efebe9
+
+    class Dev,Git dev
+    class,Build,Docker cicd
+    class Registry,CloudRun gcp
+    class App,API,Static,Studio app
+    class Auth auth
+    class ElevenLabs,Gemini external
+    class Analytics,FileSystem storage
+    class Logging,Monitoring monitor
+    class Public,Admin user
+    class EnvVars,Secrets config
+```
+
+## Deployment Architecture Details
+
+### 1. Build Process
+- **Multi-stage Docker build**: Optimized for production (~150MB image size)
+- **Next.js standalone output**: Minimal runtime footprint
+- **Node.js 24 runtime**: Compatible with Next.js 16 requirements
+- **pnpm package manager**: Efficient dependency management
+
+### 2. Container Registry
+- **Artifact Registry**: Google's native container registry
+- **Versioned images**: Tagged with git commit SHA or version
+- **Regional storage**: Optimized for deployment region
+
+### 3. Cloud Run Configuration
+- **Serverless execution**: Automatic scaling based on traffic
+- **HTTP/2 support**: Improved performance for concurrent requests
+- **Maximum instances**: Configurable limits for cost control
+- **Minimum instances**: 0 for cost optimization, 1 for performance
+
+### 4. Environment Variables
+```yaml
+Required:
+  - STUDIO_BASIC_AUTH_USER
+  - STUDIO_BASIC_AUTH_PASS
+  - LOGGING_SALT
+
+Optional:
+  - ELEVENLABS_API_KEY
+  - GEMINI_API_KEY
+  - ELEVENLABS_VOICE_ID_EN
+  - ELEVENLABS_VOICE_ID_ZH
+```
+
+### 5. Security Features
+- **Basic Authentication**: Protects `/studio` routes
+- **Secret Manager**: Secure storage for sensitive data
+- **HTTPS enforcement**: Automatic SSL certificates
+- **IAM roles**: Least-privilege access control
+
+### 6. Performance Optimizations
+- **Request caching**: Reduces external API calls
+- **Connection pooling**: Efficient database connections
+- **Static asset optimization**: Served from CDN
+- **Cold start mitigation**: Minimum instance configuration
+
+### 7. Monitoring & Observability
+- **Structured logging**: JSON-formatted logs for easy parsing
+- **Request tracing**: Correlation IDs for debugging
+- **Performance metrics**: Response times and error rates
+- **Custom metrics**: Voice usage and analytics data
+
+## Deployment Commands
+
+### Initial Deployment
+```bash
+# Build and push Docker image
+gcloud builds submit --tag gcr.io/PROJECT-ID/lessonarcade:latest
+
+# Deploy to Cloud Run
+gcloud run deploy lessonarcade \
+  --image gcr.io/PROJECT-ID/lessonarcade:latest \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars STUDIO_BASIC_AUTH_USER=admin \
+  --set-env-vars STUDIO_BASIC_AUTH_PASS=secure-password \
+  --set-env-vars LOGGING_SALT=random-salt-string
+```
+
+### With Secret Manager
+```bash
+# Create secrets
+gcloud secrets create studio-auth-user --replication-policy="automatic"
+gcloud secrets create studio-auth-pass --replication-policy="automatic"
+
+# Deploy with secrets
+gcloud run deploy lessonarcade \
+  --image gcr.io/PROJECT-ID/lessonarcade:latest \
+  --set-secrets STUDIO_BASIC_AUTH_USER=studio-auth-user:latest \
+  --set-secrets STUDIO_BASIC_AUTH_PASS=studio-auth-pass:latest
+```
+
+## Cost Optimization
+
+| Configuration | Monthly Cost (us-central1) |
+|---------------|---------------------------|
+| 0 min instances, 512MiB | $0-5 |
+| 0 min instances, 1GiB | $5-15 |
+| 1 min instance, 1GiB | $15-25 |
+
+*Costs vary based on traffic and AI API usage*
+
+## Scaling Behavior
+
+- **Automatic scaling**: 0 to N instances based on request volume
+- **Concurrency**: 20-40 requests per container (recommended)
+- **CPU allocation**: On-demand or always allocated
+- **Memory allocation**: 512MiB minimum, 1GiB recommended
+
+## CI/CD Integration
+
+### GitHub Actions Workflow
+```yaml
+name: Deploy to Cloud Run
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Google Auth
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+    - name: Deploy
+      uses: google-github-actions/deploy-cloudrun@v1
+      with:
+        image: gcr.io/${{ secrets.GCP_PROJECT }}/lessonarcade
+        service: lessonarcade
+        region: us-central1

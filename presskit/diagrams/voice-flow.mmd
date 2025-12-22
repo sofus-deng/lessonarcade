@@ -1,0 +1,124 @@
+# Voice System Architecture Flow
+
+```mermaid
+graph TB
+    %% User Interface Layer
+    subgraph "Frontend (Next.js)"
+        UI[Voice Lesson Player]
+        UI -->|1. Play Request| API
+    end
+
+    %% API Layer
+    subgraph "API Routes"
+        API[/api/voice/tts]
+        API -->|2. Validate Request| Guard
+        Guard -->|3. Check Limits| RateLimit
+        RateLimit -->|4. Process Request| ChunkQueue
+    end
+
+    %% Guardrails System
+    subgraph "Guardrails"
+        Guard[Request Validator]
+        RateLimit[Multi-tier Rate Limiter]
+        RateLimit -->|5a. Minute Limit| MinuteStore
+        RateLimit -->|5b. Hour Limit| HourStore
+        RateLimit -->|5c. Day Limit| DayStore
+        RateLimit -->|5d. Fingerprint| FingerprintStore
+    end
+
+    %% Voice Processing Pipeline
+    subgraph "Voice Processing"
+        ChunkQueue[Chunking Queue]
+        ChunkQueue -->|6. Build Script| ScriptBuilder
+        ScriptBuilder -->|7. Generate TTS| TTSProcessor
+        TTSProcessor -->|8. Cache Response| Cache
+    end
+
+    %% External Services
+    subgraph "External Services"
+        ElevenLabs[ElevenLabs API]
+        TTSProcessor -->|9. Request Audio| ElevenLabs
+        ElevenLabs -->|10. Return Audio| TTSProcessor
+    end
+
+    %% Telemetry System
+    subgraph "Telemetry"
+        Telemetry[Voice Telemetry]
+        API -->|11. Log Events| Telemetry
+        Telemetry -->|12. Store Events| AnalyticsDB
+    end
+
+    %% Voice Presets System
+    subgraph "Voice Presets"
+        Presets[Preset Registry]
+        Guard -->|13. Resolve Preset| Presets
+        Presets -->|14. Voice ID| TTSProcessor
+    end
+
+    %% Response Flow
+    Cache -->|15. Return Audio| API
+    API -->|16. Audio Response| UI
+
+    %% Styling
+    classDef frontend fill:#e1f5fe
+    classDef api fill:#f3e5f5
+    classDef guard fill:#fff3e0
+    classDef voice fill:#e8f5e9
+    classDef external fill:#fce4ec
+    classDef telemetry fill:#f1f8e9
+    classDef presets fill:#e0f2f1
+
+    class UI frontend
+    class API api
+    class Guard,RateLimit,MinuteStore,HourStore,DayStore,FingerprintStore guard
+    class ChunkQueue,ScriptBuilder,TTSProcessor,Cache voice
+    class ElevenLabs external
+    class Telemetry,AnalyticsDB telemetry
+    class Presets presets
+```
+
+## Key Components Explained
+
+### 1. Request Validation
+- Validates text length, language, and voice parameters
+- Resolves voice presets to actual voice IDs
+- Ensures only approved voice IDs are used
+
+### 2. Multi-tier Rate Limiting
+- **IP-based limits**: 5 requests/minute, 10/hour
+- **Fingerprint-based limits**: 10/minute, 30/day
+- Prevents abuse while allowing legitimate usage
+
+### 3. Voice Processing Pipeline
+- **Script Builder**: Converts lesson content to voice scripts
+- **Chunking Queue**: Optimizes text for TTS processing
+- **Caching**: Reduces API costs and improves response times
+
+### 4. Telemetry Collection
+- Tracks voice play/pause/stop events
+- Monitors completion rates and replay patterns
+- Privacy-first approach with hashed identifiers
+
+### 5. Voice Presets System
+- Environment-based voice configuration
+- Support for multiple languages (English/Chinese)
+- Fallback to default voices when needed
+
+## Data Flow
+
+1. User initiates voice playback from the lesson player
+2. API validates request parameters and resolves voice presets
+3. Rate limiter checks against multiple time windows
+4. Request enters the chunking queue for processing
+5. Script builder generates voice-ready content
+6. TTS processor requests audio from ElevenLabs
+7. Response is cached for future requests
+8. Audio is returned to the user interface
+9. All events are logged for analytics
+
+## Security & Performance
+
+- **Request Deduplication**: Prevents duplicate API calls
+- **Intelligent Caching**: 10-minute TTL for audio responses
+- **Privacy Protection**: Hashed IP addresses and fingerprints
+- **Cost Optimization**: Minimizes external API calls

@@ -212,11 +212,13 @@ Configure these in your GitHub repository settings under Secrets and variables >
 - `GCP_WIF_PROVIDER`: The Workload Identity Provider name from the setup step
 - `GCP_SERVICE_ACCOUNT`: The service account email (e.g., `github-actions@your-project.iam.gserviceaccount.com`)
 - `GCP_PROJECT_ID`: Your Google Cloud project ID
+- `STUDIO_BASIC_AUTH_PASS`: The password for Studio Basic Auth (if running smoke tests with auth)
 
 **Variables** (visible, not secret):
 - `GCP_REGION`: Cloud Run region (default: `us-central1`)
 - `AR_REPO`: Artifact Registry repository name (default: `lessonarcade`)
 - `CLOUD_RUN_SERVICE`: Cloud Run service name (default: `lessonarcade`)
+- `STUDIO_BASIC_AUTH_USER`: The username for Studio Basic Auth (if running smoke tests with auth)
 
 ### CI/CD Flow
 
@@ -231,12 +233,55 @@ Configure these in your GitHub repository settings under Secrets and variables >
    - Builds Docker image with git SHA as tag
    - Pushes image to Artifact Registry
    - Deploys to Cloud Run with existing environment variables
+   - Runs post-deploy smoke tests
+
+3. **Post-Deploy Smoke Tests**:
+   - Retrieves the deployed service URL
+   - Verifies public endpoints return 200 OK
+   - Verifies protected endpoints return 401 without auth
+   - Optionally verifies protected endpoints return 200 with auth (if credentials provided)
 
 ### Important Notes
 
 - **No secrets in logs**: The workflow never prints or logs secret values
 - **Environment variables**: All Cloud Run environment variables (STUDIO_BASIC_AUTH_*, LOGGING_SALT, API keys) are assumed to be already configured in the Cloud Run service
 - **Manual triggers**: The workflow can also be triggered manually via the GitHub Actions UI
+- **Concurrency**: The workflow includes concurrency control to prevent race conditions when multiple pushes occur in quick succession
+
+## CI Post-Deploy Smoke Checks
+
+After each successful deployment, the CI pipeline runs automated smoke tests to verify the service is functioning correctly. These tests check:
+
+1. **Public Demo Page**: Verifies `GET /demo` returns 200 OK
+   - Failure indicates the application is not running or has routing issues
+
+2. **Demo Voice Lesson**: Verifies `GET /demo/voice/effective-meetings` returns 200 OK
+   - Failure indicates lesson loading or routing problems
+
+3. **Protected Studio Page**: Verifies `GET /studio` returns 401 without authentication
+   - Failure indicates authentication is not properly configured
+
+4. **Protected Analytics Page**: Verifies `GET /studio/voice-analytics` returns 401 without authentication
+   - Failure indicates authentication bypass or configuration issues
+
+5. **Authenticated Studio Access** (optional): Verifies `GET /studio` returns 200 with Basic Auth
+   - Only runs if `STUDIO_BASIC_AUTH_USER` and `STUDIO_BASIC_AUTH_PASS` are configured
+   - Failure indicates incorrect credentials or authentication mechanism issues
+
+### What Smoke Test Failures Mean
+
+- **200 OK failures**: The service is not responding correctly, possibly due to:
+  - Application startup errors
+  - Database connection issues
+  - Missing environment variables
+  - Resource constraints
+
+- **401 failures**: Authentication is not working as expected, possibly due to:
+  - Missing `STUDIO_BASIC_AUTH_USER` or `STUDIO_BASIC_AUTH_PASS` environment variables
+  - Middleware configuration issues
+  - Incorrect authentication implementation
+
+- **Smoke test failures will block the deployment** and require investigation before the service can be considered healthy.
 
 ## Setting Environment Variables Safely
 
@@ -331,7 +376,17 @@ curl -I $SERVICE_URL/studio
 curl -I -u admin:secure-password $SERVICE_URL/studio
 ```
 
-### 4. Check Logs
+### 4. Run Smoke Tests Manually
+
+```bash
+# Run the smoke test script
+./scripts/cloud-run/smoke.sh $SERVICE_URL
+
+# Or with auth credentials
+STUDIO_BASIC_AUTH_USER=admin STUDIO_BASIC_AUTH_PASS=secure-password ./scripts/cloud-run/smoke.sh $SERVICE_URL
+```
+
+### 5. Check Logs
 
 ```bash
 # View recent logs
@@ -366,6 +421,12 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
    - Verify Workload Identity Federation setup is correct
    - Check that service account has required permissions
    - Ensure GitHub secrets are properly configured
+
+6. **Smoke Test Failures**
+   - Check if the service is fully started (may need to wait a few moments)
+   - Verify environment variables are correctly configured
+   - Check Cloud Run logs for application errors
+   - Ensure authentication is properly configured for protected endpoints
 
 ### Getting Help
 

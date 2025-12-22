@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Add concurrency to prevent race conditions
+concurrency:
+  group: cloud-run-deploy
+  cancel-in-progress: true
+
 env:
   GCP_REGION: us-central1
   AR_REPO: lessonarcade
@@ -102,3 +107,20 @@ jobs:
             --min-instances=0 \
             --max-instances=10 \
             --concurrency=20
+
+      - name: Get service URL
+        id: service-url
+        run: |
+          SERVICE_URL=$(gcloud run services describe "${{ env.CLOUD_RUN_SERVICE }}" \
+            --region="${{ env.GCP_REGION }}" \
+            --format='value(status.url)')
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_ENV
+          echo "service-url=$SERVICE_URL" >> $GITHUB_OUTPUT
+
+      - name: Run post-deploy smoke tests
+        run: |
+          ./scripts/cloud-run/smoke.sh "$SERVICE_URL"
+        env:
+          SERVICE_URL: ${{ steps.service-url.outputs.service-url }}
+          STUDIO_BASIC_AUTH_USER: ${{ vars.STUDIO_BASIC_AUTH_USER }}
+          STUDIO_BASIC_AUTH_PASS: ${{ secrets.STUDIO_BASIC_AUTH_PASS }}

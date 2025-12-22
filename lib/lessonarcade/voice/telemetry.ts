@@ -1,9 +1,14 @@
 import { z } from "zod"
 import { createHash } from "crypto"
 import { NextRequest } from "next/server"
+import { mkdir, appendFile } from "node:fs/promises"
+import path from "node:path"
+
+// Import client-safe functions
+export { createTextHash, createSessionId } from './telemetry-client'
 
 // Use dynamic import for fs to avoid client-side bundling issues
-const fs = typeof window === 'undefined' ? require('fs').promises : null
+const fs = typeof window === 'undefined' ? { mkdir, appendFile } : null
 
 /**
  * Schema for voice telemetry events
@@ -91,8 +96,7 @@ function getDailyFilePath(): string {
   const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
   const fileName = `events-${today}.jsonl`
   // Use path module only on server side
-  if (typeof window === 'undefined' && typeof require !== 'undefined') {
-    const path = require('path')
+  if (typeof window === 'undefined') {
     return path.join(process.cwd(), 'data', 'voice-analytics', fileName)
   }
   return ''
@@ -137,21 +141,4 @@ export async function appendTelemetryEvent(
     // Telemetry failures should never break the application
     console.error('Failed to append telemetry event:', error)
   }
-}
-
-/**
- * Creates a SHA-256 hash of text content for telemetry
- * This should only include the script text, not voice parameters
- */
-export function createTextHash(text: string): string {
-  return createHash('sha256').update(text).digest('hex')
-}
-
-/**
- * Creates a session ID for client-side telemetry tracking
- * Generates a random UUID-like string
- */
-export function createSessionId(): string {
-  return 'sess_' + Math.random().toString(36).substr(2, 9) + 
-         Date.now().toString(36)
 }

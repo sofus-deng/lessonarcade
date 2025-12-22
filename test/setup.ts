@@ -25,12 +25,15 @@ const navigatorStub = {
 }
 vi.stubGlobal('navigator', navigatorStub)
 
+// Create a proper Response instance for the fetch stub
+const okJson = new Response(JSON.stringify({ ok: true }), {
+  status: 200,
+  headers: { 'content-type': 'application/json' }
+})
+
 vi.stubGlobal(
   'fetch',
-  vi.fn(async () => ({
-    ok: true,
-    json: async () => ({ ok: true }),
-  })) as typeof fetch
+  vi.fn(async () => okJson.clone()) as unknown as typeof fetch
 )
 
 let sessionStore: Record<string, string> = {}

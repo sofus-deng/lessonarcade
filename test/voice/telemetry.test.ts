@@ -2,7 +2,19 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 import { VoiceTelemetryEventSchema, appendTelemetryEvent, createTextHash, createSessionId, type VoiceTelemetryEvent } from '@/lib/lessonarcade/voice/telemetry'
-import * as fsMod from 'fs'
+
+// Mock the fs/promises module
+vi.mock('node:fs/promises', () => ({
+  mkdir: vi.fn().mockResolvedValue(undefined),
+  appendFile: vi.fn().mockResolvedValue(undefined)
+}))
+
+// Mock the path module
+vi.mock('node:path', () => ({
+  default: {
+    join: vi.fn((...args: string[]) => args.join('/'))
+  }
+}))
 
 // Mock environment variables
 const originalEnv = process.env
@@ -17,9 +29,6 @@ describe('Voice Telemetry', () => {
     
     // Clear any existing mocks
     vi.clearAllMocks()
-
-    vi.spyOn(fsMod.promises, 'mkdir').mockResolvedValue(undefined)
-    vi.spyOn(fsMod.promises, 'appendFile').mockResolvedValue(undefined)
   })
   
   afterEach(() => {
@@ -223,15 +232,19 @@ describe('Voice Telemetry', () => {
 
       await appendTelemetryEvent(event, mockRequest)
 
+      // Get the mocked functions
+      const { mkdir, appendFile } = await import('node:fs/promises')
+      const mockedMkdir = vi.mocked(mkdir)
+      const mockedAppendFile = vi.mocked(appendFile)
+
       // Verify directory creation was attempted
-      const fs = vi.mocked(fsMod.promises)
-      expect(fs.mkdir).toHaveBeenCalledWith(
+      expect(mockedMkdir).toHaveBeenCalledWith(
         expect.stringContaining('data/voice-analytics'),
         { recursive: true }
       )
 
       // Verify file append was attempted
-      expect(fs.appendFile).toHaveBeenCalledWith(
+      expect(mockedAppendFile).toHaveBeenCalledWith(
         expect.stringContaining('events-2025-12-20.jsonl'),
         expect.stringContaining('"schemaVersion":1'),
         'utf8'
@@ -254,9 +267,12 @@ describe('Voice Telemetry', () => {
         sessionId: 'sess_test123'
       }
 
+      // Get the mocked functions
+      const { mkdir } = await import('node:fs/promises')
+      const mockedMkdir = vi.mocked(mkdir)
+      
       // Mock fs.mkdir to throw error (directory doesn't exist)
-      const fs = vi.mocked(fsMod.promises)
-      fs.mkdir.mockRejectedValueOnce(new Error('Directory creation failed'))
+      mockedMkdir.mockRejectedValueOnce(new Error('Directory creation failed'))
 
       // Should not throw error
       await expect(appendTelemetryEvent(event)).resolves.toBeUndefined()
@@ -288,9 +304,12 @@ describe('Voice Telemetry', () => {
 
       await appendTelemetryEvent(event, mockRequest)
 
+      // Get the mocked functions
+      const { appendFile } = await import('node:fs/promises')
+      const mockedAppendFile = vi.mocked(appendFile)
+
       // Verify the event was stored with server-side hashes
-      const fs = vi.mocked(fsMod.promises)
-      const appendCall = fs.appendFile.mock.calls[0]
+      const appendCall = mockedAppendFile.mock.calls[0]
       const storedData = JSON.parse(appendCall[1] as string)
       
       expect(storedData.ipHash).toBeDefined()
@@ -317,9 +336,12 @@ describe('Voice Telemetry', () => {
         sessionId: 'sess_test123'
       }
 
+      // Get the mocked functions
+      const { appendFile } = await import('node:fs/promises')
+      const mockedAppendFile = vi.mocked(appendFile)
+      
       // Mock fs.appendFile to throw error
-      const fs = vi.mocked(fsMod.promises)
-      fs.appendFile.mockRejectedValueOnce(new Error('File system error'))
+      mockedAppendFile.mockRejectedValueOnce(new Error('File system error'))
 
       // Should not throw error
       await expect(appendTelemetryEvent(event)).resolves.toBeUndefined()

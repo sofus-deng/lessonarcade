@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { loadDesignFeedbackLesson, loadLessonBySlug } from '@/lib/lessonarcade/loaders'
-import type { LessonArcadeLesson } from '@/lib/lessonarcade/schema'
 
 describe('Design Feedback Basics Lesson', () => {
   it('loads and validates the design feedback lesson without errors', () => {

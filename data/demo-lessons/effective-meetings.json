@@ -2,7 +2,7 @@
   "id": "effective-meetings-guide",
   "slug": "effective-meetings",
   "title": "How to Run Effective Meetings",
-  "shortDescription": "Master the art of running productive, efficient meetings that drive results and respect everyone's time.",
+  "shortDescription": "Master's art of running productive, efficient meetings that drive results and respect everyone's time.",
   "longDescription": "Learn proven strategies for planning, conducting, and following up on meetings that actually accomplish their goals. This comprehensive guide covers meeting preparation, facilitation techniques, and post-meeting action items to ensure your meetings are valuable and impactful.",
   "estimatedDurationMinutes": 30,
   "tags": [
@@ -27,7 +27,7 @@
       "summary": "Learn how to properly prepare for meetings to ensure they're productive and focused",
       "timeRange": {
         "startSeconds": 0,
-        "endSeconds": 600
+        "endAtSeconds": 600
       },
       "keyPoints": [
         "Define clear meeting objectives and outcomes",
@@ -88,7 +88,7 @@
           "id": "q2",
           "prompt": "Describe a situation where you attended an unprepared meeting. What could have been done differently to make it more effective?",
           "promptI18n": {
-            "zh": "描述一次您参加的没有准备的会议。本可以采取什么不同的做法来使其更有效？"
+            "zh": "描述一次您参加的没有准备的会议。可以采取什么不同的做法来使其更有效？"
           },
           "placeholder": "Share your experience and what improvements would have helped...",
           "placeholderI18n": {
@@ -121,7 +121,7 @@
       "summary": "Master facilitation techniques to keep meetings on track and engaging",
       "timeRange": {
         "startSeconds": 600,
-        "endSeconds": 1200
+        "endAtSeconds": 1200
       },
       "keyPoints": [
         "Start on time and establish ground rules",
@@ -134,28 +134,46 @@
           "kind": "multiple_choice",
           "id": "q3",
           "prompt": "What should you do if a meeting discussion goes off-topic?",
+          "promptI18n": {
+            "zh": "如果会议讨论偏离主题，您应该怎么做？"
+          },
           "options": [
             {
               "id": "a",
-              "text": "Let the discussion continue naturally"
+              "text": "Let the discussion continue naturally",
+              "textI18n": {
+                "zh": "让讨论自然继续"
+              }
             },
             {
               "id": "b",
-              "text": "Immediately shut down the off-topic discussion"
+              "text": "Immediately shut down the off-topic discussion",
+              "textI18n": {
+                "zh": "立即关闭偏离主题的讨论"
+              }
             },
             {
               "id": "c",
-              "text": "Acknowledge the point and redirect to agenda items"
+              "text": "Acknowledge the point and redirect to agenda items",
+              "textI18n": {
+                "zh": "承认该观点并重定向到议程项目"
+              }
             },
             {
               "id": "d",
-              "text": "Schedule another meeting for the off-topic"
+              "text": "Schedule another meeting for the off-topic",
+              "textI18n": {
+                "zh": "为偏离主题的内容安排另一次会议"
+              }
             }
           ],
           "correctOptionIds": [
             "c"
           ],
           "explanation": "Acknowledging the point shows respect while redirecting maintains focus on the meeting's objectives.",
+          "explanationI18n": {
+            "zh": "承认该观点表示尊重，同时重定向保持对会议目标的关注。"
+          },
           "difficulty": "medium",
           "points": 15
         },
@@ -163,15 +181,30 @@
           "kind": "open_ended",
           "id": "q4",
           "prompt": "What techniques would you use to encourage quiet team members to participate in a meeting?",
+          "promptI18n": {
+            "zh": "您会使用什么技巧来鼓励安静的团队成员参与会议？"
+          },
           "placeholder": "Think about facilitation strategies...",
+          "placeholderI18n": {
+            "zh": "考虑促进策略..."
+          },
           "guidance": "Consider direct but gentle invitations, round-robin formats, or creating safe spaces for input.",
+          "guidanceI18n": {
+            "zh": "考虑直接但温和的邀请、轮流格式或为输入创造安全空间。"
+          },
           "maxCharacters": 400
         },
         {
           "kind": "checkpoint",
           "id": "cp2",
           "message": "Excellent! You're mastering meeting facilitation. Now let's ensure meetings lead to action.",
-          "actionHint": "Ready to learn about effective follow-up? Continue to the next section."
+          "messageI18n": {
+            "zh": "优秀！您正在掌握会议促进技巧。现在让我们确保会议能够产生行动。"
+          },
+          "actionHint": "Ready to learn about effective follow-up? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "准备好学习有效的后续跟进了吗？继续到下一部分。"
+          }
         }
       ]
     },
@@ -182,7 +215,7 @@
       "summary": "Ensure meetings lead to concrete actions and accountability",
       "timeRange": {
         "startSeconds": 1200,
-        "endSeconds": 1800
+        "endAtSeconds": 1800
       },
       "keyPoints": [
         "Document decisions and action items clearly",
@@ -195,28 +228,46 @@
           "kind": "multiple_choice",
           "id": "q5",
           "prompt": "When should meeting minutes and action items be distributed?",
+          "promptI18n": {
+            "zh": "会议纪要和行动项目应该何时分发？"
+          },
           "options": [
             {
               "id": "a",
-              "text": "Within the next week"
+              "text": "Within the next week",
+              "textI18n": {
+                "zh": "在一周内"
+              }
             },
             {
               "id": "b",
-              "text": "Within 24 hours of the meeting"
+              "text": "Within 24 hours of the meeting",
+              "textI18n": {
+                "zh": "在会议后24小时内"
+              }
             },
             {
               "id": "c",
-              "text": "Only if someone requests them"
+              "text": "Only if someone requests them",
+              "textI18n": {
+                "zh": "仅当有人要求时"
+              }
             },
             {
               "id": "d",
-              "text": "At the next meeting"
+              "text": "At the next meeting",
+              "textI18n": {
+                "zh": "在下次会议上"
+              }
             }
           ],
           "correctOptionIds": [
             "b"
           ],
           "explanation": "Prompt distribution within 24 hours ensures everyone remembers the context and can act on decisions while they're fresh.",
+          "explanationI18n": {
+            "zh": "在24小时内及时分发可确保每个人都记住上下文，并在记忆犹新时对决定采取行动。"
+          },
           "difficulty": "medium",
           "points": 20
         },
@@ -224,15 +275,30 @@
           "kind": "open_ended",
           "id": "q6",
           "prompt": "Describe a system you would implement to track action items from multiple meetings across your team.",
+          "promptI18n": {
+            "zh": "描述您将实施一个系统来跟踪团队中多个会议的行动项目。"
+          },
           "placeholder": "Think about tools and processes that work for your team...",
+          "placeholderI18n": {
+            "zh": "考虑适合您团队的工具和流程..."
+          },
           "guidance": "Consider shared documents, project management tools, or regular check-ins.",
+          "guidanceI18n": {
+            "zh": "考虑共享文档、项目管理工具或定期检查。"
+          },
           "maxCharacters": 500
         },
         {
           "kind": "checkpoint",
           "id": "cp3",
           "message": "Congratulations! You've mastered the complete lifecycle of effective meetings.",
-          "actionHint": "Ready to transform your team's meeting culture?"
+          "messageI18n": {
+            "zh": "恭喜！您已经掌握了有效会议的完整生命周期。"
+          },
+          "actionHint": "Ready to transform your team's meeting culture?",
+          "actionHintI18n": {
+            "zh": "准备好改变您团队的会议文化了吗？"
+          }
         }
       ]
     }

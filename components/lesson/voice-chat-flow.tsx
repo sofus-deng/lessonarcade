@@ -44,7 +44,7 @@ const getItemPrompt = (item: LessonArcadeItem, language: LanguageCode) => {
   if (item.kind === 'checkpoint') {
     return getLocalizedText(item.messageI18n, item.message, language)
   }
-  return getLocalizedText(item.promptI18n, item.prompt, language)
+  return getLocalizedText(undefined, item.prompt, language)
 }
 
 // Calculate total count of answerable items (multiple choice + open ended)

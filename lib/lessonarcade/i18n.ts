@@ -18,11 +18,11 @@ export function getLocalizedText(
     return fallbackText
   }
   
-  // If translation exists for the target language, return it
+  // If translation exists for target language, return it
   if (i18nText[language]) {
     return i18nText[language]
   }
   
-  // Otherwise return the fallback text
+  // Otherwise return fallback text
   return fallbackText
 }

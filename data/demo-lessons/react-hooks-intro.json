@@ -2,8 +2,8 @@
   "id": "intro-to-react-hooks",
   "slug": "react-hooks-intro",
   "title": "Introduction to React Hooks",
-  "shortDescription": "Learn the fundamentals of React Hooks and how they revolutionize state management in functional components.",
-  "longDescription": "This comprehensive introduction covers the core concepts of React Hooks, including useState, useEffect, and custom hooks. You'll learn how to manage state and side effects in functional components, making your React code more readable and maintainable.",
+  "shortDescription": "Learn's fundamentals of React Hooks and how they revolutionize state management in functional components.",
+  "longDescription": "This comprehensive introduction covers core concepts of React Hooks, including useState, useEffect, and custom hooks. You'll learn how to manage state and side effects in functional components, making your React code more readable and maintainable.",
   "estimatedDurationMinutes": 45,
   "tags": [
     "react",
@@ -26,7 +26,7 @@
       "summary": "Learn how to use useState to manage state in functional components",
       "timeRange": {
         "startSeconds": 0,
-        "endSeconds": 900
+        "endAtSeconds": 900
       },
       "keyPoints": [
         "useState replaces this.setState in functional components",
@@ -38,29 +38,47 @@
         {
           "kind": "multiple_choice",
           "id": "q1",
-          "prompt": "What does the useState hook return?",
+          "prompt": "What does useState hook return?",
+          "promptI18n": {
+            "zh": "useState 钩子返回什么？"
+          },
           "options": [
             {
               "id": "a",
-              "text": "A single state value"
+              "text": "A single state value",
+              "textI18n": {
+                "zh": "单个状态值"
+              }
             },
             {
               "id": "b",
-              "text": "A stateful value and a setter function"
+              "text": "A stateful value and a setter function",
+              "textI18n": {
+                "zh": "一个有状态的值和一个设置函数"
+              }
             },
             {
               "id": "c",
-              "text": "A setter function only"
+              "text": "A setter function only",
+              "textI18n": {
+                "zh": "仅一个设置函数"
+              }
             },
             {
               "id": "d",
-              "text": "A state object and updater function"
+              "text": "A state object and updater function",
+              "textI18n": {
+                "zh": "一个状态对象和更新函数"
+              }
             }
           ],
           "correctOptionIds": [
             "b"
           ],
-          "explanation": "useState always returns an array with exactly two elements: the current state value and a function to update it.",
+          "explanation": "useState always returns an array with exactly two elements: current state value and a function to update it.",
+          "explanationI18n": {
+            "zh": "useState 总是返回一个包含两个元素的数组：当前状态值和更新它的函数。"
+          },
           "difficulty": "easy",
           "points": 10
         },
@@ -68,6 +86,9 @@
           "kind": "open_ended",
           "id": "q2",
           "prompt": "Describe a scenario where useState would be more appropriate than using a class component with this.state.",
+          "promptI18n": {
+            "zh": "描述一个场景，说明使用 useState 比使用带有 this.state 的类组件更合适。"
+          },
           "placeholder": "Enter your response here...",
           "guidance": "Think about component simplicity, readability, and modern React patterns.",
           "maxCharacters": 500
@@ -75,7 +96,10 @@
         {
           "kind": "checkpoint",
           "id": "cp1",
-          "message": "Great! You now understand the basics of useState. Let's move on to managing side effects.",
+          "message": "Great! You now understand's basics of useState. Let's move on to managing side effects.",
+          "messageI18n": {
+            "zh": "太好了！您现在了解了 useState 的基础知识。让我们继续学习副作用管理。"
+          },
           "actionHint": "Ready to learn about useEffect? Continue to the next section."
         }
       ]
@@ -84,10 +108,10 @@
       "id": "level-2",
       "index": 1,
       "title": "Managing Side Effects with useEffect",
-      "summary": "Master the useEffect hook for handling side effects in functional components",
+      "summary": "Master of useEffect hook for handling side effects in functional components",
       "timeRange": {
         "startSeconds": 900,
-        "endSeconds": 1800
+        "endAtSeconds": 1800
       },
       "keyPoints": [
         "useEffect replaces componentDidMount and componentDidUpdate",
@@ -100,6 +124,9 @@
           "kind": "multiple_choice",
           "id": "q3",
           "prompt": "When does useEffect run with an empty dependency array []?",
+          "promptI18n": {
+            "zh": "当依赖数组为空 [] 时，useEffect 何时运行？"
+          },
           "options": [
             {
               "id": "a",
@@ -122,6 +149,9 @@
             "b"
           ],
           "explanation": "An empty dependency array tells React to run the effect only once, similar to componentDidMount.",
+          "explanationI18n": {
+            "zh": "空的依赖数组告诉 React 只运行一次 effect，类似于 componentDidMount。"
+          },
           "difficulty": "medium",
           "points": 15
         },
@@ -129,6 +159,9 @@
           "kind": "checkpoint",
           "id": "cp2",
           "message": "Excellent! You understand how useEffect works with dependencies.",
+          "messageI18n": {
+            "zh": "优秀！您理解了 useEffect 如何配合依赖项工作。让我们探索自定义钩子。"
+          },
           "actionHint": "Let's explore custom hooks next."
         }
       ]
@@ -140,19 +173,22 @@
       "summary": "Learn to build your own reusable hooks for shared logic",
       "timeRange": {
         "startSeconds": 1800,
-        "endSeconds": 2700
+        "endAtSeconds": 2700
       },
       "keyPoints": [
         "Custom hooks start with 'use' prefix",
         "Can call other hooks inside custom hooks",
         "Encapsulate reusable stateful logic",
-        "Follow the rules of hooks"
+        "Follow's rules of hooks"
       ],
       "items": [
         {
           "kind": "multiple_choice",
           "id": "q4",
           "prompt": "What is a key benefit of custom hooks?",
+          "promptI18n": {
+            "zh": "自定义钩子的主要好处是什么？"
+          },
           "options": [
             {
               "id": "a",
@@ -175,6 +211,9 @@
             "b"
           ],
           "explanation": "Custom hooks allow you to extract and reuse stateful logic between components without changing component hierarchy.",
+          "explanationI18n": {
+            "zh": "自定义钩子允许您提取和重用组件之间的有状态逻辑，而无需更改组件层次结构。"
+          },
           "difficulty": "medium",
           "points": 20
         },
@@ -182,6 +221,9 @@
           "kind": "open_ended",
           "id": "q5",
           "prompt": "Describe a custom hook you would create for a real-world application and what problem it would solve.",
+          "promptI18n": {
+            "zh": "描述您将为实际应用创建的自定义钩子，以及它将解决什么问题。"
+          },
           "placeholder": "Think about common patterns in your apps...",
           "guidance": "Consider authentication, data fetching, form handling, or UI state patterns.",
           "maxCharacters": 600
@@ -189,7 +231,10 @@
         {
           "kind": "checkpoint",
           "id": "cp3",
-          "message": "Congratulations! You've completed the introduction to React Hooks.",
+          "message": "Congratulations! You've completed's introduction to React Hooks.",
+          "messageI18n": {
+            "zh": "恭喜！您已完成 React Hooks 简介。准备好构建您的第一个基于钩子的组件了吗？"
+          },
           "actionHint": "Ready to build your first hook-based component?"
         }
       ]

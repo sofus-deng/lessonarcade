@@ -42,15 +42,14 @@ const multipleChoiceItemSchema = baseItemSchema.extend({
 // Open ended item schema
 const openEndedItemSchema = baseItemSchema.extend({
   kind: z.literal("open_ended"),
+  prompt: z.string(),
+  promptI18n: i18nTextSchema,
   placeholder: z.string().optional(),
   placeholderI18n: i18nTextSchema,
   guidance: z.string().optional(),
   guidanceI18n: i18nTextSchema,
   maxCharacters: z.number().optional(),
-}).merge(z.object({
-  prompt: z.string(),
-  promptI18n: i18nTextSchema,
-}))
+})
 
 // Checkpoint item schema
 const checkpointItemSchema = baseItemSchema.extend({
@@ -71,7 +70,7 @@ const lessonArcadeItemSchema = z.discriminatedUnion("kind", [
 // Time range schema for levels
 const timeRangeSchema = z.object({
   startSeconds: z.number(),
-  endSeconds: z.number(),
+  endAtSeconds: z.number(),
 }).optional()
 
 // Level schema
@@ -117,7 +116,6 @@ export {
 // Export inferred types
 export type LessonArcadeVideo = z.infer<typeof videoSchema>
 export type I18nText = z.infer<typeof i18nTextSchema>
-export type LanguageCode = string
 export type LessonArcadeMultipleChoiceOption = z.infer<typeof multipleChoiceOptionSchema>
 export type LessonArcadeBaseItem = z.infer<typeof baseItemSchema>
 export type LessonArcadeMultipleChoiceItem = z.infer<typeof multipleChoiceItemSchema>
@@ -127,3 +125,4 @@ export type LessonArcadeItem = z.infer<typeof lessonArcadeItemSchema>
 export type LessonArcadeTimeRange = z.infer<typeof timeRangeSchema>
 export type LessonArcadeLevel = z.infer<typeof lessonArcadeLevelSchema>
 export type LessonArcadeLesson = z.infer<typeof lessonArcadeLessonSchema>
+export type LanguageCode = string

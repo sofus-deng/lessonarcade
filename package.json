@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:e2e:ci": "playwright test --reporter=line --project=chromium",
+    "typecheck": "tsc --noEmit",
     "presskit:check": "node scripts/presskit/check.mjs"
   },
   "dependencies": {
@@ -43,6 +44,7 @@
     "server-only": "^0.0.1",
     "tailwindcss": "^4",
     "typescript": "^5",
+    "vite-tsconfig-paths": "^6.0.3",
     "vitest": "^4.0.16"
   }
 }

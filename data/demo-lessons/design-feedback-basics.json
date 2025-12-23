@@ -2,8 +2,8 @@
   "id": "design-feedback-basics-guide",
   "slug": "design-feedback-basics",
   "title": "Design Feedback Basics",
-  "shortDescription": "Master the art of giving and receiving constructive design feedback to improve creative collaboration.",
-  "longDescription": "Learn the essential principles of design feedback, including how to structure critique sessions, provide actionable feedback, and create a culture of constructive criticism. This comprehensive guide covers both giving and receiving feedback effectively in design contexts.",
+  "shortDescription": "Master's art of giving and receiving constructive design feedback to improve creative collaboration.",
+  "longDescription": "Learn essential principles of design feedback, including how to structure critique sessions, provide actionable feedback, and create a culture of constructive criticism. This comprehensive guide covers both giving and receiving feedback effectively in design contexts.",
   "estimatedDurationMinutes": 35,
   "tags": [
     "design",
@@ -25,14 +25,14 @@
       "id": "level-1",
       "index": 0,
       "title": "Understanding Design Feedback",
-      "summary": "Learn the fundamentals of design feedback and why it's crucial for creative work",
+      "summary": "Learn's fundamentals of design feedback and why it's crucial for creative work",
       "timeRange": {
         "startSeconds": 0,
-        "endSeconds": 600
+        "endAtSeconds": 600
       },
       "keyPoints": [
         "Design feedback is a collaborative process, not criticism",
-        "Good feedback focuses on the work, not the person",
+        "Good feedback focuses on the work, not on person",
         "Timing and context are crucial for effective feedback",
         "Both giving and receiving feedback are skills that improve with practice"
       ],
@@ -41,28 +41,46 @@
           "kind": "multiple_choice",
           "id": "q1",
           "prompt": "What is the primary purpose of design feedback?",
+          "promptI18n": {
+            "zh": "设计反馈的主要目的是什么？"
+          },
           "options": [
             {
               "id": "a",
-              "text": "To point out flaws in the design"
+              "text": "To point out flaws in design",
+              "textI18n": {
+                "zh": "指出设计中的缺陷"
+              }
             },
             {
               "id": "b",
-              "text": "To improve the design through collaborative insights"
+              "text": "To improve design through collaborative insights",
+              "textI18n": {
+                "zh": "通过协作见解改进设计"
+              }
             },
             {
               "id": "c",
-              "text": "To showcase your own design expertise"
+              "text": "To showcase your own design expertise",
+              "textI18n": {
+                "zh": "展示您自己的设计专业知识"
+              }
             },
             {
               "id": "d",
-              "text": "To determine if the design is ready for launch"
+              "text": "To determine if design is ready for launch",
+              "textI18n": {
+                "zh": "确定设计是否准备好发布"
+              }
             }
           ],
           "correctOptionIds": [
             "b"
           ],
           "explanation": "Design feedback aims to improve the work through collaborative insights, not just criticize or judge it.",
+          "explanationI18n": {
+            "zh": "设计反馈旨在通过协作见解改进作品，而不仅仅是批评或评判。"
+          },
           "difficulty": "easy",
           "points": 10
         },
@@ -70,14 +88,20 @@
           "kind": "open_ended",
           "id": "q2",
           "prompt": "Describe a situation where design feedback was given poorly. What made it ineffective, and how could it have been improved?",
+          "promptI18n": {
+            "zh": "描述一个情况，说明设计反馈提供得很糟糕。是什么让它无效的，以及如何可以改进？"
+          },
           "placeholder": "Share your experience with ineffective feedback...",
-          "guidance": "Consider factors like timing, delivery, specificity, and the focus of the feedback.",
+          "guidance": "Consider factors like timing, delivery, specificity, and focus of the feedback.",
           "maxCharacters": 500
         },
         {
           "kind": "checkpoint",
           "id": "cp1",
-          "message": "Great! You understand the fundamentals of design feedback. Let's explore how to give feedback effectively.",
+          "message": "Great! You understand's fundamentals of design feedback. Let's explore how to give feedback effectively.",
+          "messageI18n": {
+            "zh": "太好了！您了解了设计反馈的基础知识。让我们学习如何有效地提供建设。"
+          },
           "actionHint": "Ready to learn about giving constructive feedback? Continue to the next section."
         }
       ]
@@ -89,7 +113,7 @@
       "summary": "Master techniques for providing constructive, actionable design feedback",
       "timeRange": {
         "startSeconds": 600,
-        "endSeconds": 1200
+        "endAtSeconds": 1200
       },
       "keyPoints": [
         "Use specific, objective language rather than subjective opinions",
@@ -102,6 +126,9 @@
           "kind": "multiple_choice",
           "id": "q3",
           "prompt": "Which approach is most effective when giving design feedback?",
+          "promptI18n": {
+            "zh": "提供建设反馈时，哪种方法最有效？"
+          },
           "options": [
             {
               "id": "a",
@@ -124,6 +151,9 @@
             "c"
           ],
           "explanation": "Specific, objective feedback with measurable criteria is most effective because it's actionable and non-personal.",
+          "explanationI18n": {
+            "zh": "具体、客观且具有可衡量标准的反馈最有效，因为它是可操作的且非个人的。"
+          },
           "difficulty": "medium",
           "points": 15
         },
@@ -131,6 +161,9 @@
           "kind": "multiple_choice",
           "id": "q4",
           "prompt": "What's the best way to frame feedback about a design element that isn't working?",
+          "promptI18n": {
+            "zh": "对于不起作用的设计元素，提供建设反馈的最佳方式是什么？"
+          },
           "options": [
             {
               "id": "a",
@@ -153,6 +186,9 @@
             "b"
           ],
           "explanation": "Framing feedback as a collaborative question invites discussion and shows respect for the designer's decisions.",
+          "explanationI18n": {
+            "zh": "将反馈构造成协作问题可以邀请讨论，并尊重设计师的决定。"
+          },
           "difficulty": "medium",
           "points": 15
         },
@@ -160,6 +196,9 @@
           "kind": "open_ended",
           "id": "q5",
           "prompt": "How would you give feedback on a homepage design that feels cluttered and unfocused?",
+          "promptI18n": {
+            "zh": "您会如何给感觉杂乱且无焦点的首页设计提供建设反馈？"
+          },
           "placeholder": "Describe your approach to giving this feedback constructively...",
           "guidance": "Think about how to identify specific issues while respecting the designer's intent and offering helpful direction.",
           "maxCharacters": 400
@@ -167,7 +206,10 @@
         {
           "kind": "checkpoint",
           "id": "cp2",
-          "message": "Excellent! You're mastering the art of giving effective feedback. Now let's explore how to receive feedback gracefully.",
+          "message": "Excellent! You're mastering's art of giving effective feedback. Now let's explore how to receive feedback gracefully.",
+          "messageI18n": {
+            "zh": "优秀！您正在掌握提供建设反馈的艺术。现在让我们学习如何优雅地接受反馈。"
+          },
           "actionHint": "Ready to learn about receiving feedback? Continue to the next section."
         }
       ]
@@ -179,7 +221,7 @@
       "summary": "Learn how to accept and process feedback to improve your design work",
       "timeRange": {
         "startSeconds": 1200,
-        "endSeconds": 1800
+        "endAtSeconds": 1800
       },
       "keyPoints": [
         "Listen fully before responding or defending your decisions",
@@ -192,6 +234,9 @@
           "kind": "multiple_choice",
           "id": "q6",
           "prompt": "What's the best immediate response when receiving unexpected critical feedback?",
+          "promptI18n": {
+            "zh": "收到意外的负面反馈时，最佳立即回应是什么？"
+          },
           "options": [
             {
               "id": "a",
@@ -214,6 +259,9 @@
             "b"
           ],
           "explanation": "Acknowledging feedback and asking for specifics shows openness while helping you understand the issues better.",
+          "explanationI18n": {
+            "zh": "承认反馈并询问具体细节表明开放态度，同时帮助您更好地理解问题。"
+          },
           "difficulty": "medium",
           "points": 20
         },
@@ -221,6 +269,9 @@
           "kind": "open_ended",
           "id": "q7",
           "prompt": "Describe a system you would use to track and prioritize feedback from multiple stakeholders on a design project.",
+          "promptI18n": {
+            "zh": "描述您将使用什么系统来跟踪和优先处理来自多个利益相关者的设计项目反馈。"
+          },
           "placeholder": "Think about tools and processes that work for organizing feedback...",
           "guidance": "Consider how to categorize, prioritize, and resolve conflicting feedback from different sources.",
           "maxCharacters": 500
@@ -228,7 +279,10 @@
         {
           "kind": "checkpoint",
           "id": "cp3",
-          "message": "Congratulations! You've mastered the complete cycle of design feedback - from understanding principles to giving and receiving feedback effectively.",
+          "message": "Congratulations! You've mastered's complete cycle of design feedback - from understanding principles to giving and receiving feedback effectively.",
+          "messageI18n": {
+            "zh": "恭喜！您已经掌握了设计反馈的完整循环——从理解原则到有效提供建设和优雅地接受反馈。"
+          },
           "actionHint": "Ready to transform your team's design feedback culture?"
         }
       ]

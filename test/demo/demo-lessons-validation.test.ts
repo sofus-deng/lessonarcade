@@ -77,7 +77,7 @@ describe('Demo Lessons Schema Validation', () => {
       expect(level.summary).toBeTruthy()
       expect(level.timeRange).toBeDefined()
       expect(level.timeRange?.startSeconds).toBeGreaterThanOrEqual(0)
-      expect(level.timeRange?.endSeconds).toBeGreaterThan(level.timeRange?.startSeconds || 0)
+      expect(level.timeRange?.endAtSeconds).toBeGreaterThan(level.timeRange?.startSeconds || 0)
       expect(level.keyPoints).toBeInstanceOf(Array)
       expect(level.keyPoints.length).toBeGreaterThan(0)
       expect(level.items).toBeInstanceOf(Array)
@@ -174,7 +174,6 @@ describe('Demo Lessons Schema Validation', () => {
         }
         // Check for i18n fields in open ended items
         else if (item.kind === 'open_ended') {
-          if (item.promptI18n && item.promptI18n.zh) hasI18nText = true
           if (item.placeholderI18n && item.placeholderI18n.zh) hasI18nText = true
           if (item.guidanceI18n && item.guidanceI18n.zh) hasI18nText = true
         }

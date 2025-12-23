@@ -27,7 +27,7 @@
       "summary": "Learn to identify different types of uncertainty and how they impact decision-making",
       "timeRange": {
         "startSeconds": 0,
-        "endSeconds": 800
+        "endAtSeconds": 800
       },
       "keyPoints": [
         "Distinguish between known unknowns and unknown unknowns",
@@ -168,7 +168,7 @@
       "summary": "Master practical frameworks for structured decision-making under uncertainty",
       "timeRange": {
         "startSeconds": 800,
-        "endSeconds": 1600
+        "endAtSeconds": 1600
       },
       "keyPoints": [
         "Use decision trees to map outcomes and probabilities",
@@ -309,7 +309,7 @@
       "summary": "Learn to evaluate risks and move forward with confidence",
       "timeRange": {
         "startSeconds": 1600,
-        "endSeconds": 2400
+        "endAtSeconds": 2400
       },
       "keyPoints": [
         "Distinguish between reversible and irreversible decisions",

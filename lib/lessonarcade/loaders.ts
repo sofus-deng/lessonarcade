@@ -44,12 +44,12 @@ function validateLesson(data: unknown, slug: string, source: 'demo' | 'user'): L
   }
 
   const result = lessonArcadeLessonSchema.safeParse(data)
-  
+
   if (!result.success) {
     const errorMessages = result.error.issues.map(issue =>
       `${issue.path.join('.')}: ${issue.message}`
     )
-    
+
     throw new LessonLoadError(
       'VALIDATION',
       'There is an issue with the lesson data that prevents it from loading properly.',
@@ -60,7 +60,7 @@ function validateLesson(data: unknown, slug: string, source: 'demo' | 'user'): L
       }
     )
   }
-  
+
   return result.data
 }
 
@@ -190,20 +190,6 @@ export const lessonRegistry: LessonRegistry = {
 }
 
 /**
- * Loads a lesson by slug with deterministic behavior:
- * - If slug exists in lessonRegistry (demo), return demoLoader() and let its LessonLoadError propagate
- * - Otherwise, call loadUserLessonBySlug(slug) and let its LessonLoadError propagate
- */
-export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson> {
-  const demoLoader = lessonRegistry[slug]
-  if (demoLoader) {
-    return demoLoader()
-  }
-  
-  return await loadUserLessonBySlug(slug)
-}
-
-/**
  * Demo lesson summary interface for UI listing
  */
 export interface DemoLessonSummary {
@@ -220,7 +206,7 @@ export interface DemoLessonSummary {
  */
 export function getDemoLessonSummaries(): DemoLessonSummary[] {
   const lessons: DemoLessonSummary[] = []
-  
+
   // Load React Hooks lesson summary
   try {
     const reactHooks = loadReactHooksLesson()
@@ -235,7 +221,7 @@ export function getDemoLessonSummaries(): DemoLessonSummary[] {
   } catch (error) {
     console.error('Error loading React Hooks lesson summary:', error)
   }
-  
+
   // Load Effective Meetings lesson summary
   try {
     const effectiveMeetings = loadEffectiveMeetingsLesson()
@@ -250,7 +236,7 @@ export function getDemoLessonSummaries(): DemoLessonSummary[] {
   } catch (error) {
     console.error('Error loading Effective Meetings lesson summary:', error)
   }
-  
+
   // Load Design Feedback Basics lesson summary
   try {
     const designFeedback = loadDesignFeedbackLesson()
@@ -310,6 +296,20 @@ export function getDemoLessonSummaries(): DemoLessonSummary[] {
   } catch (error) {
     console.error('Error loading Running Effective 1:1s lesson summary:', error)
   }
-  
+
   return lessons
+}
+
+/**
+ * Loads a lesson by slug with deterministic behavior:
+ * - If slug exists in lessonRegistry (demo), return demoLoader() and let its LessonLoadError propagate
+ * - Otherwise, call loadUserLessonBySlug(slug) and let its LessonLoadError propagate
+ */
+export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson> {
+  const demoLoader = lessonRegistry[slug]
+  if (demoLoader) {
+    return demoLoader()
+  }
+
+  return await loadUserLessonBySlug(slug)
 }

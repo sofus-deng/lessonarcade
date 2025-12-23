@@ -27,7 +27,7 @@
       "summary": "Learn how to prepare effectively for feedback that will be well-received",
       "timeRange": {
         "startSeconds": 0,
-        "endSeconds": 700
+        "endAtSeconds": 700
       },
       "keyPoints": [
         "Clarify your intention before starting the conversation",
@@ -168,7 +168,7 @@
       "summary": "Master proven techniques for delivering feedback that is heard and understood",
       "timeRange": {
         "startSeconds": 700,
-        "endSeconds": 1400
+        "endAtSeconds": 1400
       },
       "keyPoints": [
         "Use specific, observable behaviors rather than judgments",
@@ -309,7 +309,7 @@
       "summary": "Learn strategies to ensure feedback leads to meaningful change",
       "timeRange": {
         "startSeconds": 1400,
-        "endSeconds": 2100
+        "endAtSeconds": 2100
       },
       "keyPoints": [
         "Create clear action plans together after feedback",

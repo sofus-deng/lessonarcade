@@ -99,7 +99,7 @@ export default function DebugLessonPage() {
               <div className="mb-3">
                 <span className="font-medium">Time Range:</span>
                 <span className="ml-2">
-                  {level.timeRange.startSeconds}s - {level.timeRange.endSeconds}s
+                  {level.timeRange.startSeconds}s - {level.timeRange.endAtSeconds}s
                 </span>
               </div>
             )}

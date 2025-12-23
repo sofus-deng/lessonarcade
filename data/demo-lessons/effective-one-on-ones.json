@@ -27,7 +27,7 @@
       "summary": "Understand the true purpose of 1:1s and how to prepare effectively",
       "timeRange": {
         "startSeconds": 0,
-        "endSeconds": 600
+        "endAtSeconds": 600
       },
       "keyPoints": [
         "1:1s are for the direct report, not the manager",
@@ -168,7 +168,7 @@
       "summary": "Master techniques for productive 1:1 conversations",
       "timeRange": {
         "startSeconds": 600,
-        "endSeconds": 1200
+        "endAtSeconds": 1200
       },
       "keyPoints": [
         "Start with personal check-in before work topics",
@@ -309,7 +309,7 @@
       "summary": "Ensure 1:1s lead to meaningful outcomes and career growth",
       "timeRange": {
         "startSeconds": 1200,
-        "endSeconds": 1800
+        "endAtSeconds": 1800
       },
       "keyPoints": [
         "Document action items and commitments from each 1:1",

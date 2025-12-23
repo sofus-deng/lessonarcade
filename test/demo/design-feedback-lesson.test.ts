@@ -65,7 +65,7 @@ describe('Design Feedback Basics Lesson', () => {
       expect(level.summary).toBeTruthy()
       expect(level.timeRange).toBeDefined()
       expect(level.timeRange?.startSeconds).toBeGreaterThanOrEqual(0)
-      expect(level.timeRange?.endSeconds).toBeGreaterThan(level.timeRange?.startSeconds || 0)
+      expect(level.timeRange?.endAtSeconds).toBeGreaterThan(level.timeRange?.startSeconds || 0)
       expect(level.keyPoints).toBeInstanceOf(Array)
       expect(level.items).toBeInstanceOf(Array)
     })

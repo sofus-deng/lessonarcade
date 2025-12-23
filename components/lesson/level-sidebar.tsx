@@ -100,7 +100,7 @@ export function LevelSidebar({ levels, currentLevelIndex, onLevelSelect, scoring
                       <span>{level.items.length} items</span>
                       {level.timeRange && (
                         <span>
-                          {Math.floor((level.timeRange.endSeconds - level.timeRange.startSeconds) / 60)}m
+                          {Math.floor((level.timeRange.endAtSeconds - level.timeRange.startSeconds) / 60)}m
                         </span>
                       )}
                     </div>

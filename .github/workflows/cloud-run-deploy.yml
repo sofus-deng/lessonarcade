@@ -61,6 +61,18 @@ jobs:
       - name: Check presskit
         run: pnpm presskit:check
 
+      - name: Install Playwright browser dependencies (Chromium only)
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run e2e tests with production server
+        run: pnpm test:e2e:ci
+        env:
+          PLAYWRIGHT_WEB_SERVER_CMD: "pnpm start -- -p 3100"
+          NODE_ENV: production
+          LOGGING_SALT: "ci-salt"
+          STUDIO_BASIC_AUTH_USER: "ci"
+          STUDIO_BASIC_AUTH_PASS: "ci"
+
   deploy:
     name: Deploy to Cloud Run
     needs: quality

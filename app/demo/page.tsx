@@ -19,7 +19,7 @@ export default async function DemoPage() {
   const demoLessons = await getDemoLessonSummaries()
 
   return (
-    <div className="min-h-screen bg-la-bg">
+    <div data-testid="la-demo-page" className="min-h-screen bg-la-bg">
       {/* Header Section */}
       <div className="bg-la-surface border-b border-la-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

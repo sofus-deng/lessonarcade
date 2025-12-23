@@ -23,8 +23,9 @@ const resolveDisplayLanguage = (value?: string): LanguageCode | undefined => {
 }
 
 export async function generateMetadata({ params }: Pick<VoiceChatPageProps, 'params'>): Promise<Metadata> {
+  const { slug } = await params
+  
   try {
-    const { slug } = await params
     const lesson = await loadLessonBySlug(slug)
 
     return {
@@ -60,7 +61,7 @@ export default async function VoiceChatPage({ params, searchParams }: VoiceChatP
   } catch (error) {
     const normalizedError = normalizeLessonLoadError(error)
     return (
-      <div className="min-h-screen bg-la-bg">
+      <div data-testid="la-voice-chat-page" className="min-h-screen bg-la-bg">
         <LessonLoadErrorView 
           error={normalizedError} 
           debug={sp.debug === "1" || sp.debug === "true"} 
@@ -71,6 +72,8 @@ export default async function VoiceChatPage({ params, searchParams }: VoiceChatP
 
   const displayLanguage = resolveDisplayLanguage(sp.displayLanguage)
   return (
-    <VoiceChatFlow lesson={lessonData} initialDisplayLanguage={displayLanguage} />
+    <div data-testid="la-voice-chat-page">
+      <VoiceChatFlow lesson={lessonData} initialDisplayLanguage={displayLanguage} />
+    </div>
   )
 }

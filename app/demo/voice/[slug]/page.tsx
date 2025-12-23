@@ -7,14 +7,15 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 
 interface VoiceLessonPageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
 export async function generateMetadata({ params }: VoiceLessonPageProps): Promise<Metadata> {
+  const { slug } = await params
+  
   try {
-    const { slug } = await params
     const lesson = await loadLessonBySlug(slug)
     
     return {
@@ -47,11 +48,11 @@ export async function generateMetadata({ params }: VoiceLessonPageProps): Promis
 }
 
 export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) {
+  const { slug } = await params
   let lesson: LessonArcadeLesson | null = null
   let error: unknown = null
   
   try {
-    const { slug } = await params
     lesson = await loadLessonBySlug(slug)
   } catch (e) {
     error = e
@@ -65,7 +66,7 @@ export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) 
   // Fallback for any other unexpected errors
   if (error) {
     return (
-      <div className="min-h-screen bg-la-bg p-8">
+      <div data-testid="la-voice-page" className="min-h-screen bg-la-bg p-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-la-surface rounded-lg border border-la-border p-8 text-center">
             <h1 className="text-3xl font-bold text-la-bg mb-4">
@@ -99,7 +100,7 @@ export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) 
   // Success state - render voice lesson
   if (lesson) {
     return (
-      <div className="min-h-screen bg-la-bg">
+      <div data-testid="la-voice-page" className="min-h-screen bg-la-bg">
         <VoiceLessonPlayer lesson={lesson} />
       </div>
     )
@@ -107,7 +108,7 @@ export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) 
   
   // Fallback if lesson is null for some reason
   return (
-    <div className="min-h-screen bg-la-bg p-8">
+    <div data-testid="la-voice-page" className="min-h-screen bg-la-bg p-8">
       <div className="max-w-4xl mx-auto">
         <div className="bg-la-surface rounded-lg border border-la-border p-8 text-center">
           <h1 className="text-3xl font-bold text-la-bg mb-4">

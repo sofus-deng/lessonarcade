@@ -56,7 +56,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
   if (loadError) {
     const normalizedError = normalizeLessonLoadError(loadError)
     return (
-      <div className="min-h-screen bg-la-bg">
+      <div data-testid="la-lesson-page" className="min-h-screen bg-la-bg">
         <LessonLoadErrorView 
           error={normalizedError} 
           debug={debug === "1" || debug === "true"} 
@@ -67,7 +67,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
 
   if (lesson) {
     return (
-      <div className="min-h-screen bg-la-bg">
+      <div data-testid="la-lesson-page" className="min-h-screen bg-la-bg">
         <LessonPlayer lesson={lesson} />
       </div>
     )
@@ -76,7 +76,7 @@ export default async function LessonPage({ params, searchParams }: LessonPagePro
   // Final fallback
   const fallbackError = normalizeLessonLoadError(new Error("The lesson could not be loaded."))
   return (
-    <div className="min-h-screen bg-la-bg">
+    <div data-testid="la-lesson-page" className="min-h-screen bg-la-bg">
       <LessonLoadErrorView error={fallbackError} />
     </div>
   )

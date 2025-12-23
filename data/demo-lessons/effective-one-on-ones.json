@@ -1,0 +1,447 @@
+{
+  "id": "effective-one-on-ones-guide",
+  "slug": "effective-one-on-ones",
+  "title": "Running Effective 1:1s",
+  "shortDescription": "Transform one-on-one meetings into valuable touchpoints that build trust and drive growth.",
+  "longDescription": "Master the art of running impactful one-on-one meetings. This comprehensive guide covers preparation, conversation frameworks, and follow-up strategies to make your 1:1s the most valuable time on your calendar.",
+  "estimatedDurationMinutes": 30,
+  "tags": [
+    "management",
+    "one-on-ones",
+    "leadership",
+    "coaching",
+    "team-management"
+  ],
+  "language": "en",
+  "video": {
+    "provider": "youtube",
+    "videoId": "R7q6eOJm7tM",
+    "startAtSeconds": 0,
+    "endAtSeconds": 1800
+  },
+  "levels": [
+    {
+      "id": "level-1",
+      "index": 0,
+      "title": "Purpose and Preparation",
+      "summary": "Understand the true purpose of 1:1s and how to prepare effectively",
+      "timeRange": {
+        "startSeconds": 0,
+        "endSeconds": 600
+      },
+      "keyPoints": [
+        "1:1s are for the direct report, not the manager",
+        "Prepare by reviewing notes and setting an agenda together",
+        "Create psychological safety through consistent scheduling",
+        "Focus on growth, development, and unblocking work"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q1",
+          "prompt": "Who is the primary beneficiary of a 1:1 meeting?",
+          "promptI18n": {
+            "zh": "誰是一對一會議的主要受益者？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "The manager",
+              "textI18n": {
+                "zh": "經理"
+              }
+            },
+            {
+              "id": "b",
+              "text": "The direct report",
+              "textI18n": {
+                "zh": "直屬下屬"
+              }
+            },
+            {
+              "id": "c",
+              "text": "The company",
+              "textI18n": {
+                "zh": "公司"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Both parties equally",
+              "textI18n": {
+                "zh": "雙方平等"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "While both benefit, the 1:1 is primarily for the direct report's growth, development, and support needs.",
+          "explanationI18n": {
+            "zh": "雖然雙方都受益，但一對一主要是為直屬下屬的成長、發展和支持需求。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q2",
+          "prompt": "What is the best way to prepare for a 1:1?",
+          "promptI18n": {
+            "zh": "準備一對一的最佳方法是什麼？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Show up and see what comes up",
+              "textI18n": {
+                "zh": "出現並看看會發生什麼"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Review previous notes and ask your report to add agenda items",
+              "textI18n": {
+                "zh": "審查之前的筆記並要求您的下屬添加議程項目"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Prepare a full agenda of what you want to cover",
+              "textI18n": {
+                "zh": "準備一份您想要涵蓋內容的完整議程"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Skip preparation to keep it casual",
+              "textI18n": {
+                "zh": "跳過準備以保持隨意"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Preparation shows respect and ensures continuity. Letting your report add agenda items ensures their priorities are addressed.",
+          "explanationI18n": {
+            "zh": "準備表現出尊重並確保連續性。讓您的下屬添加議程項目可以確保他們的優先事項得到處理。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q3",
+          "prompt": "Describe a 1:1 meeting you've experienced that was particularly valuable. What made it effective?",
+          "promptI18n": {
+            "zh": "描述一次您經歷過的特別有價值的一對一會議。是什麼讓它有效？"
+          },
+          "placeholder": "Reflect on what made the meeting impactful...",
+          "placeholderI18n": {
+            "zh": "反思是什麼讓會議有影響力..."
+          },
+          "guidance": "Consider preparation, conversation flow, psychological safety, and outcomes from that meeting.",
+          "guidanceI18n": {
+            "zh": "考慮準備、對話流程、心理安全和那次會議的結果。"
+          },
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp1",
+          "message": "Great! You understand the purpose and preparation for effective 1:1s. Let's learn how to run the conversation.",
+          "messageI18n": {
+            "zh": "很好！您了解了有效一對一的目的和準備。讓我們學習如何進行對話。"
+          },
+          "actionHint": "Ready to learn conversation techniques? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "準備好學習對話技巧了嗎？繼續到下一部分。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "level-2",
+      "index": 1,
+      "title": "Running the Conversation",
+      "summary": "Master techniques for productive 1:1 conversations",
+      "timeRange": {
+        "startSeconds": 600,
+        "endSeconds": 1200
+      },
+      "keyPoints": [
+        "Start with personal check-in before work topics",
+        "Listen more than you speak - aim for 80/20 split",
+        "Ask open-ended questions that encourage reflection",
+        "Address blockers and development needs proactively"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q4",
+          "prompt": "What is the recommended speaking ratio for managers in 1:1s?",
+          "promptI18n": {
+            "zh": "經理在一對一會議中建議的發言比例是多少？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Manager speaks 80%, report speaks 20%",
+              "textI18n": {
+                "zh": "經理發言 80%，下屬發言 20%"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Manager speaks 50%, report speaks 50%",
+              "textI18n": {
+                "zh": "經理發言 50%，下屬發言 50%"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Manager speaks 20%, report speaks 80%",
+              "textI18n": {
+                "zh": "經理發言 20%，下屬發言 80%"
+              }
+            },
+            {
+              "id": "d",
+              "text": "It doesn't matter as long as you cover everything",
+              "textI18n": {
+                "zh": "只要涵蓋所有內容，這並不重要"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "c"
+          ],
+          "explanation": "The 80/20 rule (report speaks 80%, manager speaks 20%) ensures the conversation focuses on their needs and concerns.",
+          "explanationI18n": {
+            "zh": "80/20 法則（下屬發言 80%，經理發言 20%）確保對話專注於他們的需求和關注點。"
+          },
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q5",
+          "prompt": "Why is starting with a personal check-in important?",
+          "promptI18n": {
+            "zh": "為什麼以個人簽到開始很重要？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "It's just polite conversation",
+              "textI18n": {
+                "zh": "這只是禮貌的對話"
+              }
+            },
+            {
+              "id": "b",
+              "text": "It builds trust and shows you care about them as a person",
+              "textI18n": {
+                "zh": "它建立信任並表明您關心他們作為一個人"
+              }
+            },
+            {
+              "id": "c",
+              "text": "It fills time if you don't have work topics",
+              "textI18n": {
+                "zh": "如果您沒有工作主題，它可以填補時間"
+              }
+            },
+            {
+              "id": "d",
+              "text": "It's not important - skip to work topics",
+              "textI18n": {
+                "zh": "這不重要 - 直接跳到工作主題"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Personal check-ins build psychological safety and demonstrate that you value the whole person, not just their output.",
+          "explanationI18n": {
+            "zh": "個人簽到建立心理安全，並表明您重視整個人，而不僅僅是他們的產出。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q6",
+          "prompt": "What are three open-ended questions you would ask in a 1:1 to encourage your direct report to reflect on their work and growth?",
+          "promptI18n": {
+            "zh": "您會在一對一中問哪三個開放式問題，以鼓勵您的直屬下屬反思他們的工作和成長？"
+          },
+          "placeholder": "List your questions here...",
+          "placeholderI18n": {
+            "zh": "在此列出您的問題..."
+          },
+          "guidance": "Think about questions that can't be answered with yes/no and that prompt deeper thinking about challenges, goals, and development.",
+          "guidanceI18n": {
+            "zh": "考慮那些不能用是/否回答並能引發對挑戰、目標和發展更深入思考的問題。"
+          },
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp2",
+          "message": "Excellent! You're mastering conversation techniques. Now let's learn about follow-up and growth planning.",
+          "messageI18n": {
+            "zh": "太棒了！您正在掌握對話技巧。現在讓我們學習關於後續跟進和成長規劃。"
+          },
+          "actionHint": "Ready to learn follow-up strategies? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "準備好學習後續跟進策略了嗎？繼續到下一部分。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "level-3",
+      "index": 2,
+      "title": "Follow-up and Growth Planning",
+      "summary": "Ensure 1:1s lead to meaningful outcomes and career growth",
+      "timeRange": {
+        "startSeconds": 1200,
+        "endSeconds": 1800
+      },
+      "keyPoints": [
+        "Document action items and commitments from each 1:1",
+        "Review progress on previous commitments at the start of each meeting",
+        "Use 1:1s for career development and goal setting",
+        "Provide regular feedback, not just during performance reviews"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q7",
+          "prompt": "How should you handle action items from a 1:1?",
+          "promptI18n": {
+            "zh": "您應該如何處理一對一中的行動項目？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Hope everyone remembers what they agreed to",
+              "textI18n": {
+                "zh": "希望每個人都記得他們同意了什麼"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Document them and review progress at the next 1:1",
+              "textI18n": {
+                "zh": "記錄它們並在下一次一對一中審查進度"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Only document items for the manager",
+              "textI18n": {
+                "zh": "只記錄經理的項目"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Skip action items to keep things casual",
+              "textI18n": {
+                "zh": "跳過行動項目以保持隨意"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Documenting and reviewing action items creates accountability and ensures progress continues between meetings.",
+          "explanationI18n": {
+            "zh": "記錄和審查行動項目可以建立問責，並確保進度在會議之間持續。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q8",
+          "prompt": "When is the best time to give feedback in a 1:1?",
+          "promptI18n": {
+            "zh": "在一對一中給予回饋的最佳時機是什麼時候？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Only during annual performance reviews",
+              "textI18n": {
+                "zh": "僅在年度績效評估期間"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Regularly, as part of ongoing conversation",
+              "textI18n": {
+                "zh": "定期，作為持續對話的一部分"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Never - feedback is for other meetings",
+              "textI18n": {
+                "zh": "從不 - 回饋用於其他會議"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Only when there's a serious problem",
+              "textI18n": {
+                "zh": "僅當有嚴重問題時"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Regular feedback in 1:1s prevents surprises, builds trust, and enables continuous improvement.",
+          "explanationI18n": {
+            "zh": "在一對一中定期給予回饋可以防止驚喜，建立信任，並實現持續改進。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q9",
+          "prompt": "Describe how you would structure a 1:1 focused on career development. What topics would you cover and in what order?",
+          "promptI18n": {
+            "zh": "描述您將如何構建一個專注於職業發展的一對一。您將涵蓋哪些主題以及按什麼順序？"
+          },
+          "placeholder": "Outline your career development 1:1 structure...",
+          "placeholderI18n": {
+            "zh": "概述您的職業發展一對一結構..."
+          },
+          "guidance": "Consider long-term goals, skill development, opportunities, and how you can support their growth journey.",
+          "guidanceI18n": {
+            "zh": "考慮長期目標、技能發展、機會，以及您如何支持他們的成長之旅。"
+          },
+          "maxCharacters": 600
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp3",
+          "message": "Congratulations! You've mastered the complete approach to running effective 1:1s.",
+          "messageI18n": {
+            "zh": "恭喜！您已經掌握了運行有效一對一的完整方法。"
+          },
+          "actionHint": "Ready to transform your team's 1:1 culture?",
+          "actionHintI18n": {
+            "zh": "準備好改變您團隊的一對一文化了嗎？"
+          }
+        }
+      ]
+    }
+  ]
+}

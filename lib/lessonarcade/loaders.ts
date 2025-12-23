@@ -5,6 +5,9 @@ import { loadUserLessonBySlug } from './storage'
 import reactHooksLesson from '@/data/demo-lessons/react-hooks-intro.json'
 import effectiveMeetingsLesson from '@/data/demo-lessons/effective-meetings.json'
 import designFeedbackLesson from '@/data/demo-lessons/design-feedback-basics.json'
+import decisionMakingUncertaintyLesson from '@/data/demo-lessons/decision-making-uncertainty.json'
+import feedbackThatLandsLesson from '@/data/demo-lessons/feedback-that-lands.json'
+import effectiveOneOnOnesLesson from '@/data/demo-lessons/effective-one-on-ones.json'
 
 /**
  * Typed error for lesson loading failures
@@ -116,6 +119,60 @@ export function loadDesignFeedbackLesson(): LessonArcadeLesson {
 }
 
 /**
+ * Loads and validates the Decision-Making Under Uncertainty demo lesson
+ */
+export function loadDecisionMakingUncertaintyLesson(): LessonArcadeLesson {
+  try {
+    return validateLesson(decisionMakingUncertaintyLesson, 'decision-making-uncertainty', 'demo')
+  } catch (error) {
+    if (error instanceof LessonLoadError) {
+      throw error
+    }
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load Decision-Making Under Uncertainty demo lesson',
+      { slug: 'decision-making-uncertainty', source: 'demo' }
+    )
+  }
+}
+
+/**
+ * Loads and validates the Giving Feedback That Lands demo lesson
+ */
+export function loadFeedbackThatLandsLesson(): LessonArcadeLesson {
+  try {
+    return validateLesson(feedbackThatLandsLesson, 'feedback-that-lands', 'demo')
+  } catch (error) {
+    if (error instanceof LessonLoadError) {
+      throw error
+    }
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load Giving Feedback That Lands demo lesson',
+      { slug: 'feedback-that-lands', source: 'demo' }
+    )
+  }
+}
+
+/**
+ * Loads and validates the Running Effective 1:1s demo lesson
+ */
+export function loadEffectiveOneOnOnesLesson(): LessonArcadeLesson {
+  try {
+    return validateLesson(effectiveOneOnOnesLesson, 'effective-one-on-ones', 'demo')
+  } catch (error) {
+    if (error instanceof LessonLoadError) {
+      throw error
+    }
+    throw new LessonLoadError(
+      'LOAD_FAILED',
+      'Failed to load Running Effective 1:1s demo lesson',
+      { slug: 'effective-one-on-ones', source: 'demo' }
+    )
+  }
+}
+
+/**
  * Simple lesson registry for future expansion
  */
 export interface LessonRegistry {
@@ -126,6 +183,9 @@ export const lessonRegistry: LessonRegistry = {
   'react-hooks-intro': loadReactHooksLesson,
   'effective-meetings': loadEffectiveMeetingsLesson,
   'design-feedback-basics': loadDesignFeedbackLesson,
+  'decision-making-uncertainty': loadDecisionMakingUncertaintyLesson,
+  'feedback-that-lands': loadFeedbackThatLandsLesson,
+  'effective-one-on-ones': loadEffectiveOneOnOnesLesson,
   // Future lessons can be added here
 }
 
@@ -204,6 +264,51 @@ export function getDemoLessonSummaries(): DemoLessonSummary[] {
     })
   } catch (error) {
     console.error('Error loading Design Feedback Basics lesson summary:', error)
+  }
+
+  // Load Decision-Making Under Uncertainty lesson summary
+  try {
+    const decisionMakingUncertainty = loadDecisionMakingUncertaintyLesson()
+    lessons.push({
+      slug: decisionMakingUncertainty.slug,
+      title: decisionMakingUncertainty.title,
+      shortDescription: decisionMakingUncertainty.shortDescription,
+      tags: decisionMakingUncertainty.tags,
+      estimatedDurationMinutes: decisionMakingUncertainty.estimatedDurationMinutes || 0,
+      language: decisionMakingUncertainty.language
+    })
+  } catch (error) {
+    console.error('Error loading Decision-Making Under Uncertainty lesson summary:', error)
+  }
+
+  // Load Giving Feedback That Lands lesson summary
+  try {
+    const feedbackThatLands = loadFeedbackThatLandsLesson()
+    lessons.push({
+      slug: feedbackThatLands.slug,
+      title: feedbackThatLands.title,
+      shortDescription: feedbackThatLands.shortDescription,
+      tags: feedbackThatLands.tags,
+      estimatedDurationMinutes: feedbackThatLands.estimatedDurationMinutes || 0,
+      language: feedbackThatLands.language
+    })
+  } catch (error) {
+    console.error('Error loading Giving Feedback That Lands lesson summary:', error)
+  }
+
+  // Load Running Effective 1:1s lesson summary
+  try {
+    const effectiveOneOnOnes = loadEffectiveOneOnOnesLesson()
+    lessons.push({
+      slug: effectiveOneOnOnes.slug,
+      title: effectiveOneOnOnes.title,
+      shortDescription: effectiveOneOnOnes.shortDescription,
+      tags: effectiveOneOnOnes.tags,
+      estimatedDurationMinutes: effectiveOneOnOnes.estimatedDurationMinutes || 0,
+      language: effectiveOneOnOnes.language
+    })
+  } catch (error) {
+    console.error('Error loading Running Effective 1:1s lesson summary:', error)
   }
   
   return lessons

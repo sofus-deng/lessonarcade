@@ -1,0 +1,447 @@
+{
+  "id": "decision-making-uncertainty-guide",
+  "slug": "decision-making-uncertainty",
+  "title": "Decision-Making Under Uncertainty",
+  "shortDescription": "Learn frameworks and techniques for making confident decisions when information is incomplete.",
+  "longDescription": "Master the art of making sound decisions in uncertain environments. This comprehensive guide covers decision frameworks, risk assessment techniques, and practical strategies for moving forward when you don't have all the answers.",
+  "estimatedDurationMinutes": 40,
+  "tags": [
+    "decision-making",
+    "leadership",
+    "strategy",
+    "problem-solving",
+    "management"
+  ],
+  "language": "en",
+  "video": {
+    "provider": "youtube",
+    "videoId": "wZ9s0d6fGgQ",
+    "startAtSeconds": 0,
+    "endAtSeconds": 2400
+  },
+  "levels": [
+    {
+      "id": "level-1",
+      "index": 0,
+      "title": "Understanding Uncertainty Types",
+      "summary": "Learn to identify different types of uncertainty and how they impact decision-making",
+      "timeRange": {
+        "startSeconds": 0,
+        "endSeconds": 800
+      },
+      "keyPoints": [
+        "Distinguish between known unknowns and unknown unknowns",
+        "Recognize when you have enough information to decide",
+        "Understand the cost of delaying decisions",
+        "Identify which uncertainties matter most"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q1",
+          "prompt": "What is the difference between a 'known unknown' and an 'unknown unknown'?",
+          "promptI18n": {
+            "zh": "'已知未知'和'未知未知'之間有什麼區別？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "There is no difference - both are unpredictable",
+              "textI18n": {
+                "zh": "沒有區別 - 兩者都是不可預測的"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Known unknowns are things you know you don't know; unknown unknowns are things you don't realize you don't know",
+              "textI18n": {
+                "zh": "已知未知是你知道自己不知道的事情；未知未知是你沒有意識到自己不知道的事情"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Known unknowns are mathematical; unknown unknowns are philosophical",
+              "textI18n": {
+                "zh": "已知未知是數學上的；未知未知是哲學上的"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Known unknowns can be researched; unknown unknowns cannot",
+              "textI18n": {
+                "zh": "已知未知可以研究；未知未知不可以"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Known unknowns are gaps in your knowledge that you're aware of, while unknown unknowns are factors you haven't even considered. This distinction is crucial for planning.",
+          "explanationI18n": {
+            "zh": "已知未知是你意識到的知識空白，而未知未知是你甚至沒有考慮到的因素。這種區別對規劃至關重要。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q2",
+          "prompt": "When should you make a decision despite having incomplete information?",
+          "promptI18n": {
+            "zh": "什麼時候你應該在資訊不完整的情況下做出決策？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Never - always gather all possible information first",
+              "textI18n": {
+                "zh": "從不 - 總是先收集所有可能的資訊"
+              }
+            },
+            {
+              "id": "b",
+              "text": "When the cost of waiting exceeds the cost of being wrong",
+              "textI18n": {
+                "zh": "當等待的成本超過犯錯的成本時"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Only when you have at least 90% of the information",
+              "textI18n": {
+                "zh": "只有當你擁有至少 90% 的資訊時"
+              }
+            },
+            {
+              "id": "d",
+              "text": "When you feel confident about the outcome",
+              "textI18n": {
+                "zh": "當你對結果感到自信時"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "The optimal time to decide is when the value of additional information is less than the cost of delaying the decision. This is known as the 'good enough' decision point.",
+          "explanationI18n": {
+            "zh": "做出決策的最佳時機是當額外資訊的價值低於延遲決策的成本時。這被稱為'足夠好'的決策點。"
+          },
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "open_ended",
+          "id": "q3",
+          "prompt": "Describe a situation where you had to make a decision with incomplete information. What uncertainty type was it, and how did you approach it?",
+          "promptI18n": {
+            "zh": "描述一次你必須在資訊不完整的情況下做出決策的經歷。那是什麼類型的不確定性，你是如何處理的？"
+          },
+          "placeholder": "Share your experience with uncertainty...",
+          "placeholderI18n": {
+            "zh": "分享您處理不確定性的經歷..."
+          },
+          "guidance": "Think about what information was missing, what assumptions you made, and what framework you used (or could have used).",
+          "guidanceI18n": {
+            "zh": "考慮缺少了什麼資訊，你做了什麼假設，以及你使用了什麼框架（或本可以使用什麼框架）。"
+          },
+          "maxCharacters": 600
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp1",
+          "message": "Great! You understand the types of uncertainty. Let's explore decision frameworks that help you navigate them.",
+          "messageI18n": {
+            "zh": "很好！您了解了不確定性的類型。讓我們探索幫助您應對它們的決策框架。"
+          },
+          "actionHint": "Ready to learn decision frameworks? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "準備好學習決策框架了嗎？繼續到下一部分。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "level-2",
+      "index": 1,
+      "title": "Decision Frameworks",
+      "summary": "Master practical frameworks for structured decision-making under uncertainty",
+      "timeRange": {
+        "startSeconds": 800,
+        "endSeconds": 1600
+      },
+      "keyPoints": [
+        "Use decision trees to map outcomes and probabilities",
+        "Apply the 70% rule: decide when you're 70% confident",
+        "Consider opportunity costs of indecision",
+        "Use scenario planning for complex situations"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q4",
+          "prompt": "What is the '70% rule' in decision-making?",
+          "promptI18n": {
+            "zh": "在決策中，'70% 法則'是什麼？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "You should be 70% confident before making any decision",
+              "textI18n": {
+                "zh": "在做任何決策之前，你應該有 70% 的把握"
+              }
+            },
+            {
+              "id": "b",
+              "text": "You need 70% of stakeholders to agree",
+              "textI18n": {
+                "zh": "你需要 70% 的利益相關者同意"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Wait until you have 70% of available data",
+              "textI18n": {
+                "zh": "等到你擁有 70% 的可用數據"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Make the decision when you have 70% of the information you'd like to have",
+              "textI18n": {
+                "zh": "當你擁有你希望擁有資訊的 70% 時做出決策"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "d"
+          ],
+          "explanation": "The 70% rule suggests that waiting for 100% information is rarely practical. Making a decision at 70% allows you to move forward while remaining adaptable.",
+          "explanationI18n": {
+            "zh": "70% 法則表明，等待 100% 的資訊很少是實際的。在 70% 時做出決策可以讓您繼續前進，同時保持適應性。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q5",
+          "prompt": "What is the primary benefit of using a decision tree?",
+          "promptI18n": {
+            "zh": "使用決策樹的主要好處是什麼？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "It guarantees the correct outcome",
+              "textI18n": {
+                "zh": "它保證正確的結果"
+              }
+            },
+            {
+              "id": "b",
+              "text": "It makes decisions faster",
+              "textI18n": {
+                "zh": "它讓決策更快"
+              }
+            },
+            {
+              "id": "c",
+              "text": "It visualizes different paths, outcomes, and probabilities to inform your choice",
+              "textI18n": {
+                "zh": "它可視化了不同的路徑、結果和概率，以幫助您做出選擇"
+              }
+            },
+            {
+              "id": "d",
+              "text": "It eliminates all risk from the decision",
+              "textI18n": {
+                "zh": "它消除了決策中的所有風險"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "c"
+          ],
+          "explanation": "Decision trees help you see the full picture of possible outcomes, their likelihood, and associated costs, making uncertainty more manageable.",
+          "explanationI18n": {
+            "zh": "決策樹幫助您看到可能結果的全貌、它們的可能性以及相關成本，使不確定性更容易管理。"
+          },
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "open_ended",
+          "id": "q6",
+          "prompt": "How would you apply scenario planning to a major business decision you're facing? What are 2-3 plausible scenarios?",
+          "promptI18n": {
+            "zh": "您將如何將情境規劃應用於您面臨的重大業務決策？有哪 2-3 種合理的情境？"
+          },
+          "placeholder": "Describe your scenarios and how they differ...",
+          "placeholderI18n": {
+            "zh": "描述您的情境以及它們有何不同..."
+          },
+          "guidance": "Consider best case, worst case, and most likely scenarios. What factors would lead to each outcome?",
+          "guidanceI18n": {
+            "zh": "考慮最佳情況、最壞情況和最可能的情境。什麼因素會導致每種結果？"
+          },
+          "maxCharacters": 600
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp2",
+          "message": "Excellent! You're equipped with decision frameworks. Now let's learn about risk assessment and taking action.",
+          "messageI18n": {
+            "zh": "太棒了！您已經掌握了決策框架。現在讓我們學習風險評估和採取行動。"
+          },
+          "actionHint": "Ready to assess risks and take action? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "準備好評估風險並採取行動了嗎？繼續到下一部分。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "level-3",
+      "index": 2,
+      "title": "Risk Assessment & Action",
+      "summary": "Learn to evaluate risks and move forward with confidence",
+      "timeRange": {
+        "startSeconds": 1600,
+        "endSeconds": 2400
+      },
+      "keyPoints": [
+        "Distinguish between reversible and irreversible decisions",
+        "Calculate the cost of inaction vs. action",
+        "Build in review points and feedback loops",
+        "Communicate uncertainty to stakeholders effectively"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q7",
+          "prompt": "How should you approach reversible vs. irreversible decisions differently?",
+          "promptI18n": {
+            "zh": "你應該如何以不同的方式處理可逆轉和不可逆轉的決策？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Treat them exactly the same",
+              "textI18n": {
+                "zh": "以完全相同的方式處理它們"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Move faster on reversible decisions, be more deliberate on irreversible ones",
+              "textI18n": {
+                "zh": "在可逆轉決策上更快，在不可逆轉決策上更謹慎"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Never make irreversible decisions",
+              "textI18n": {
+                "zh": "永遠不要做出不可逆轉的決策"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Only make reversible decisions",
+              "textI18n": {
+                "zh": "只做出可逆轉的決策"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Reversible decisions can be corrected if wrong, so you should move faster. Irreversible decisions require more careful consideration and higher confidence.",
+          "explanationI18n": {
+            "zh": "可逆轉的決策如果錯了可以糾正，所以你應該更快。不可逆轉的決策需要更仔細的考慮和更高的把握。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q8",
+          "prompt": "What is an effective way to communicate uncertainty to stakeholders?",
+          "promptI18n": {
+            "zh": "向利益相關者溝通不確定性的有效方法是什麼？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Hide all uncertainty to appear confident",
+              "textI18n": {
+                "zh": "隱藏所有不確定性以顯得自信"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Share the decision framework, key assumptions, and plan for review",
+              "textI18n": {
+                "zh": "分享決策框架、關鍵假設和審查計劃"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Only share the final decision",
+              "textI18n": {
+                "zh": "只分享最終決策"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Delay communication until all uncertainty is resolved",
+              "textI18n": {
+                "zh": "延遲溝通，直到所有不確定性都得到解決"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Transparent communication about uncertainty, including your framework and review plans, builds trust and helps stakeholders understand the reasoning.",
+          "explanationI18n": {
+            "zh": "關於不確定性的透明溝通，包括您的框架和審查計劃，可以建立信任並幫助利益相關者理解推理過程。"
+          },
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "open_ended",
+          "id": "q9",
+          "prompt": "Describe a system you would implement to review and adjust decisions made under uncertainty. How would you track outcomes and learn?",
+          "promptI18n": {
+            "zh": "描述您將實施的一個系統，用於審查和調整在不確定性下做出的決策。您將如何追蹤結果並學習？"
+          },
+          "placeholder": "Think about feedback loops, metrics, and review cadence...",
+          "placeholderI18n": {
+            "zh": "考慮反饋循環、指標和審查節奏..."
+          },
+          "guidance": "Consider how you'll measure success, when you'll review, and how you'll capture lessons learned for future decisions.",
+          "guidanceI18n": {
+            "zh": "考慮您將如何衡量成功、何時審查，以及如何為未來的決策捕獲經驗教訓。"
+          },
+          "maxCharacters": 600
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp3",
+          "message": "Congratulations! You've mastered the art of making confident decisions under uncertainty.",
+          "messageI18n": {
+            "zh": "恭喜！您已經掌握了在不確定性下做出自信決策的藝術。"
+          },
+          "actionHint": "Ready to apply these skills to real-world decisions?",
+          "actionHintI18n": {
+            "zh": "準備好將這些技能應用到現實世界的決策中嗎？"
+          }
+        }
+      ]
+    }
+  ]
+}

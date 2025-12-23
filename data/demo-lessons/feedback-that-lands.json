@@ -1,0 +1,447 @@
+{
+  "id": "feedback-that-lands-guide",
+  "slug": "feedback-that-lands",
+  "title": "Giving Feedback That Lands",
+  "shortDescription": "Master techniques for delivering feedback that is heard, understood, and acted upon.",
+  "longDescription": "Learn the art of delivering feedback that actually makes a difference. This comprehensive guide covers preparation, delivery techniques, and follow-up strategies to ensure your feedback is received constructively and leads to meaningful change.",
+  "estimatedDurationMinutes": 35,
+  "tags": [
+    "feedback",
+    "communication",
+    "leadership",
+    "management",
+    "soft-skills"
+  ],
+  "language": "en",
+  "video": {
+    "provider": "youtube",
+    "videoId": "hD1f8KgVdY0",
+    "startAtSeconds": 0,
+    "endAtSeconds": 2100
+  },
+  "levels": [
+    {
+      "id": "level-1",
+      "index": 0,
+      "title": "Preparing for Feedback Conversations",
+      "summary": "Learn how to prepare effectively for feedback that will be well-received",
+      "timeRange": {
+        "startSeconds": 0,
+        "endSeconds": 700
+      },
+      "keyPoints": [
+        "Clarify your intention before starting the conversation",
+        "Gather specific examples and data to support your feedback",
+        "Choose the right timing and setting for the conversation",
+        "Check your own emotional state before delivering feedback"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q1",
+          "prompt": "What is the most important question to ask yourself before giving feedback?",
+          "promptI18n": {
+            "zh": "在給予回饋之前，問自己最重要的問題是什麼？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "How can I make them feel bad?",
+              "textI18n": {
+                "zh": "我如何能讓他們感覺不好？"
+              }
+            },
+            {
+              "id": "b",
+              "text": "What is my intention and what outcome do I want?",
+              "textI18n": {
+                "zh": "我的意圖是什麼，我想要什麼結果？"
+              }
+            },
+            {
+              "id": "c",
+              "text": "How quickly can I get this over with?",
+              "textI18n": {
+                "zh": "我能多快完成這件事？"
+              }
+            },
+            {
+              "id": "d",
+              "text": "What will they think of me?",
+              "textI18n": {
+                "zh": "他們會怎麼看我？"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Clarifying your intention ensures your feedback is constructive and focused on improvement rather than criticism.",
+          "explanationI18n": {
+            "zh": "澄清您的意圖可以確保您的回饋是建設性的，並專注於改進而不是批評。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q2",
+          "prompt": "When is the best time to give difficult feedback?",
+          "promptI18n": {
+            "zh": "什麼時候是給予困難回饋的最佳時機？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Immediately, no matter what the circumstances",
+              "textI18n": {
+                "zh": "立即，無論情況如何"
+              }
+            },
+            {
+              "id": "b",
+              "text": "In a private setting when both parties are calm and have time",
+              "textI18n": {
+                "zh": "在雙方都冷靜且有時間的私人環境中"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Never - avoid difficult conversations",
+              "textI18n": {
+                "zh": "從不 - 避免困難的對話"
+              }
+            },
+            {
+              "id": "d",
+              "text": "In front of the whole team to make an example",
+              "textI18n": {
+                "zh": "在整個團隊面前作為榜樣"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Private settings with adequate time allow for open dialogue and reduce defensiveness, making feedback more likely to be received well.",
+          "explanationI18n": {
+            "zh": "有足夠時間的私人環境允許開放對話並減少防禦心理，使回饋更有可能被很好地接受。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q3",
+          "prompt": "Describe a feedback conversation that went poorly. Looking back, how could better preparation have changed the outcome?",
+          "promptI18n": {
+            "zh": "描述一次進展不順利的回饋對話。回顧過去，更好的準備如何能改變結果？"
+          },
+          "placeholder": "Reflect on what was missing in the preparation...",
+          "placeholderI18n": {
+            "zh": "反思準備過程中缺少了什麼..."
+          },
+          "guidance": "Consider timing, setting, your emotional state, and whether you had clear intentions and examples.",
+          "guidanceI18n": {
+            "zh": "考慮時機、環境、您的情緒狀態，以及您是否有明確的意圖和例子。"
+          },
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp1",
+          "message": "Great! You understand the importance of preparation. Let's learn techniques for delivering feedback effectively.",
+          "messageI18n": {
+            "zh": "很好！您了解了準備的重要性。讓我們學習有效傳遞回饋的技巧。"
+          },
+          "actionHint": "Ready to learn delivery techniques? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "準備好學習傳遞技巧了嗎？繼續到下一部分。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "level-2",
+      "index": 1,
+      "title": "Delivering Feedback Effectively",
+      "summary": "Master proven techniques for delivering feedback that is heard and understood",
+      "timeRange": {
+        "startSeconds": 700,
+        "endSeconds": 1400
+      },
+      "keyPoints": [
+        "Use specific, observable behaviors rather than judgments",
+        "Focus on impact rather than intent",
+        "Balance positive and constructive feedback",
+        "Ask questions to ensure understanding and invite dialogue"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q4",
+          "prompt": "Which feedback statement is most effective?",
+          "promptI18n": {
+            "zh": "哪個回饋陳述最有效？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "You're always late to meetings.",
+              "textI18n": {
+                "zh": "你總是遲到會議。"
+              }
+            },
+            {
+              "id": "b",
+              "text": "I noticed you were late to the last three team meetings, which delayed our start time.",
+              "textI18n": {
+                "zh": "我注意到你遲到了最近三次團隊會議，這延遲了我們的開始時間。"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Your time management needs improvement.",
+              "textI18n": {
+                "zh": "你的時間管理需要改進。"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Nobody likes it when you're late.",
+              "textI18n": {
+                "zh": "沒有人喜歡你遲到。"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Specific, observable facts are actionable and less likely to trigger defensiveness than generalizations or judgments.",
+          "explanationI18n": {
+            "zh": "具體的、可觀察的事實是可操作的，並且比概括或判斷更不容易引發防禦心理。"
+          },
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q5",
+          "prompt": "Why is focusing on impact more effective than focusing on intent?",
+          "promptI18n": {
+            "zh": "為什麼專注於影響比專注於意圖更有效？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Intent is always positive, so it doesn't matter",
+              "textI18n": {
+                "zh": "意圖總是積極的，所以它不重要"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Impact is what actually affects others and the work",
+              "textI18n": {
+                "zh": "影響是實際影響他人和工作的因素"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Intent is impossible to know",
+              "textI18n": {
+                "zh": "意圖是不可能知道的"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Impact is always negative",
+              "textI18n": {
+                "zh": "影響總是消極的"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Focusing on impact helps the recipient understand the real consequences of their behavior, regardless of what they intended.",
+          "explanationI18n": {
+            "zh": "專注於影響可以幫助接收者理解他們行為的真正後果，無論他們的意圖是什麼。"
+          },
+          "difficulty": "medium",
+          "points": 15
+        },
+        {
+          "kind": "open_ended",
+          "id": "q6",
+          "prompt": "How would you deliver feedback to a colleague who consistently interrupts others in meetings? What would you say?",
+          "promptI18n": {
+            "zh": "您將如何向一位在會議中經常打斷他人的同事給予回饋？您會說什麼？"
+          },
+          "placeholder": "Write your feedback statement here...",
+          "placeholderI18n": {
+            "zh": "在此寫下您的回饋陳述..."
+          },
+          "guidance": "Use specific observations, focus on impact, and frame it as an invitation to improve rather than a criticism.",
+          "guidanceI18n": {
+            "zh": "使用具體的觀察，專注於影響，並將其框架為改進的邀請而不是批評。"
+          },
+          "maxCharacters": 500
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp2",
+          "message": "Excellent! You're mastering delivery techniques. Now let's learn about follow-up and ensuring impact.",
+          "messageI18n": {
+            "zh": "太棒了！您正在掌握傳遞技巧。現在讓我們學習關於後續跟進和確保影響。"
+          },
+          "actionHint": "Ready to learn about follow-up strategies? Continue to the next section.",
+          "actionHintI18n": {
+            "zh": "準備好學習後續跟進策略了嗎？繼續到下一部分。"
+          }
+        }
+      ]
+    },
+    {
+      "id": "level-3",
+      "index": 2,
+      "title": "Following Up and Ensuring Impact",
+      "summary": "Learn strategies to ensure feedback leads to meaningful change",
+      "timeRange": {
+        "startSeconds": 1400,
+        "endSeconds": 2100
+      },
+      "keyPoints": [
+        "Create clear action plans together after feedback",
+        "Schedule follow-up conversations to check progress",
+        "Provide support and resources for improvement",
+        "Recognize and acknowledge positive changes"
+      ],
+      "items": [
+        {
+          "kind": "multiple_choice",
+          "id": "q7",
+          "prompt": "What is the best approach after giving feedback?",
+          "promptI18n": {
+            "zh": "給予回饋後最好的方法是什麼？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Walk away and hope they figure it out",
+              "textI18n": {
+                "zh": "走開並希望他們自己想明白"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Create an action plan together and schedule a follow-up",
+              "textI18n": {
+                "zh": "一起制定行動計劃並安排後續跟進"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Give the same feedback again the next day",
+              "textI18n": {
+                "zh": "第二天再次給出相同的回饋"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Document it in their performance review for later",
+              "textI18n": {
+                "zh": "將其記錄在績效評估中以便以後使用"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Creating an action plan together ensures clarity and commitment, while follow-up conversations provide accountability and support.",
+          "explanationI18n": {
+            "zh": "一起制定行動計劃可以確保清晰度和承諾，而後續跟進對話則提供問責和支持。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "multiple_choice",
+          "id": "q8",
+          "prompt": "How should you respond when someone makes positive changes after your feedback?",
+          "promptI18n": {
+            "zh": "當有人在您的回饋後做出積極改變時，您應該如何回應？"
+          },
+          "options": [
+            {
+              "id": "a",
+              "text": "Say nothing - they're just doing what they should",
+              "textI18n": {
+                "zh": "什麼也不說 - 他們只是在做應該做的事"
+              }
+            },
+            {
+              "id": "b",
+              "text": "Acknowledge and appreciate their effort and progress",
+              "textI18n": {
+                "zh": "承認並感謝他們的努力和進步"
+              }
+            },
+            {
+              "id": "c",
+              "text": "Point out what they're still doing wrong",
+              "textI18n": {
+                "zh": "指出他們仍然做錯的地方"
+              }
+            },
+            {
+              "id": "d",
+              "text": "Take credit for their improvement",
+              "textI18n": {
+                "zh": "將他們的改進歸功於自己"
+              }
+            }
+          ],
+          "correctOptionIds": [
+            "b"
+          ],
+          "explanation": "Acknowledging positive change reinforces the behavior and builds trust, making future feedback more likely to be well-received.",
+          "explanationI18n": {
+            "zh": "承認積極改變可以強化行為並建立信任，使未來的回饋更有可能被很好地接受。"
+          },
+          "difficulty": "easy",
+          "points": 10
+        },
+        {
+          "kind": "open_ended",
+          "id": "q9",
+          "prompt": "Describe a system you would use to track feedback and follow-up across your team. How would you ensure accountability without micromanaging?",
+          "promptI18n": {
+            "zh": "描述您將使用的一個系統來追蹤團隊中的回饋和後續跟進。您將如何在不微觀管理的情況下確保問責？"
+          },
+          "placeholder": "Think about tools, processes, and communication patterns...",
+          "placeholderI18n": {
+            "zh": "考慮工具、流程和溝通模式..."
+          },
+          "guidance": "Consider regular check-ins, shared documentation, and how to balance support with autonomy.",
+          "guidanceI18n": {
+            "zh": "考慮定期檢查、共享文檔，以及如何平衡支持與自主性。"
+          },
+          "maxCharacters": 600
+        },
+        {
+          "kind": "checkpoint",
+          "id": "cp3",
+          "message": "Congratulations! You've mastered the complete cycle of giving feedback that lands.",
+          "messageI18n": {
+            "zh": "恭喜！您已經掌握了給予有效回饋的完整週期。"
+          },
+          "actionHint": "Ready to transform your team's feedback culture?",
+          "actionHintI18n": {
+            "zh": "準備好改變您團隊的回饋文化了嗎？"
+          }
+        }
+      ]
+    }
+  ]
+}

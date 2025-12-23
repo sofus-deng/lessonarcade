@@ -130,41 +130,17 @@ export const lessonRegistry: LessonRegistry = {
 }
 
 /**
- * Loads a lesson by slug, checking demo lessons first, then falling back to user lessons
- * Demo lessons always take precedence over user lessons
+ * Loads a lesson by slug with deterministic behavior:
+ * - If slug exists in lessonRegistry (demo), return demoLoader() and let its LessonLoadError propagate
+ * - Otherwise, call loadUserLessonBySlug(slug) and let its LessonLoadError propagate
  */
 export async function loadLessonBySlug(slug: string): Promise<LessonArcadeLesson> {
-  // First try to load from demo lessons (highest priority)
   const demoLoader = lessonRegistry[slug]
   if (demoLoader) {
-    try {
-      return demoLoader()
-    } catch (error) {
-      if (error instanceof LessonLoadError) {
-        // Re-throw LessonLoadError from demo lesson
-        throw error
-      }
-      console.error(`Error loading demo lesson "${slug}":`, error)
-      // Continue to try user lessons if demo lesson fails
-    }
+    return demoLoader()
   }
-
-  // If no demo lesson found or demo lesson failed, try user lessons
-  try {
-    return await loadUserLessonBySlug(slug)
-  } catch (error) {
-    if (error instanceof LessonLoadError) {
-      // Re-throw LessonLoadError from user lesson
-      throw error
-    }
-    
-    // If neither found, throw NOT_FOUND error
-    throw new LessonLoadError(
-      'NOT_FOUND',
-      'The lesson you\'re looking for doesn\'t exist or may have been removed.',
-      { slug, source: 'demo' } // Default to demo since we tried demo first
-    )
-  }
+  
+  return await loadUserLessonBySlug(slug)
 }
 
 /**

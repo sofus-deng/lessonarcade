@@ -1,8 +1,10 @@
+# NOTE: This workflow is disabled for automatic execution.
+# Cloud Run is the primary contest deployment path.
+# This VPS deploy workflow is only for manual use if needed.
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
   deploy:

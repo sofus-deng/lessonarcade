@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LessonArcade - Progress Tracker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #e0e0e0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      color: #a0a0a0;
+      font-size: 1.1rem;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 25px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: #a0a0a0;
+      font-size: 0.9rem;
+    }
+
+    .section {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #667eea;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section-title::before {
+      content: '';
+      width: 4px;
+      height: 24px;
+      background: linear-gradient(180deg, #667eea, #764ba2);
+      border-radius: 2px;
+    }
+
+    .work-items {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .work-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .work-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .work-item-id {
+      font-size: 0.85rem;
+      color: #667eea;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .work-item-title {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+      color: #e0e0e0;
+    }
+
+    .work-item-desc {
+      font-size: 0.9rem;
+      color: #a0a0a0;
+      line-height: 1.5;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .status-pending {
+      background: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+    }
+
+    .status-in-progress {
+      background: rgba(33, 150, 243, 0.2);
+      color: #2196f3;
+    }
+
+    .status-completed {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4caf50;
+    }
+
+    .legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      color: #a0a0a0;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.pending {
+      background: #ffc107;
+    }
+
+    .legend-dot.in-progress {
+      background: #2196f3;
+    }
+
+    .legend-dot.completed {
+      background: #4caf50;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      color: #666;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>LessonArcade Progress Tracker</h1>
+      <p class="subtitle">AI Partner Catalyst Hackathon - Work Items</p>
+    </header>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-number" id="total-items">6</div>
+        <div class="stat-label">Total Work Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="completed-items">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="in-progress-items">0</div>
+        <div class="stat-label">In Progress</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="pending-items">6</div>
+        <div class="stat-label">Pending</div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-dot completed"></div>
+        <span>Completed</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot in-progress"></div>
+        <span>In Progress</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-dot pending"></div>
+        <span>Pending</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Phase 1 Work Items</h2>
+      <div class="work-items">
+        <div class="work-item" data-id="la1-p0-01" data-status="completed">
+          <div class="work-item-id">LA1-P0-01</div>
+          <div class="work-item-title">Submission Requirements Extraction</div>
+          <div class="work-item-desc">Extract and document MUST-HAVES from Devpost challenge pages</div>
+          <span class="status-badge status-completed">Completed</span>
+        </div>
+        <div class="work-item" data-id="la1-p0-02" data-status="pending">
+          <div class="work-item-id">LA1-P0-02</div>
+          <div class="work-item-title">CI/CD Workflow Fixes</div>
+          <div class="work-item-desc">Fix PLAYWRIGHT_WEB_SERVER_CMD and add Playwright browser caching</div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+        <div class="work-item" data-id="la1-p0-03" data-status="pending">
+          <div class="work-item-id">LA1-P0-03</div>
+          <div class="work-item-title">VPS Deploy Workflow Handling</div>
+          <div class="work-item-desc">Convert deploy.yml to workflow_dispatch only or remove</div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Phase 3 Work Items</h2>
+      <div class="work-items">
+        <div class="work-item" data-id="la3-p0-02" data-status="pending">
+          <div class="work-item-id">LA3-P0-02</div>
+          <div class="work-item-title">LICENSE File Creation</div>
+          <div class="work-item-desc">Add Apache-2.0 license file to root of repository</div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+        <div class="work-item" data-id="la3-p0-03" data-status="pending">
+          <div class="work-item-id">LA3-P0-03</div>
+          <div class="work-item-title">README.md Rewrite</div>
+          <div class="work-item-desc">Create judge-friendly README with pitch, tech stack, setup, and deployment info
+          </div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+        <div class="work-item" data-id="la3-p0-04" data-status="pending">
+          <div class="work-item-id">LA3-P0-04</div>
+          <div class="work-item-title">Submission Documentation</div>
+          <div class="work-item-desc">Create docs/submission.md with Devpost write-up sections and pre-submit checklist
+          </div>
+          <span class="status-badge status-pending">Pending</span>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Last updated: December 2025 | LessonArcade Project</p>
+    </footer>
+  </div>
+
+  <script>
+    // Update work item status by editing the data-status attribute
+    // Valid values: 'pending', 'in-progress', 'completed'
+
+    function updateStats() {
+      const items = document.querySelectorAll('.work-item');
+      let completed = 0;
+      let inProgress = 0;
+      let pending = 0;
+
+      items.forEach(item => {
+        const status = item.getAttribute('data-status');
+        const badge = item.querySelector('.status-badge');
+
+        if (status === 'completed') {
+          completed++;
+          badge.className = 'status-badge status-completed';
+          badge.textContent = 'Completed';
+        } else if (status === 'in-progress') {
+          inProgress++;
+          badge.className = 'status-badge status-in-progress';
+          badge.textContent = 'In Progress';
+        } else {
+          pending++;
+          badge.className = 'status-badge status-pending';
+          badge.textContent = 'Pending';
+        }
+      });
+
+      document.getElementById('total-items').textContent = items.length;
+      document.getElementById('completed-items').textContent = completed;
+      document.getElementById('in-progress-items').textContent = inProgress;
+      document.getElementById('pending-items').textContent = pending;
+    }
+
+    // Initialize stats on page load
+    updateStats();
+
+    // Example: To mark an item as completed, edit the HTML:
+    // <div class="work-item" data-id="la1-p0-01" data-status="completed">
+  </script>
+</body>
+
+</html>

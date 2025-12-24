@@ -128,46 +128,88 @@ pnpm test:e2e:ci
 
 The application is deployed on Google Cloud Run for automatic scaling and cost-effective hosting.
 
-#### Prerequisites
-- Google Cloud project with Cloud Run API enabled
-- `gcloud` CLI installed and authenticated
-- Artifact Registry configured
+**IMPORTANT FOR CONTEST SUBMISSION:** The hosted URL for judging must come from Google Cloud Run. Do not use other cloud hosting providers (Vercel, Netlify, etc.) for this contest submission.
 
-#### Deployment Steps
+For complete, copy-paste runnable deployment instructions, see [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
-1. Build and push the Docker image:
+#### Quick Start
+
 ```bash
-gcloud builds submit --tag gcr.io/PROJECT_ID/lessonarcade
-```
+# 1. Set up your Google Cloud project
+export PROJECT_ID="your-project-id"
+gcloud config set project $PROJECT_ID
 
-2. Deploy to Cloud Run:
-```bash
-gcloud run deploy lessonarcade \
-  --image gcr.io/PROJECT_ID/lessonarcade \
-  --platform managed \
-  --region us-central1 \
-  --allow-unauthenticated
-```
+# 2. Enable required APIs
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
 
-3. Configure required secrets in Cloud Run:
-- `GEMINI_API_KEY`
-- `ELEVENLABS_API_KEY`
-- `STUDIO_BASIC_AUTH_USER`
-- `STUDIO_BASIC_AUTH_PASS`
-- `LOGGING_SALT`
-- Voice preset IDs (e.g., `VOICE_TTS_VOICE_ID_EN_INSTRUCTOR`)
-
-#### Automated Deployment
-Use the provided deployment script:
-```bash
+# 3. Use the provided deployment script
 ./scripts/cloud-run/deploy.sh
 ```
 
-### Health Check
-Verify deployment with the smoke test:
+#### Prerequisites
+
+- Google Cloud project with Cloud Run API enabled
+- `gcloud` CLI installed and authenticated
+- Artifact Registry configured
+- Docker installed and running
+
+#### Required APIs
+
+- `run.googleapis.com` — Cloud Run Admin API
+- `cloudbuild.googleapis.com` — Cloud Build API
+- `artifactregistry.googleapis.com` — Artifact Registry API
+- `secretmanager.googleapis.com` — Secret Manager API
+
+#### Environment Variables and Secrets
+
+For production deployments, use Google Cloud Secret Manager for sensitive values (API keys, passwords):
+
 ```bash
-./scripts/cloud-run/smoke.sh
+# Create secrets
+gcloud secrets create gemini-api-key --replication-policy="automatic"
+gcloud secrets create elevenlabs-api-key --replication-policy="automatic"
+gcloud secrets create studio-auth-user --replication-policy="automatic"
+gcloud secrets create studio-auth-pass --replication-policy="automatic"
+
+# Add secret values
+echo -n "your-key" | gcloud secrets versions add gemini-api-key --data-file=-
 ```
+
+See [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md) for complete secret management instructions.
+
+#### Port Configuration
+
+Cloud Run automatically injects a `PORT` environment variable. The application listens on this port (configured in [`Dockerfile`](Dockerfile)):
+
+```dockerfile
+ENV PORT=8080
+ENV HOSTNAME=0.0.0.0
+```
+
+#### Health Checks
+
+Cloud Run automatically configures a default TCP startup probe:
+- `timeoutSeconds: 240`
+- `periodSeconds: 240`
+- `failureThreshold: 1`
+
+For custom health check configuration, see [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
+
+#### Getting the Hosted URL
+
+After deployment, capture the service URL for Devpost submission:
+
+```bash
+SERVICE_URL=$(gcloud run services describe lessonarcade \
+    --region=us-central1 \
+    --format="value(status.url)")
+
+echo "$SERVICE_URL"
+```
+
+#### Troubleshooting
+
+For common failures (port issues, health check failures, missing environment variables), see the [Common Failures](docs/deploy-cloud-run.md#common-failures) section in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
 ## Privacy & Data Handling
 
@@ -207,7 +249,8 @@ This checklist ensures the repository is strictly contest-compliant per Devpost 
 ### Hosted Project URL
 - [ ] **Public URL to deployed application** for judging and testing
   - Must be accessible to judges without authentication barriers
-  - Recommended: Google Cloud Run deployment
+  - **Required: Google Cloud Run deployment** — Do not use other cloud hosting providers for this contest
+  - See [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md) for deployment instructions
 
 ### Public Open Source Repository
 - [ ] **Public GitHub repository** with visible license

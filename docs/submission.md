@@ -1,6 +1,51 @@
 # AI Partner Catalyst Hackathon - Submission Requirements
 
-## MUST-HAVES Checklist for Devpost Submission
+## Devpost Submission Checklist
+
+This checklist ensures the repository is strictly contest-compliant per Devpost rules.
+
+### Hosted Project URL
+- [ ] **Public URL to deployed application** for judging and testing
+  - Must be accessible to judges without authentication barriers
+  - Recommended: Google Cloud Run deployment
+  - URL format: `https://[project-name]-[hash].a.run.app`
+
+### Public Open Source Repository
+- [ ] **Public GitHub repository** with visible license
+  - Repository must be publicly accessible
+  - LICENSE file included at repository root (Apache-2.0)
+  - License must be visible on repository landing page
+  - Repository contains all necessary source code, assets, and instructions
+  - Repository is functional and can be successfully installed and run
+
+### Demo Video Requirements
+- [ ] **Public YouTube or Vimeo link** (<= 3 minutes)
+  - Video uploaded to YouTube or Vimeo
+  - Made publicly visible (no private/unlisted restrictions)
+  - Duration: approximately 3 minutes or less
+  - Content requirements:
+    - [ ] Overview of what the project does
+    - [ ] Explanation of how the project solves a problem
+    - [ ] Footage showing the project functioning on the target platform
+    - [ ] No third-party trademarks or copyrighted music (unless permission granted)
+
+### English Requirement
+- [ ] **All submission materials in English**
+  - Text description in English
+  - Demo video in English OR includes English subtitles
+  - Testing instructions in English
+  - If non-English content is present, provide English translations
+
+### AI Usage Limitation
+- [ ] **Only allowed Google Cloud AI tools at runtime**
+  - Google Gemini API (via Google AI Studio or Vertex AI)
+  - ElevenLabs API (partner integration for voice synthesis)
+  - **No other AI APIs are used by the product at runtime**
+  - Development tools (e.g., AI coding assistants) may be used during development but must not be part of the deployed application
+
+---
+
+## Challenge-Specific Requirements
 
 ### Challenge Selection
 - [ ] **ElevenLabs Challenge** selected (LessonArcade uses ElevenLabs + Google Cloud AI)
@@ -10,29 +55,6 @@
 - [ ] Solution integrates both Google Cloud products (Gemini) AND ElevenLabs products
 - [ ] Project is newly created during contest period (Nov 17 - Dec 31, 2025)
 - [ ] Project runs on web platform (Next.js web application)
-
-### Repository Requirements
-- [ ] Repository is public and open source
-- [ ] LICENSE file included (Apache-2.0) - visible at top of repository page
-- [ ] Repository contains all necessary source code, assets, and instructions
-- [ ] Repository is functional and can be successfully installed and run
-
-### Submission Components
-- [ ] **URL to hosted Project** for judging and testing (Cloud Run deployment)
-- [ ] **URL to code repository** for judging and testing (GitHub)
-- [ ] **Demo video** (3 minutes max):
-  - [ ] Uploaded to YouTube or Vimeo
-  - [ ] Made public
-  - [ ] Shows project functioning on web platform
-  - [ ] In English or includes English subtitles
-  - [ ] No inappropriate, offensive, or infringing content
-  - [ ] No third-party advertising or sponsorship logos
-  - [ ] Original, unpublished work
-- [ ] **Text description** including:
-  - [ ] Summary of Project's features and functionality
-  - [ ] Technologies used (Google Cloud + ElevenLabs)
-  - [ ] Information about any data sources used
-  - [ ] Findings and learnings from the project
 
 ### Technology Constraints
 - [ ] Uses Google Cloud AI tools (Gemini models via Vertex AI or API)
@@ -152,6 +174,7 @@ graph TB
 - [ ] All source code committed to repository
 - [ ] Repository is public and accessible
 - [ ] No sensitive data (API keys, secrets) in repository
+- [ ] Playwright artifacts (.gitignore updated) not committed
 
 ### Testing
 - [ ] `pnpm lint` passes with no errors
@@ -178,6 +201,7 @@ graph TB
 - [ ] Demo video uploaded to YouTube/Vimeo and made public
 - [ ] Video is 3 minutes or less
 - [ ] Video shows project functioning
+- [ ] Video is in English or has English subtitles
 - [ ] Text description completed with all required sections
 - [ ] Challenge selected: ElevenLabs Challenge
 

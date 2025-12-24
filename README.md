@@ -200,6 +200,50 @@ graph TB
 
 Try the live demo at [demo-url-placeholder] (replace with actual Cloud Run URL)
 
+## Devpost Submission Checklist
+
+This checklist ensures the repository is strictly contest-compliant per Devpost rules.
+
+### Hosted Project URL
+- [ ] **Public URL to deployed application** for judging and testing
+  - Must be accessible to judges without authentication barriers
+  - Recommended: Google Cloud Run deployment
+
+### Public Open Source Repository
+- [ ] **Public GitHub repository** with visible license
+  - Repository must be publicly accessible
+  - LICENSE file included at repository root (Apache-2.0)
+  - License must be visible on repository landing page
+  - Repository contains all necessary source code, assets, and instructions
+  - Repository is functional and can be successfully installed and run
+
+### Demo Video Requirements
+- [ ] **Public YouTube or Vimeo link** (<= 3 minutes)
+  - Video uploaded to YouTube or Vimeo
+  - Made publicly visible (no private/unlisted restrictions)
+  - Duration: approximately 3 minutes or less
+  - Content requirements:
+    - [ ] Overview of what the project does
+    - [ ] Explanation of how the project solves a problem
+    - [ ] Footage showing the project functioning on the target platform
+    - [ ] No third-party trademarks or copyrighted music (unless permission granted)
+
+### English Requirement
+- [ ] **All submission materials in English**
+  - Text description in English
+  - Demo video in English OR includes English subtitles
+  - Testing instructions in English
+  - If non-English content is present, provide English translations
+
+### AI Usage Limitation
+- [ ] **Only allowed Google Cloud AI tools at runtime**
+  - Google Gemini API (via Google AI Studio or Vertex AI)
+  - ElevenLabs API (partner integration for voice synthesis)
+  - **No other AI APIs are used by the product at runtime**
+  - Development tools (e.g., AI coding assistants) may be used during development but must not be part of the deployed application
+
+*See [`docs/submission.md`](docs/submission.md) for complete submission requirements and pre-submit checklist.*
+
 ## Contributing
 
 This project is open source under the Apache-2.0 license. Contributions are welcome!

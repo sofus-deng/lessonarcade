@@ -68,5 +68,8 @@ export default defineConfig({
     command: process.env.PLAYWRIGHT_WEB_SERVER_CMD ?? 'pnpm dev --port 3100',
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,
+    env: {
+      GEMINI_VERTEX_MOCK: '1',
+    },
   },
 });

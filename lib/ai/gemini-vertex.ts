@@ -4,6 +4,46 @@ import { VertexAI } from "@google-cloud/vertexai"
  * Server-only Vertex AI Gemini client initialization
  * This file should never be imported from client components
  */
+export const SERVER_ONLY = true
+
+export interface GenerateContentRequest {
+  contents: Array<{
+    role: string
+    parts: Array<{ text: string }>
+  }>
+  generationConfig?: Record<string, unknown>
+  systemInstruction?: {
+    role: "system"
+    parts: Array<{ text: string }>
+  }
+}
+
+export interface GenerateContentResponse {
+  response: {
+    candidates?: Array<{
+      content?: {
+        parts?: Array<{ text?: string }>
+      }
+    }>
+    usageMetadata?: {
+      promptTokenCount?: number
+      candidatesTokenCount?: number
+      totalTokenCount?: number
+    }
+  }
+}
+
+export interface GeminiModelRunner {
+  generateContent(request: GenerateContentRequest): Promise<GenerateContentResponse>
+}
+
+export interface GeminiVertexClient {
+  getGenerativeModel(request: { model: string }): GeminiModelRunner
+}
+
+export interface GenerateGeminiTextDeps {
+  getClient?: () => GeminiVertexClient | null
+}
 
 /**
  * Environment variable validation
@@ -25,7 +65,7 @@ function validateVertexAIConfig(): void {
  * Get the Vertex AI client (lazy initialization)
  * This allows tests to modify environment variables and pick up changes
  */
-function getVertexAI(): VertexAI | null {
+function getVertexAIClient(): GeminiVertexClient | null {
   try {
     validateVertexAIConfig()
     const GCP_PROJECT_ID = process.env.GCP_PROJECT_ID!
@@ -116,13 +156,16 @@ export async function generateGeminiText({
   messages,
   systemPrompt,
   options = {},
+  deps,
 }: {
   messages: Message[]
   systemPrompt?: string
   options?: GenerateGeminiTextOptions
+  deps?: GenerateGeminiTextDeps
 }): Promise<GenerateGeminiTextResult> {
   // Get the Vertex AI client (lazy initialization)
-  const vertexAI = getVertexAI()
+  const getClient = deps?.getClient ?? getVertexAIClient
+  const vertexAI = getClient()
 
   // Validate configuration
   if (!vertexAI) {
@@ -160,7 +203,7 @@ export async function generateGeminiText({
   }
 
   // Build system instruction if provided
-  const systemInstruction = systemPrompt ? {
+  const systemInstruction: GenerateContentRequest["systemInstruction"] = systemPrompt ? {
     role: "system",
     parts: [{ text: systemPrompt }],
   } : undefined

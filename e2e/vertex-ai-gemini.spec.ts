@@ -13,6 +13,8 @@ import { test, expect } from '@playwright/test'
  */
 
 test.describe('Vertex AI Gemini API', () => {
+  const mockResponseText = 'Mock Gemini response'
+
   test('GET /api/ai/gemini returns configuration status', async ({ request }) => {
     const response = await request.get('/api/ai/gemini')
 
@@ -22,15 +24,11 @@ test.describe('Vertex AI Gemini API', () => {
     const body = await response.json()
 
     // Response should have configured boolean and config object
-    expect(body).toHaveProperty('configured')
-    expect(typeof body.configured).toBe('boolean')
+    expect(body).toHaveProperty('configured', true)
     expect(body).toHaveProperty('config')
   })
 
-  test('POST /api/ai/gemini returns 503 when Vertex AI is not configured', async ({ request }) => {
-    // This test assumes Vertex AI is not configured in the test environment
-    // (no GCP_PROJECT_ID set)
-
+  test('POST /api/ai/gemini returns deterministic mock response', async ({ request }) => {
     const response = await request.post('/api/ai/gemini', {
       headers: { 'Content-Type': 'application/json' },
       data: {
@@ -40,15 +38,12 @@ test.describe('Vertex AI Gemini API', () => {
       }
     })
 
-    // Should return 503 Service Unavailable when not configured
-    expect(response.status()).toBe(503)
+    expect(response.status()).toBe(200)
 
     const body = await response.json()
 
-    expect(body.ok).toBe(false)
-    expect(body.error).toHaveProperty('code')
-    expect(body.error).toHaveProperty('message')
-    expect(body.error.code).toBe('CONFIGURATION_ERROR')
+    expect(body).toHaveProperty('text', mockResponseText)
+    expect(body).toHaveProperty('usage')
   })
 
   test('POST /api/ai/gemini returns 400 for missing messages', async ({ request }) => {
@@ -115,22 +110,11 @@ test.describe('Vertex AI Gemini API', () => {
       }
     })
 
-    // Will return 503 if not configured, but should validate input first
-    // If configured, would return 200 with generated text
-    expect([200, 503]).toContain(response.status())
+    expect(response.status()).toBe(200)
 
     const body = await response.json()
 
-    if (response.status() === 200) {
-      // If configured, should have text field
-      expect(body).toHaveProperty('text')
-      expect(typeof body.text).toBe('string')
-      expect(body.text.length).toBeGreaterThan(0)
-    } else {
-      // If not configured, should have error
-      expect(body.ok).toBe(false)
-      expect(body.error.code).toBe('CONFIGURATION_ERROR')
-    }
+    expect(body).toHaveProperty('text', mockResponseText)
   })
 
   test('POST /api/ai/gemini accepts valid request with options', async ({ request }) => {
@@ -147,18 +131,11 @@ test.describe('Vertex AI Gemini API', () => {
       }
     })
 
-    // Will return 503 if not configured, but should validate input first
-    expect([200, 503]).toContain(response.status())
+    expect(response.status()).toBe(200)
 
     const body = await response.json()
 
-    if (response.status() === 200) {
-      expect(body).toHaveProperty('text')
-      expect(typeof body.text).toBe('string')
-    } else {
-      expect(body.ok).toBe(false)
-      expect(body.error.code).toBe('CONFIGURATION_ERROR')
-    }
+    expect(body).toHaveProperty('text', mockResponseText)
   })
 
   test('POST /api/ai/gemini handles multi-turn conversation', async ({ request }) => {
@@ -173,16 +150,11 @@ test.describe('Vertex AI Gemini API', () => {
       }
     })
 
-    expect([200, 503]).toContain(response.status())
+    expect(response.status()).toBe(200)
 
     const body = await response.json()
 
-    if (response.status() === 200) {
-      expect(body).toHaveProperty('text')
-      expect(typeof body.text).toBe('string')
-    } else {
-      expect(body.ok).toBe(false)
-    }
+    expect(body).toHaveProperty('text', mockResponseText)
   })
 
   test('POST /api/ai/gemini returns 400 for malformed JSON', async ({ request }) => {

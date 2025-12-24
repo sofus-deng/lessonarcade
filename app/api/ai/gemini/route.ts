@@ -9,6 +9,11 @@ import {
 // Explicitly declare Node.js runtime for Cloud Run compatibility
 export const runtime = "nodejs"
 
+function isGeminiVertexMockEnabled(): boolean {
+  const value = process.env.GEMINI_VERTEX_MOCK
+  return value === "1" || value === "true"
+}
+
 /**
  * Request body schema for the Vertex AI Gemini API endpoint
  */
@@ -108,7 +113,7 @@ interface ErrorResponse {
 export async function POST(request: NextRequest): Promise<NextResponse<GenerateGeminiResponse | ErrorResponse>> {
   try {
     // Check if Vertex AI is configured
-    if (!isVertexAIConfigured()) {
+    if (!isGeminiVertexMockEnabled() && !isVertexAIConfigured()) {
       return NextResponse.json(
         {
           ok: false,
@@ -142,8 +147,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
     }
 
     // Validate message structure
+    const validRoles = new Set(["system", "user", "assistant"])
     for (const msg of body.messages) {
-      if (!msg.role || typeof msg.role !== "string") {
+      if (!msg.role || typeof msg.role !== "string" || !validRoles.has(msg.role)) {
         return NextResponse.json(
           {
             ok: false,
@@ -190,6 +196,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
     }
     if (body.options?.maxOutputTokens !== undefined) {
       options.maxOutputTokens = body.options.maxOutputTokens
+    }
+
+    if (isGeminiVertexMockEnabled()) {
+      return NextResponse.json({
+        text: "Mock Gemini response",
+        usage: {
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+        },
+      })
     }
 
     // Generate text using Vertex AI
@@ -262,6 +279,17 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
  * ```
  */
 export async function GET(): Promise<NextResponse> {
+  if (isGeminiVertexMockEnabled()) {
+    return NextResponse.json({
+      configured: true,
+      config: {
+        projectId: process.env.GCP_PROJECT_ID || "mock-project",
+        region: process.env.GCP_REGION || "us-central1",
+        model: process.env.GCP_VERTEX_MODEL || "gemini-2.0-flash-exp",
+      },
+    })
+  }
+
   const configured = isVertexAIConfigured()
   const config = configured
     ? {

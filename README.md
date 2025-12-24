@@ -25,6 +25,7 @@ LessonArcade is a voice-first educational platform that delivers engaging, acces
 ### Google Cloud Hosting & Services
 - **Google Cloud Run** — Serverless deployment with automatic scaling
 - **Gemini AI** — Content generation and lesson enhancement
+- **Vertex AI** — Production-grade Gemini integration with Application Default Credentials
 - **Google Artifact Registry** — Container image storage
 - **Google Cloud Secrets Manager** — Secure API key management
 
@@ -63,10 +64,41 @@ cp .env.example .env.local
 
 4. Configure environment variables in `.env.local`:
 
+### AI Configuration
+
+The application supports two modes for Gemini AI integration:
+
+#### Option 1: Developer API Key (Local Development)
+
+For local development and testing, use the Google AI Studio API key:
+
 ```bash
 # Google AI Studio API Key for Gemini
+# Get your key from: https://aistudio.google.com/app/apikey
 GEMINI_API_KEY=your_gemini_api_key_here
+```
 
+#### Option 2: Vertex AI (Production)
+
+For production deployments on Cloud Run, use Vertex AI with Application Default Credentials (ADC):
+
+```bash
+# Vertex AI Configuration (Production Mode)
+# When set, uses Vertex AI instead of developer API key
+GCP_PROJECT_ID=your-gcp-project-id
+GCP_REGION=us-central1
+GCP_VERTEX_MODEL=gemini-2.0-flash-exp
+```
+
+**Note**: Vertex AI mode is recommended for production deployments as it:
+- Uses Google Cloud's Application Default Credentials (ADC) for authentication
+- Eliminates the need to manage API keys
+- Provides better security and scalability
+- Integrates seamlessly with Cloud Run service accounts
+
+### Additional Environment Variables
+
+```bash
 # Basic Authentication for Lesson Studio
 STUDIO_BASIC_AUTH_USER=your_admin_username
 STUDIO_BASIC_AUTH_PASS=your_admin_password
@@ -140,9 +172,16 @@ export PROJECT_ID="your-project-id"
 gcloud config set project $PROJECT_ID
 
 # 2. Enable required APIs
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com aiplatform.googleapis.com
 
-# 3. Use the provided deployment script
+# 3. Grant Vertex AI permissions to Cloud Run service account
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT" \
+  --role="roles/aiplatform.user"
+
+# 4. Use the provided deployment script
 ./scripts/cloud-run/deploy.sh
 ```
 
@@ -159,6 +198,7 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregi
 - `cloudbuild.googleapis.com` — Cloud Build API
 - `artifactregistry.googleapis.com` — Artifact Registry API
 - `secretmanager.googleapis.com` — Secret Manager API
+- `aiplatform.googleapis.com` — Vertex AI API (for production mode)
 
 #### Environment Variables and Secrets
 
@@ -173,6 +213,12 @@ gcloud secrets create studio-auth-pass --replication-policy="automatic"
 
 # Add secret values
 echo -n "your-key" | gcloud secrets versions add gemini-api-key --data-file=-
+```
+
+**For Vertex AI mode**, set the following environment variables (non-sensitive, can be set directly):
+
+```bash
+--set-env-vars=GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1,GCP_VERTEX_MODEL=gemini-2.0-flash-exp
 ```
 
 See [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md) for complete secret management instructions.
@@ -228,14 +274,20 @@ graph TB
     A[User Browser] --> B[Next.js 16 App]
     B --> C[Voice API Routes]
     B --> D[Studio Analytics]
-    C --> E[ElevenLabs TTS API]
-    C --> F[Rate Limiter]
-    C --> G[Telemetry Emitter]
-    D --> H[Voice Analytics Dashboard]
-    G --> H
-    B --> I[Google Cloud Run]
-    I --> J[Artifact Registry]
-    I --> K[Cloud Secrets Manager]
+    B --> E[Vertex AI API Route]
+    C --> F[ElevenLabs TTS API]
+    C --> G[Rate Limiter]
+    C --> H[Telemetry Emitter]
+    D --> I[Voice Analytics Dashboard]
+    G --> I
+    E --> J[Vertex AI Client]
+    J --> K[Application Default Credentials]
+    K --> L[Cloud Run Service Account]
+    L --> M[Vertex AI API]
+    M --> N[Gemini Model]
+    B --> O[Google Cloud Run]
+    O --> P[Artifact Registry]
+    O --> Q[Cloud Secrets Manager]
 ```
 
 ## Demo

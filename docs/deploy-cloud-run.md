@@ -38,7 +38,7 @@ Before you begin, ensure you have:
 
 ### 1. Enable Required APIs
 
-Enable the Cloud Run, Cloud Build, Artifact Registry, and Secret Manager APIs:
+Enable the Cloud Run, Cloud Build, Artifact Registry, Secret Manager, and Vertex AI APIs:
 
 ```bash
 # Set your project ID
@@ -50,6 +50,7 @@ gcloud services enable run.googleapis.com
 gcloud services enable cloudbuild.googleapis.com
 gcloud services enable artifactregistry.googleapis.com
 gcloud services enable secretmanager.googleapis.com
+gcloud services enable aiplatform.googleapis.com
 ```
 
 ### 2. Create Artifact Registry Repository
@@ -84,6 +85,29 @@ gcloud auth login
 # For automated deployments, set up application default login
 gcloud auth application-default login
 ```
+
+### 5. Set Up Vertex AI IAM Permissions (Required for Production Mode)
+
+For Vertex AI integration, grant the Cloud Run service account the necessary permissions:
+
+```bash
+# Get the project number and service account
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+
+# Grant Vertex AI User role to the Cloud Run service account
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member="serviceAccount:$SERVICE_ACCOUNT" \
+    --role="roles/aiplatform.user"
+
+# Verify the permission was granted
+gcloud projects get-iam-policy $PROJECT_ID \
+    --filter="serviceAccount:$SERVICE_ACCOUNT" \
+    --flatten="bindings[].members" \
+    --format="table(bindings.role,bindings.members)"
+```
+
+**Note**: The `roles/aiplatform.user` role allows the service account to invoke Vertex AI models. This is the minimum required permission for Vertex AI operations.
 
 ## Setting Environment Variables Securely
 
@@ -145,6 +169,37 @@ export VOICE_TTS_VOICE_ID_ZH_INSTRUCTOR="your-voice-id"
 export VOICE_TTS_VOICE_ID_ZH_NARRATOR="your-voice-id"
 ```
 
+## AI Configuration Options
+
+LessonArcade supports two modes for Gemini AI integration:
+
+### Developer API Key Mode (Development)
+
+For local development and testing, use the Google AI Studio API key:
+
+```bash
+# Set GEMINI_API_KEY as a secret
+echo -n "your-gemini-api-key" | gcloud secrets versions add gemini-api-key --data-file=-
+```
+
+### Vertex AI Mode (Production - Recommended)
+
+For production deployments, use Vertex AI with Application Default Credentials (ADC):
+
+```bash
+# Set Vertex AI configuration as environment variables (not secrets)
+export GCP_PROJECT_ID=$PROJECT_ID
+export GCP_REGION="us-central1"
+export GCP_VERTEX_MODEL="gemini-2.0-flash-exp"
+```
+
+**Benefits of Vertex AI Mode**:
+- Uses Application Default Credentials (ADC) for authentication
+- No API key management required
+- Better security and scalability
+- Seamless integration with Cloud Run service accounts
+- Enterprise-grade access controls
+
 ## Build and Deploy Commands
 
 ### Method 1: Using the Provided Deployment Script (Recommended)
@@ -166,6 +221,11 @@ export IMAGE_TAG="latest"
 export STUDIO_BASIC_AUTH_USER="admin"
 export STUDIO_BASIC_AUTH_PASS="secure-password"
 export LOGGING_SALT="random-salt-string"
+
+# Set Vertex AI configuration (production mode)
+export GCP_PROJECT_ID=$PROJECT_ID
+export GCP_REGION="us-central1"
+export GCP_VERTEX_MODEL="gemini-2.0-flash-exp"
 
 # Set API keys (optional - can also use Secret Manager)
 export ELEVENLABS_API_KEY="your-elevenlabs-key"
@@ -204,7 +264,7 @@ gcloud run deploy $SERVICE_NAME \
     --min-instances=0 \
     --max-instances=10 \
     --concurrency=20 \
-    --set-env-vars=STUDIO_BASIC_AUTH_USER=admin,STUDIO_BASIC_AUTH_PASS=secure-password,LOGGING_SALT=random-salt-string
+    --set-env-vars=STUDIO_BASIC_AUTH_USER=admin,STUDIO_BASIC_AUTH_PASS=secure-password,LOGGING_SALT=random-salt-string,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1,GCP_VERTEX_MODEL=gemini-2.0-flash-exp
 ```
 
 ### Method 3: Deploy with Secret Manager (Recommended for Production)
@@ -221,7 +281,7 @@ export IMAGE_TAG="latest"
 docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG .
 docker push $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG
 
-# Deploy with secrets
+# Deploy with secrets and Vertex AI configuration
 gcloud run deploy $SERVICE_NAME \
     --image=$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG \
     --region=$REGION \
@@ -236,7 +296,8 @@ gcloud run deploy $SERVICE_NAME \
     --set-secrets=ELEVENLABS_API_KEY=elevenlabs-api-key:latest \
     --set-secrets=STUDIO_BASIC_AUTH_USER=studio-auth-user:latest \
     --set-secrets=STUDIO_BASIC_AUTH_PASS=studio-auth-pass:latest \
-    --set-secrets=LOGGING_SALT=logging-salt:latest
+    --set-secrets=LOGGING_SALT=logging-salt:latest \
+    --set-env-vars=GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1,GCP_VERTEX_MODEL=gemini-2.0-flash-exp
 ```
 
 ## Verify the Deployed Service
@@ -261,6 +322,9 @@ curl -I $SERVICE_URL/demo
 # Test a specific voice lesson
 curl -I $SERVICE_URL/demo/voice/effective-meetings
 
+# Test the Vertex AI API endpoint (GET for config check)
+curl $SERVICE_URL/api/ai/gemini
+
 # Test the studio endpoint (should return 401 without auth)
 curl -I $SERVICE_URL/studio
 
@@ -275,6 +339,7 @@ Open the following URLs in your browser:
 - Demo page: `https://YOUR_SERVICE_URL/demo`
 - Voice lesson: `https://YOUR_SERVICE_URL/demo/voice/effective-meetings`
 - Studio (requires auth): `https://YOUR_SERVICE_URL/studio`
+- Vertex AI API (GET): `https://YOUR_SERVICE_URL/api/ai/gemini`
 
 ### Run Smoke Tests
 
@@ -431,6 +496,40 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
    gcloud secrets get-iam-policy SECRET_NAME
    ```
 
+### Vertex AI Permission Errors
+
+**Symptom:** API calls to Vertex AI fail with "Permission denied" or "Access denied" errors
+
+**Cause:** Cloud Run service account does not have the necessary IAM permissions.
+
+**Solution:**
+
+1. **Verify service account has Vertex AI User role:**
+   ```bash
+   PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+   SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+   gcloud projects get-iam-policy $PROJECT_ID \
+       --filter="serviceAccount:$SERVICE_ACCOUNT" \
+       --format="table(bindings.role)"
+   ```
+
+2. **Grant Vertex AI User role if missing:**
+   ```bash
+   gcloud projects add-iam-policy-binding $PROJECT_ID \
+       --member="serviceAccount:$SERVICE_ACCOUNT" \
+       --role="roles/aiplatform.user"
+   ```
+
+3. **Check Vertex AI API is enabled:**
+   ```bash
+   gcloud services list --enabled | grep aiplatform
+   ```
+
+4. **Enable Vertex AI API if needed:**
+   ```bash
+   gcloud services enable aiplatform.googleapis.com
+   ```
+
 ### Build Failures
 
 **Symptom:** Docker build fails during deployment
@@ -507,3 +606,5 @@ gcloud secrets delete logging-salt
 - [Secret Manager Documentation](https://cloud.google.com/secret-manager/docs)
 - [Environment Variables Documentation](https://docs.cloud.google.com/run/docs/configuring/services/environment-variables)
 - [Health Checks Documentation](https://docs.cloud.google.com/run/docs/configuring/healthchecks)
+- [Vertex AI Documentation](https://cloud.google.com/vertex-ai/docs)
+- [Application Default Credentials](https://cloud.google.com/docs/authentication/application-default-credentials)

@@ -77,92 +77,26 @@ This checklist ensures the repository is strictly contest-compliant per Devpost 
 
 ---
 
-## Devpost Write-Up Draft
+## Devpost Write-Up
 
-### Problem
+**The canonical Devpost write-up content is located in [`docs/devpost-draft.md`](devpost-draft.md).**
 
-Traditional e-learning platforms face significant challenges in delivering engaging, accessible educational content:
+Copy the content from that file directly to Devpost for your submission. It includes all required sections:
+- Problem
+- Solution / What it does
+- How we built it
+- Architecture overview
+- Challenges
+- Accomplishments
+- What we learned
+- What's next
 
-1. **Static Content**: Text-heavy lessons lack engagement and fail to capture learner attention
-2. **Language Barriers**: Limited multilingual support excludes non-English speakers
-3. **Accessibility Gaps**: Visual-only content is inaccessible to visually impaired learners
-4. **No Analytics**: Educators lack insights into learner engagement and completion rates
-5. **Complex Infrastructure**: Deploying and scaling voice-enabled applications requires significant technical expertise and resources
-
-These barriers prevent educators from creating truly inclusive and engaging learning experiences that reach diverse global audiences.
-
-### Solution
-
-**LessonArcade** is a voice-first educational platform that transforms traditional lessons into interactive, AI-powered learning experiences. Built with Next.js 16 and deployed on Google Cloud Run, LessonArcade enables:
-
-- **Natural AI Voice Narration**: Using ElevenLabs' advanced text-to-speech API, lessons are delivered with human-like voices in multiple languages
-- **Interactive Controls**: Learners can pause, resume, and stop narration at any point
-- **Bilingual Support**: Full English and Chinese language support with automatic language detection
-- **Advanced Guardrails**: Acknowledgment system, cooldown periods, and multi-tier rate limiting to prevent abuse
-- **Comprehensive Analytics**: Real-time voice usage telemetry tracking completion rates, replay patterns, and interruption points
-- **Privacy-First Design**: All telemetry uses hashed IP addresses with no personal data collection
-
-### How It Uses Google Cloud + Partner Technology
-
-#### Google Cloud Technologies
-- **Google Cloud Run**: Serverless deployment with automatic scaling, ensuring the application handles traffic spikes efficiently while maintaining cost-effectiveness
-- **Gemini AI**: Content generation and lesson enhancement through Google's advanced AI models
-- **Google Artifact Registry**: Container image storage for Docker deployments
-- **Google Cloud Secrets Manager**: Secure management of API keys and sensitive configuration
-
-#### ElevenLabs Technology
-- **ElevenLabs Text-to-Speech API**: High-quality, natural-sounding voice synthesis in multiple languages
-- **Customizable Voice Presets**: Different voices for instructors, narrators, and content types
-- **Multilingual Support**: English and Chinese voice synthesis with consistent quality across languages
-
-The integration combines Google Cloud's scalable infrastructure with ElevenLabs' industry-leading voice technology to deliver a seamless, accessible learning experience.
-
-### Architecture
-
-```mermaid
-graph TB
-    A[User Browser] --> B[Next.js 16 App]
-    B --> C[Voice API Routes]
-    B --> D[Studio Analytics]
-    C --> E[ElevenLabs TTS API]
-    C --> F[Rate Limiter]
-    C --> G[Telemetry Emitter]
-    D --> H[Voice Analytics Dashboard]
-    G --> H
-    B --> I[Google Cloud Run]
-    I --> J[Artifact Registry]
-    I --> K[Cloud Secrets Manager]
-```
-
-**Key Components:**
-
-1. **Frontend**: Next.js 16 with App Router, React 19, TypeScript, Tailwind CSS
-2. **Voice System**: 
-   - Script building and chunking queue for optimal performance
-   - Request deduplication and caching
-   - Multi-tier rate limiting (minute/hour/day windows)
-3. **Analytics**: 
-   - Real-time voice usage tracking
-   - Completion and replay rate metrics
-   - Interruption point analysis
-4. **Deployment**: 
-   - Docker containerization with multi-stage builds
-   - Google Cloud Run with automatic scaling
-   - Basic Auth protection for admin routes
-
-### What's Next
-
-**Short-term Enhancements:**
-- Additional language support (Spanish, French, Japanese)
-- Mobile-responsive optimizations for tablet devices
-- Voice chat mode for interactive Q&A sessions
-- Lesson studio with visual content editor
-
-**Long-term Vision:**
-- Custom voice cloning for personalized learning
-- Real-time collaboration features for group lessons
-- AI-powered content generation from source materials
-- Integration with learning management systems (LMS)
+Remember to fill in the placeholders at the top of [`docs/devpost-draft.md`](devpost-draft.md):
+- `PROJECT_NAME`
+- `ONE_LINE_PITCH`
+- `HOSTED_URL` (Cloud Run URL for judging)
+- `REPO_URL`
+- `DEMO_VIDEO_URL`
 
 ---
 
@@ -191,6 +125,7 @@ graph TB
 
 ### Documentation
 - [ ] docs/submission.md created with all sections
+- [ ] docs/devpost-draft.md created with Devpost write-up
 - [ ] Progress tracking HTML file added for work items
 - [ ] Local dev setup instructions complete
 - [ ] Deployment instructions for Cloud Run included

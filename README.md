@@ -279,7 +279,7 @@ The deployment script automatically outputs the hosted URL at the end:
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-===========================================
+==========================================
 ```
 
 Alternatively, you can retrieve it manually:
@@ -336,51 +336,18 @@ graph TB
 
 Try the live demo at [demo-url-placeholder] (replace with actual Cloud Run URL)
 
-## Devpost Submission Checklist
+## Devpost Submission
 
-This checklist ensures the repository is strictly contest-compliant per Devpost rules.
+For complete submission requirements and the canonical Devpost write-up, see:
 
-### Hosted Project URL
-- [ ] **Public URL to deployed application** for judging and testing
-  - Must be accessible to judges without authentication barriers
-  - **Required: Google Cloud Run deployment** — Do not use other cloud hosting providers for this contest
-  - Use the deployment script: `./scripts/cloud-run/deploy.sh` — it outputs `HOSTED_URL=...` for your submission
-  - See [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md) for deployment instructions
+- **[`docs/devpost-draft.md`](docs/devpost-draft.md)** — Copy-paste ready Devpost submission content with all required sections (Problem, Solution, How We Built It, Architecture, Challenges, Accomplishments, What We Learned, What's Next)
+- **[`docs/submission.md`](docs/submission.md)** — Complete checklist for contest compliance, pre-submit verification, and final steps
 
-### Public Open Source Repository
-- [ ] **Public GitHub repository** with visible license
-  - Repository must be publicly accessible
-  - LICENSE file included at repository root (Apache-2.0)
-  - License must be visible on repository landing page
-  - Repository contains all necessary source code, assets, and instructions
-  - Repository is functional and can be successfully installed and run
+### Quick Links
 
-### Demo Video Requirements
-- [ ] **Public YouTube or Vimeo link** (<= 3 minutes)
-  - Video uploaded to YouTube or Vimeo
-  - Made publicly visible (no private/unlisted restrictions)
-  - Duration: approximately 3 minutes or less
-  - Content requirements:
-    - [ ] Overview of what the project does
-    - [ ] Explanation of how the project solves a problem
-    - [ ] Footage showing the project functioning on the target platform
-    - [ ] No third-party trademarks or copyrighted music (unless permission granted)
-
-### English Requirement
-- [ ] **All submission materials in English**
-  - Text description in English
-  - Demo video in English OR includes English subtitles
-  - Testing instructions in English
-  - If non-English content is present, provide English translations
-
-### AI Usage Limitation
-- [ ] **Only allowed Google Cloud AI tools at runtime**
-  - Google Gemini API (via Google AI Studio or Vertex AI)
-  - ElevenLabs API (partner integration for voice synthesis)
-  - **No other AI APIs are used by the product at runtime**
-  - Development tools (e.g., AI coding assistants) may be used during development but must not be part of the deployed application
-
-*See [`docs/submission.md`](docs/submission.md) for complete submission requirements and pre-submit checklist.*
+- Hosted project URL (Cloud Run): [your-deployment-url]
+- Demo video (<= 3 minutes): [your-video-url]
+- Repository: [your-repo-url]
 
 ## Contributing
 

@@ -129,8 +129,23 @@ export async function POST(request: NextRequest): Promise<NextResponse<GenerateG
       )
     }
 
-    // Parse request body
-    const body: GenerateGeminiRequest = await request.json()
+    // Parse request body with error handling
+    let body: GenerateGeminiRequest
+    try {
+      body = await request.json()
+    } catch {
+      console.error('JSON parse error in /api/ai/gemini: request is not valid JSON')
+      return NextResponse.json(
+        {
+          ok: false,
+          error: {
+            code: "BAD_REQUEST",
+            message: "Expected JSON body"
+          }
+        },
+        { status: 400 }
+      )
+    }
 
     // Validate required fields
     if (!body.messages || !Array.isArray(body.messages) || body.messages.length === 0) {

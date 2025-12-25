@@ -13,7 +13,8 @@
     "test:e2e:ci": "playwright test --reporter=line --project=chromium",
     "typecheck": "tsc --noEmit",
     "presskit:check": "node scripts/presskit/check.mjs",
-    "audit:english": "tsx scripts/audit-english.ts"
+    "audit:english": "tsx scripts/audit-english.ts",
+    "hosted:url": "bash scripts/cloud-run/hosted-url.sh"
   },
   "dependencies": {
     "@elevenlabs/react": "^0.12.3",

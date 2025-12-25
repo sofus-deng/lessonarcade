@@ -25,6 +25,10 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
 
 # The script will output: HOSTED_URL=https://your-service-url.a.run.app
 # Use this URL for your Devpost submission
+
+# 5. Quick URL retrieval (after deployment)
+# The fastest way to get the URL for Devpost without committing it:
+pnpm hosted:url
 ```
 
 **Optional: Run smoke tests after deployment:**
@@ -273,9 +277,11 @@ The script will output the final hosted URL at the end:
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
 ===========================================
+
+Quick retrieval: pnpm hosted:url
 ```
 
-Use this URL for your Devpost submission.
+Use this URL for your Devpost submission. After deployment, you can quickly retrieve the URL anytime with `pnpm hosted:url` without committing it to git.
 
 ### Manual Deployment (Alternative)
 

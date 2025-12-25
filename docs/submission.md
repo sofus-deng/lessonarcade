@@ -9,6 +9,7 @@ This checklist ensures the repository is strictly contest-compliant per Devpost 
   - Must be accessible to judges without authentication barriers
   - Recommended: Google Cloud Run deployment
   - URL format: `https://[project-name]-[hash].a.run.app`
+  - **Quick retrieval**: After deploying with `./scripts/cloud-run/deploy.sh`, use `pnpm hosted:url` to get the URL anytime without committing it to git
 
 ### Public Open Source Repository
 - [ ] **Public GitHub repository** with visible license
@@ -94,7 +95,7 @@ Copy the content from that file directly to Devpost for your submission. It incl
 Remember to fill in the placeholders at the top of [`docs/devpost-draft.md`](devpost-draft.md):
 - `PROJECT_NAME`
 - `ONE_LINE_PITCH`
-- `HOSTED_URL` (Cloud Run URL for judging)
+- `HOSTED_URL` (Cloud Run URL for judging - use `pnpm hosted:url` after deployment)
 - `REPO_URL`
 - `DEMO_VIDEO_URL`
 
@@ -133,6 +134,7 @@ Remember to fill in the placeholders at the top of [`docs/devpost-draft.md`](dev
 
 ### Devpost Submission
 - [ ] Hosted project URL (Cloud Run) tested and accessible
+  - **Quick retrieval**: Use `pnpm hosted:url` after deployment to get the URL without committing it
 - [ ] Demo video uploaded to YouTube/Vimeo and made public
 - [ ] Video is 3 minutes or less
 - [ ] Video shows project functioning

@@ -172,11 +172,17 @@ get_service_url() {
     log_info "Demo page: ${SERVICE_URL}/demo"
     log_info "Studio (requires auth): ${SERVICE_URL}/studio"
     
+    # Write the URL to .hosted_url file for quick retrieval
+    echo "${SERVICE_URL}" > .hosted_url
+    log_info "URL saved to .hosted_url for quick retrieval (gitignored)"
+    
     # Output the hosted URL for Devpost submission (single line, easy to parse)
     echo ""
     echo "=== HOSTED URL FOR DEVPOST SUBMISSION ==="
     echo "HOSTED_URL=${SERVICE_URL}"
     echo "==========================================="
+    echo ""
+    echo "Quick retrieval: pnpm hosted:url"
 }
 
 # Main execution

@@ -12,7 +12,8 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:ci": "playwright test --reporter=line --project=chromium",
     "typecheck": "tsc --noEmit",
-    "presskit:check": "node scripts/presskit/check.mjs"
+    "presskit:check": "node scripts/presskit/check.mjs",
+    "audit:english": "tsx scripts/audit-english.ts"
   },
   "dependencies": {
     "@elevenlabs/react": "^0.12.3",
@@ -48,6 +49,7 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.0.3",
-    "vitest": "^4.0.16"
+    "vitest": "^4.0.16",
+    "tsx": "^4.19.2"
   }
 }

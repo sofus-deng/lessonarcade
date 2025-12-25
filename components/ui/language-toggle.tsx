@@ -18,7 +18,7 @@ export function LanguageToggle({
 }: LanguageToggleProps) {
   const languages = [
     { code: 'en' as LanguageCode, label: 'EN', flag: '🇺🇸' },
-    { code: 'zh' as LanguageCode, label: '中文', flag: '🇨🇳' }
+    { code: 'zh' as LanguageCode, label: 'ZH', flag: '🇨🇳' }
   ]
 
   return (

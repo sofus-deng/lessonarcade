@@ -29,6 +29,7 @@ jobs:
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+          echo "STORE_PATH=$(pnpm store path)"
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
@@ -54,6 +55,9 @@ jobs:
 
       - name: Run typecheck
         run: pnpm typecheck
+
+      - name: Audit English-only content
+        run: pnpm audit:english
 
       - name: Run unit tests
         run: pnpm test

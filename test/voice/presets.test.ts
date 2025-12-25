@@ -103,8 +103,8 @@ describe('Voice Preset Registry', () => {
       const instructorPreset = presets.find(p => p.presetKey === 'zh_instructor')
       const narratorPreset = presets.find(p => p.presetKey === 'zh_narrator')
       
-      expect(instructorPreset?.label).toBe('中文講師')
-      expect(narratorPreset?.label).toBe('中文旁白')
+      expect(instructorPreset?.label).toBe('Chinese Instructor')
+      expect(narratorPreset?.label).toBe('Chinese Narrator')
     })
   })
 

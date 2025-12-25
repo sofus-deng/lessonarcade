@@ -50,14 +50,14 @@ function discoverPresets(): VoicePreset[] {
         // Convert role to title case: INSTRUCTOR -> Instructor
         label = `${role.charAt(0) + role.slice(1).toLowerCase()} Voice`
       } else {
-        // Traditional Chinese labels: INSTRUCTOR -> 講師
+        // English role labels for Chinese presets
         const roleLabels: Record<string, string> = {
-          'INSTRUCTOR': '講師',
-          'NARRATOR': '旁白',
-          'TEACHER': '教師',
-          'STORYTELLER': '故事講述者'
+          'INSTRUCTOR': 'Instructor',
+          'NARRATOR': 'Narrator',
+          'TEACHER': 'Teacher',
+          'STORYTELLER': 'Storyteller'
         }
-        label = `中文${roleLabels[role.toUpperCase()] || role}`
+        label = `Chinese ${roleLabels[role.toUpperCase()] || role}`
       }
       
       presets.push({

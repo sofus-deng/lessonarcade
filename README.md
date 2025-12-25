@@ -180,28 +180,41 @@ The application is deployed on Google Cloud Run for automatic scaling and cost-e
 
 **IMPORTANT FOR CONTEST SUBMISSION:** The hosted URL for judging must come from Google Cloud Run. Do not use other cloud hosting providers (Vercel, Netlify, etc.) for this contest submission.
 
-For complete, copy-paste runnable deployment instructions, see [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
+#### Quick Start (One-Command Deployment)
 
-#### Quick Start
+For the fastest path to deploy and get your hosted URL for Devpost, use the provided deployment scripts:
 
 ```bash
-# 1. Set up your Google Cloud project
-export PROJECT_ID="your-project-id"
-gcloud config set project $PROJECT_ID
+# 1. Set your project ID (required)
+export GCP_PROJECT_ID="your-project-id"
 
-# 2. Enable required APIs
+# 2. Enable required APIs (one-time setup)
 gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com aiplatform.googleapis.com
 
-# 3. Grant Vertex AI permissions to Cloud Run service account
-PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+# 3. Grant Vertex AI permissions to Cloud Run service account (one-time setup)
+PROJECT_NUMBER=$(gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)')
 SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-gcloud projects add-iam-policy-binding $PROJECT_ID \
+gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
   --member="serviceAccount:$SERVICE_ACCOUNT" \
   --role="roles/aiplatform.user"
 
-# 4. Use the provided deployment script
+# 4. Run the deployment script
 ./scripts/cloud-run/deploy.sh
+
+# The script will output: HOSTED_URL=https://your-service-url.a.run.app
+# Use this URL for your Devpost submission
 ```
+
+**Optional: Run smoke tests after deployment:**
+```bash
+# Get the URL from the deploy script output or:
+SERVICE_URL=$(gcloud run services describe lessonarcade --region=us-central1 --format="value(status.url)")
+
+# Run smoke tests
+./scripts/cloud-run/smoke-test.sh $SERVICE_URL
+```
+
+For complete deployment instructions, see [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
 #### Prerequisites
 
@@ -261,7 +274,15 @@ For custom health check configuration, see [`docs/deploy-cloud-run.md`](docs/dep
 
 #### Getting the Hosted URL
 
-After deployment, capture the service URL for Devpost submission:
+The deployment script automatically outputs the hosted URL at the end:
+
+```bash
+=== HOSTED URL FOR DEVPOST SUBMISSION ===
+HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
+===========================================
+```
+
+Alternatively, you can retrieve it manually:
 
 ```bash
 SERVICE_URL=$(gcloud run services describe lessonarcade \
@@ -323,6 +344,7 @@ This checklist ensures the repository is strictly contest-compliant per Devpost 
 - [ ] **Public URL to deployed application** for judging and testing
   - Must be accessible to judges without authentication barriers
   - **Required: Google Cloud Run deployment** — Do not use other cloud hosting providers for this contest
+  - Use the deployment script: `./scripts/cloud-run/deploy.sh` — it outputs `HOSTED_URL=...` for your submission
   - See [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md) for deployment instructions
 
 ### Public Open Source Repository

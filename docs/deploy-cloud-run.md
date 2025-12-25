@@ -2,37 +2,71 @@
 
 This runbook provides step-by-step, copy-paste runnable instructions for deploying LessonArcade to Google Cloud Run.
 
+## Quick Start (Primary Path for Devpost Submission)
+
+For the fastest path to deploy and get your hosted URL for Devpost, use the provided deployment scripts:
+
+```bash
+# 1. Set your project ID (required)
+export GCP_PROJECT_ID="your-project-id"
+
+# 2. Enable required APIs (one-time setup)
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com secretmanager.googleapis.com aiplatform.googleapis.com
+
+# 3. Grant Vertex AI permissions to Cloud Run service account (one-time setup)
+PROJECT_NUMBER=$(gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)')
+SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
+  --member="serviceAccount:$SERVICE_ACCOUNT" \
+  --role="roles/aiplatform.user"
+
+# 4. Run the deployment script
+./scripts/cloud-run/deploy.sh
+
+# The script will output: HOSTED_URL=https://your-service-url.a.run.app
+# Use this URL for your Devpost submission
+```
+
+**Optional: Run smoke tests after deployment:**
+```bash
+# Get the URL from the deploy script output or:
+SERVICE_URL=$(gcloud run services describe lessonarcade --region=us-central1 --format="value(status.url)")
+
+# Run smoke tests
+./scripts/cloud-run/smoke-test.sh $SERVICE_URL
+```
+
 ## Prerequisites
 
 Before you begin, ensure you have:
 
 1. **Google Cloud SDK (gcloud) installed**
-   ```bash
-   # Install gcloud CLI (macOS)
-   brew install google-cloud-sdk
+    ```bash
+    # Install gcloud CLI (macOS)
+    brew install google-cloud-sdk
 
-   # Initialize gcloud
-   gcloud init
-   ```
+    # Initialize gcloud
+    gcloud init
+    ```
 
 2. **Docker installed and running**
-   ```bash
-   # Verify Docker is running
-   docker ps
-   ```
+    ```bash
+    # Verify Docker is running
+    docker ps
+    ```
 
 3. **A Google Cloud project with billing enabled**
-   ```bash
-   # Create or select a project
-   gcloud projects create PROJECT_ID
-   gcloud config set project PROJECT_ID
-   ```
+    ```bash
+    # Create or select a project
+    gcloud projects create PROJECT_ID
+    gcloud config set project PROJECT_ID
+    ```
 
 4. **Appropriate permissions** (roles):
-   - `roles/run.admin` - Cloud Run Admin
-   - `roles/artifactregistry.writer` - Artifact Registry Writer
-   - `roles/secretmanager.admin` - Secret Manager Admin
-   - `roles/serviceusage.serviceUsageAdmin` - Enable APIs
+    - `roles/run.admin` - Cloud Run Admin
+    - `roles/artifactregistry.writer` - Artifact Registry Writer
+    - `roles/secretmanager.admin` - Secret Manager Admin
+    - `roles/serviceusage.serviceUsageAdmin` - Enable APIs
 
 ## One-Time Setup
 
@@ -200,22 +234,20 @@ export GCP_VERTEX_MODEL="gemini-2.0-flash-exp"
 - Seamless integration with Cloud Run service accounts
 - Enterprise-grade access controls
 
-## Build and Deploy Commands
+## Deployment Script Details
 
-### Method 1: Using the Provided Deployment Script (Recommended)
+### Using the Deployment Script (Recommended)
 
 The project includes a deployment script that automates the entire process:
 
 ```bash
-# Make the script executable
+# Make the script executable (if not already)
 chmod +x scripts/cloud-run/deploy.sh
 
 # Set environment variables for deployment
-export PROJECT_ID="your-project-id"
-export REGION="us-central1"
-export SERVICE_NAME="lessonarcade"
-export AR_REPO="lessonarcade"
-export IMAGE_TAG="latest"
+export GCP_PROJECT_ID="your-project-id"
+export GCP_REGION="us-central1"  # Optional, defaults to us-central1
+export CLOUD_RUN_SERVICE="lessonarcade"  # Optional, defaults to lessonarcade
 
 # Set required environment variables (non-sensitive ones)
 export STUDIO_BASIC_AUTH_USER="admin"
@@ -223,7 +255,7 @@ export STUDIO_BASIC_AUTH_PASS="secure-password"
 export LOGGING_SALT="random-salt-string"
 
 # Set Vertex AI configuration (production mode)
-export GCP_PROJECT_ID=$PROJECT_ID
+export GCP_PROJECT_ID=$GCP_PROJECT_ID
 export GCP_REGION="us-central1"
 export GCP_VERTEX_MODEL="gemini-2.0-flash-exp"
 
@@ -235,28 +267,38 @@ export GEMINI_API_KEY="your-gemini-key"
 ./scripts/cloud-run/deploy.sh
 ```
 
-### Method 2: Manual Deployment
+**Script Output:**
+The script will output the final hosted URL at the end:
+```
+=== HOSTED URL FOR DEVPOST SUBMISSION ===
+HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
+===========================================
+```
+
+Use this URL for your Devpost submission.
+
+### Manual Deployment (Alternative)
 
 If you prefer to deploy manually:
 
 ```bash
 # Set variables
-export PROJECT_ID="your-project-id"
-export REGION="us-central1"
+export GCP_PROJECT_ID="your-project-id"
+export GCP_REGION="us-central1"
 export AR_REPO="lessonarcade"
-export SERVICE_NAME="lessonarcade"
+export CLOUD_RUN_SERVICE="lessonarcade"
 export IMAGE_TAG="latest"
 
 # Build the Docker image
-docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG .
+docker build -t $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$AR_REPO/$CLOUD_RUN_SERVICE:$IMAGE_TAG .
 
 # Push to Artifact Registry
-docker push $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG
+docker push $GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$AR_REPO/$CLOUD_RUN_SERVICE:$IMAGE_TAG
 
 # Deploy to Cloud Run with environment variables
-gcloud run deploy $SERVICE_NAME \
-    --image=$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG \
-    --region=$REGION \
+gcloud run deploy $CLOUD_RUN_SERVICE \
+    --image=$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$AR_REPO/$CLOUD_RUN_SERVICE:$IMAGE_TAG \
+    --region=$GCP_REGION \
     --platform=managed \
     --allow-unauthenticated \
     --memory=1Gi \
@@ -264,41 +306,34 @@ gcloud run deploy $SERVICE_NAME \
     --min-instances=0 \
     --max-instances=10 \
     --concurrency=20 \
-    --set-env-vars=STUDIO_BASIC_AUTH_USER=admin,STUDIO_BASIC_AUTH_PASS=secure-password,LOGGING_SALT=random-salt-string,GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1,GCP_VERTEX_MODEL=gemini-2.0-flash-exp
+    --set-env-vars=STUDIO_BASIC_AUTH_USER=admin,STUDIO_BASIC_AUTH_PASS=secure-password,LOGGING_SALT=random-salt-string,GCP_PROJECT_ID=$GCP_PROJECT_ID,GCP_REGION=us-central1,GCP_VERTEX_MODEL=gemini-2.0-flash-exp
 ```
 
-### Method 3: Deploy with Secret Manager (Recommended for Production)
+## Smoke Testing
+
+The project includes a smoke test script to verify your deployment:
 
 ```bash
-# Set variables
-export PROJECT_ID="your-project-id"
-export REGION="us-central1"
-export AR_REPO="lessonarcade"
-export SERVICE_NAME="lessonarcade"
-export IMAGE_TAG="latest"
+# Make the script executable (if not already)
+chmod +x scripts/cloud-run/smoke-test.sh
 
-# Build and push
-docker build -t $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG .
-docker push $REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG
+# Get the service URL from deployment or:
+SERVICE_URL=$(gcloud run services describe lessonarcade --region=us-central1 --format="value(status.url)")
 
-# Deploy with secrets and Vertex AI configuration
-gcloud run deploy $SERVICE_NAME \
-    --image=$REGION-docker.pkg.dev/$PROJECT_ID/$AR_REPO/$SERVICE_NAME:$IMAGE_TAG \
-    --region=$REGION \
-    --platform=managed \
-    --allow-unauthenticated \
-    --memory=1Gi \
-    --cpu=1 \
-    --min-instances=0 \
-    --max-instances=10 \
-    --concurrency=20 \
-    --set-secrets=GEMINI_API_KEY=gemini-api-key:latest \
-    --set-secrets=ELEVENLABS_API_KEY=elevenlabs-api-key:latest \
-    --set-secrets=STUDIO_BASIC_AUTH_USER=studio-auth-user:latest \
-    --set-secrets=STUDIO_BASIC_AUTH_PASS=studio-auth-pass:latest \
-    --set-secrets=LOGGING_SALT=logging-salt:latest \
-    --set-env-vars=GCP_PROJECT_ID=$PROJECT_ID,GCP_REGION=us-central1,GCP_VERTEX_MODEL=gemini-2.0-flash-exp
+# Run smoke tests
+./scripts/cloud-run/smoke-test.sh $SERVICE_URL
+
+# Or with auth credentials
+STUDIO_BASIC_AUTH_USER=admin STUDIO_BASIC_AUTH_PASS=secure-password ./scripts/cloud-run/smoke-test.sh $SERVICE_URL
 ```
+
+**Smoke Test Coverage:**
+- GET /demo (public demo page) - expects 200
+- GET /demo/voice/effective-meetings (voice lesson) - expects 200
+- GET /demo/voice-chat/effective-meetings (voice chat) - expects 200
+- GET /studio (without auth) - expects 401
+- GET /studio/voice-analytics (without auth) - expects 401
+- GET /studio (with auth, if credentials provided) - expects 200
 
 ## Verify the Deployed Service
 
@@ -306,8 +341,8 @@ gcloud run deploy $SERVICE_NAME \
 
 ```bash
 # Get service URL
-SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
-    --region=$REGION \
+SERVICE_URL=$(gcloud run services describe lessonarcade \
+    --region=us-central1 \
     --format="value(status.url)")
 
 echo "Service URL: $SERVICE_URL"
@@ -340,35 +375,6 @@ Open the following URLs in your browser:
 - Voice lesson: `https://YOUR_SERVICE_URL/demo/voice/effective-meetings`
 - Studio (requires auth): `https://YOUR_SERVICE_URL/studio`
 - Vertex AI API (GET): `https://YOUR_SERVICE_URL/api/ai/gemini`
-
-### Run Smoke Tests
-
-The project includes a smoke test script:
-
-```bash
-# Run smoke tests
-./scripts/cloud-run/smoke.sh $SERVICE_URL
-
-# Or with auth credentials
-STUDIO_BASIC_AUTH_USER=admin STUDIO_BASIC_AUTH_PASS=secure-password ./scripts/cloud-run/smoke.sh $SERVICE_URL
-```
-
-## Capture the Hosted URL for Devpost Submission
-
-After successful deployment, capture the service URL:
-
-```bash
-# Get and save the service URL
-SERVICE_URL=$(gcloud run services describe $SERVICE_NAME \
-    --region=$REGION \
-    --format="value(status.url)")
-
-echo "=== HOSTED URL FOR DEVPOST SUBMISSION ==="
-echo "$SERVICE_URL"
-echo "==========================================="
-```
-
-**Important:** For the Devpost submission, use the Google Cloud Run URL (e.g., `https://lessonarcade-xxxxx.a.run.app`). Do not use other cloud hosting providers.
 
 ## Port Expectations
 
@@ -403,7 +409,7 @@ For most Next.js applications, the default TCP probe is sufficient. If you need 
 
 ```bash
 # Example: Configure HTTP startup probe
-gcloud run deploy $SERVICE_NAME \
+gcloud run deploy lessonarcade \
     --image=$IMAGE_URL \
     --region=$REGION \
     --startup-probe httpGet.path=/,httpGet.port=8080,initialDelaySeconds=0,failureThreshold=3,timeoutSeconds=1,periodSeconds=10
@@ -426,7 +432,7 @@ gcloud run deploy $SERVICE_NAME \
 ```bash
 gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
     --limit=50 \
-    --filter="resource.labels.service_name=$SERVICE_NAME"
+    --filter="resource.labels.service_name=lessonarcade"
 ```
 
 ### Health Check Failures
@@ -437,27 +443,27 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
 
 **Solutions:**
 1. **Increase timeout for slow-starting applications:**
-   ```bash
-   gcloud run deploy $SERVICE_NAME \
-       --image=$IMAGE_URL \
-       --region=$REGION \
-       --startup-probe tcpSocket.port=8080,initialDelaySeconds=30,failureThreshold=3,timeoutSeconds=10,periodSeconds=10
-   ```
+    ```bash
+    gcloud run deploy lessonarcade \
+        --image=$IMAGE_URL \
+        --region=$REGION \
+        --startup-probe tcpSocket.port=8080,initialDelaySeconds=30,failureThreshold=3,timeoutSeconds=10,periodSeconds=10
+    ```
 
 2. **Configure HTTP health check endpoint** (if using custom health checks):
-   ```bash
-   gcloud run deploy $SERVICE_NAME \
-       --image=$IMAGE_URL \
-       --region=$REGION \
-       --startup-probe httpGet.path=/health,httpGet.port=8080
-   ```
+    ```bash
+    gcloud run deploy lessonarcade \
+        --image=$IMAGE_URL \
+        --region=$REGION \
+        --startup-probe httpGet.path=/health,httpGet.port=8080
+    ```
 
 3. **Check application logs for startup errors:**
-   ```bash
-   gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
-       --limit=100 \
-       --filter="resource.labels.service_name=$SERVICE_NAME"
-   ```
+    ```bash
+    gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
+        --limit=100 \
+        --filter="resource.labels.service_name=lessonarcade"
+    ```
 
 ### Missing Environment Variables
 
@@ -468,33 +474,33 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
 **Solution:**
 
 1. **List current environment variables:**
-   ```bash
-   gcloud run services describe $SERVICE_NAME \
-       --region=$REGION \
-       --format="value(spec.template.spec.containers[0].env)"
-   ```
+    ```bash
+    gcloud run services describe lessonarcade \
+        --region=$REGION \
+        --format="value(spec.template.spec.containers[0].env)"
+    ```
 
 2. **Add missing environment variables:**
-   ```bash
-   gcloud run services update $SERVICE_NAME \
-       --region=$REGION \
-       --update-env-vars=KEY1=VALUE1,KEY2=VALUE2
-   ```
+    ```bash
+    gcloud run services update lessonarcade \
+        --region=$REGION \
+        --update-env-vars=KEY1=VALUE1,KEY2=VALUE2
+    ```
 
 3. **Add missing secrets:**
-   ```bash
-   gcloud run services update $SERVICE_NAME \
-       --region=$REGION \
-       --update-secrets=SECRET_NAME=secret-name:latest
-   ```
+    ```bash
+    gcloud run services update lessonarcade \
+        --region=$REGION \
+        --update-secrets=SECRET_NAME=secret-name:latest
+    ```
 
 4. **Verify secret access:**
-   ```bash
-   # Check if service account has access to secrets
-   PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-   SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-   gcloud secrets get-iam-policy SECRET_NAME
-   ```
+    ```bash
+    # Check if service account has access to secrets
+    PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+    SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+    gcloud secrets get-iam-policy SECRET_NAME
+    ```
 
 ### Vertex AI Permission Errors
 
@@ -505,30 +511,30 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
 **Solution:**
 
 1. **Verify service account has Vertex AI User role:**
-   ```bash
-   PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
-   SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
-   gcloud projects get-iam-policy $PROJECT_ID \
-       --filter="serviceAccount:$SERVICE_ACCOUNT" \
-       --format="table(bindings.role)"
-   ```
+    ```bash
+    PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+    SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
+    gcloud projects get-iam-policy $PROJECT_ID \
+        --filter="serviceAccount:$SERVICE_ACCOUNT" \
+        --format="table(bindings.role)"
+    ```
 
 2. **Grant Vertex AI User role if missing:**
-   ```bash
-   gcloud projects add-iam-policy-binding $PROJECT_ID \
-       --member="serviceAccount:$SERVICE_ACCOUNT" \
-       --role="roles/aiplatform.user"
-   ```
+    ```bash
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member="serviceAccount:$SERVICE_ACCOUNT" \
+        --role="roles/aiplatform.user"
+    ```
 
 3. **Check Vertex AI API is enabled:**
-   ```bash
-   gcloud services list --enabled | grep aiplatform
-   ```
+    ```bash
+    gcloud services list --enabled | grep aiplatform
+    ```
 
 4. **Enable Vertex AI API if needed:**
-   ```bash
-   gcloud services enable aiplatform.googleapis.com
-   ```
+    ```bash
+    gcloud services enable aiplatform.googleapis.com
+    ```
 
 ### Build Failures
 
@@ -539,25 +545,25 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
 **Solutions:**
 
 1. **Check Node.js version compatibility** (Next.js 16 requires Node 20.9+):
-   ```bash
-   node --version
-   ```
+    ```bash
+    node --version
+    ```
 
 2. **Verify pnpm-lock.yaml is present:**
-   ```bash
-   ls -la pnpm-lock.yaml
-   ```
+    ```bash
+    ls -la pnpm-lock.yaml
+    ```
 
 3. **Build locally to debug:**
-   ```bash
-   docker build -t test-build .
-   ```
+    ```bash
+    docker build -t test-build .
+    ```
 
 4. **Check build logs:**
-   ```bash
-   gcloud builds list --limit=10
-   gcloud builds log BUILD_ID
-   ```
+    ```bash
+    gcloud builds list --limit=10
+    gcloud builds log BUILD_ID
+    ```
 
 ### Permission Errors
 
@@ -568,16 +574,16 @@ gcloud logs tail "projects/$PROJECT_ID/logs/run.googleapis.com%2Fstdout" \
 **Solution:**
 
 1. **Verify your IAM roles:**
-   ```bash
-   gcloud projects get-iam-policy $PROJECT_ID --filter="user:YOUR_EMAIL"
-   ```
+    ```bash
+    gcloud projects get-iam-policy $PROJECT_ID --filter="user:YOUR_EMAIL"
+    ```
 
 2. **Grant required roles:**
-   ```bash
-   gcloud projects add-iam-policy-binding $PROJECT_ID \
-       --member="user:YOUR_EMAIL" \
-       --role="roles/run.admin"
-   ```
+    ```bash
+    gcloud projects add-iam-policy-binding $PROJECT_ID \
+        --member="user:YOUR_EMAIL" \
+        --role="roles/run.admin"
+    ```
 
 ## Cleanup
 
@@ -585,7 +591,7 @@ To remove the deployed service and resources:
 
 ```bash
 # Delete the Cloud Run service
-gcloud run services delete $SERVICE_NAME --region=$REGION
+gcloud run services delete lessonarcade --region=$REGION
 
 # Delete the Artifact Registry repository (optional)
 gcloud artifacts repositories delete $AR_REPO --location=$REGION

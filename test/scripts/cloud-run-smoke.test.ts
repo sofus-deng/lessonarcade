@@ -4,7 +4,7 @@ import { join } from 'path'
 
 describe('cloud-run smoke script', () => {
   it('includes the voice chat demo route check', () => {
-    const scriptPath = join(process.cwd(), 'scripts', 'cloud-run', 'smoke.sh')
+    const scriptPath = join(process.cwd(), 'scripts', 'cloud-run', 'smoke-test.sh')
     const scriptContents = readFileSync(scriptPath, 'utf8')
 
     expect(scriptContents).toContain('/demo/voice-chat/effective-meetings')

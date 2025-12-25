@@ -2,14 +2,15 @@
 
 # Cloud Run Deployment Script for LessonArcade
 # This script builds, pushes, and deploys the application to Cloud Run
+# Outputs the final hosted URL for Devpost submission
 
 # --- Configuration ---
-# Update these variables for your environment
-PROJECT_ID="your-project-id"
-REGION="us-central1"
-SERVICE_NAME="lessonarcade"
-AR_REPO="lessonarcade"
-IMAGE_TAG="latest"
+# Environment variables with sensible defaults
+GCP_PROJECT_ID="${GCP_PROJECT_ID:-}"
+GCP_REGION="${GCP_REGION:-us-central1}"
+CLOUD_RUN_SERVICE="${CLOUD_RUN_SERVICE:-lessonarcade}"
+AR_REPO="${AR_REPO:-lessonarcade}"
+IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 # --- Optional Environment Variables ---
 # Set these in your environment or modify here
@@ -50,11 +51,13 @@ check_prerequisites() {
     
     if ! command -v gcloud &> /dev/null; then
         log_error "gcloud CLI is not installed. Please install it first."
+        log_error "Visit: https://cloud.google.com/sdk/docs/install"
         exit 1
     fi
     
     if ! command -v docker &> /dev/null; then
         log_error "Docker is not installed. Please install it first."
+        log_error "Visit: https://docs.docker.com/get-docker/"
         exit 1
     fi
     
@@ -71,15 +74,16 @@ check_prerequisites() {
 validate_config() {
     log_info "Validating configuration..."
     
-    if [ "$PROJECT_ID" = "your-project-id" ]; then
-        log_error "Please update PROJECT_ID in the script or export it as environment variable."
+    if [ -z "$GCP_PROJECT_ID" ]; then
+        log_error "GCP_PROJECT_ID is required. Set it as environment variable:"
+        log_error "  export GCP_PROJECT_ID=your-project-id"
         exit 1
     fi
     
     log_info "Configuration validated."
-    log_info "Project ID: $PROJECT_ID"
-    log_info "Region: $REGION"
-    log_info "Service Name: $SERVICE_NAME"
+    log_info "Project ID: $GCP_PROJECT_ID"
+    log_info "Region: $GCP_REGION"
+    log_info "Service Name: $CLOUD_RUN_SERVICE"
     log_info "Repository: $AR_REPO"
     log_info "Image Tag: $IMAGE_TAG"
 }
@@ -88,7 +92,7 @@ validate_config() {
 build_image() {
     log_info "Building Docker image..."
     
-    IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:${IMAGE_TAG}"
+    IMAGE_NAME="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPO}/${CLOUD_RUN_SERVICE}:${IMAGE_TAG}"
     
     docker build -t "${IMAGE_NAME}" .
     
@@ -99,7 +103,7 @@ build_image() {
 push_image() {
     log_info "Pushing image to Artifact Registry..."
     
-    IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:${IMAGE_TAG}"
+    IMAGE_NAME="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPO}/${CLOUD_RUN_SERVICE}:${IMAGE_TAG}"
     
     # Push the image
     docker push "${IMAGE_NAME}"
@@ -111,7 +115,7 @@ push_image() {
 deploy_service() {
     log_info "Deploying to Cloud Run..."
     
-    IMAGE_NAME="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPO}/${SERVICE_NAME}:${IMAGE_TAG}"
+    IMAGE_NAME="${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPO}/${CLOUD_RUN_SERVICE}:${IMAGE_TAG}"
     
     # Prepare environment variables
     ENV_VARS=(
@@ -141,9 +145,9 @@ deploy_service() {
     done
     
     # Deploy to Cloud Run
-    gcloud run deploy "${SERVICE_NAME}" \
+    gcloud run deploy "${CLOUD_RUN_SERVICE}" \
         --image="${IMAGE_NAME}" \
-        --region="${REGION}" \
+        --region="${GCP_REGION}" \
         --platform=managed \
         --allow-unauthenticated \
         --set-env-vars="${ENV_VARS_FLAG}" \
@@ -156,17 +160,23 @@ deploy_service() {
     log_info "Deployment completed successfully!"
 }
 
-# Get service URL
+# Get service URL and output for Devpost submission
 get_service_url() {
     log_info "Retrieving service URL..."
     
-    SERVICE_URL=$(gcloud run services describe "${SERVICE_NAME}" \
-        --region="${REGION}" \
+    SERVICE_URL=$(gcloud run services describe "${CLOUD_RUN_SERVICE}" \
+        --region="${GCP_REGION}" \
         --format="value(status.url)")
     
     log_info "Service is available at: ${SERVICE_URL}"
     log_info "Demo page: ${SERVICE_URL}/demo"
     log_info "Studio (requires auth): ${SERVICE_URL}/studio"
+    
+    # Output the hosted URL for Devpost submission (single line, easy to parse)
+    echo ""
+    echo "=== HOSTED URL FOR DEVPOST SUBMISSION ==="
+    echo "HOSTED_URL=${SERVICE_URL}"
+    echo "==========================================="
 }
 
 # Main execution
@@ -181,6 +191,7 @@ main() {
     get_service_url
     
     log_info "Deployment completed successfully!"
+    log_info "Use the HOSTED_URL above for your Devpost submission."
 }
 
 # Run the main function

@@ -222,11 +222,11 @@
 
     <div class="stats">
       <div class="stat-card">
-        <div class="stat-number" id="total-items">11</div>
+        <div class="stat-number" id="total-items">12</div>
         <div class="stat-label">Total Work Items</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="completed-items">6</div>
+        <div class="stat-number" id="completed-items">7</div>
         <div class="stat-label">Completed</div>
       </div>
       <div class="stat-card">
@@ -320,6 +320,12 @@
             with e2e tests</div>
           <span class="status-badge status-completed">Completed</span>
         </div>
+        <div class="work-item" data-id="la3-p1-02" data-status="completed">
+          <div class="work-item-id">LA3-P1-02</div>
+          <div class="work-item-title">Make voice session lesson-aware</div>
+          <div class="work-item-desc">Pass lesson context into /agents page via query parameter and API route</div>
+          <span class="status-badge status-completed">Completed</span>
+        </div>
         <div class="work-item" data-id="la3-p0-02" data-status="pending">
           <div class="work-item-id">LA3-P0-02</div>
           <div class="work-item-title">LICENSE File Creation</div>
@@ -349,11 +355,7 @@
   </div>
 
   <script>
-    // LocalStorage key for progress tracking - bump version when task list changes
-    const PROGRESS_STORAGE_KEY = 'lessonarcade_progress_v21';
-
-    // Update work item status by editing the data-status attribute
-    // Valid values: 'pending', 'in-progress', 'completed'
+    const PROGRESS_STORAGE_KEY = 'lessonarcade_progress_v22';
 
     function updateStats() {
       const items = document.querySelectorAll('.work-item');
@@ -386,11 +388,7 @@
       document.getElementById('pending-items').textContent = pending;
     }
 
-    // Initialize stats on page load
     updateStats();
-
-    // Example: To mark an item as completed, edit the HTML:
-    // <div class="work-item" data-id="la1-p0-01" data-status="completed">
   </script>
 </body>
 

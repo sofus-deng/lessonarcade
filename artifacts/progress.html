@@ -222,19 +222,19 @@
 
     <div class="stats">
       <div class="stat-card">
-        <div class="stat-number" id="total-items">10</div>
+        <div class="stat-number" id="total-items">11</div>
         <div class="stat-label">Total Work Items</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="completed-items">5</div>
+        <div class="stat-number" id="completed-items">6</div>
         <div class="stat-label">Completed</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="in-progress-items">1</div>
+        <div class="stat-number" id="in-progress-items">0</div>
         <div class="stat-label">In Progress</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="pending-items">4</div>
+        <div class="stat-number" id="pending-items">5</div>
         <div class="stat-label">Pending</div>
       </div>
     </div>
@@ -275,24 +275,37 @@
           <div class="work-item-desc">Convert deploy.yml to workflow_dispatch only or remove</div>
           <span class="status-badge status-pending">Pending</span>
         </div>
-        <div class="work-item" data-id="la1-p0-07" data-status="in-progress">
+        <div class="work-item" data-id="la1-p0-07" data-status="completed">
           <div class="work-item-id">LA1-P0-07</div>
-          <div class="work-item-title">Demo Video Kit</div>
-          <div class="work-item-desc">Create demo-video kit with docs/demo-video.md, helper scripts, and Devpost field automation</div>
-          <div class="work-item-notes">Final manual step: Upload video to YouTube/Vimeo and paste URL into docs/devpost-draft.md, then run pnpm devpost:fields to verify</div>
-          <span class="status-badge status-in-progress">In Progress</span>
+          <div class="work-item-title">Demo Video Kit (Deliverable)</div>
+          <div class="work-item-desc">Demo-video kit deliverable: docs/demo-video.md + scripts/devpost/print-fields.sh +
+            pnpm devpost:fields</div>
+          <div class="work-item-notes">Includes documentation, helper script for extracting Devpost fields, and npm
+            script for automation</div>
+          <span class="status-badge status-completed">Completed</span>
         </div>
         <div class="work-item" data-id="la1-p0-08" data-status="completed">
           <div class="work-item-id">LA1-P0-08</div>
           <div class="work-item-title">English Audit and Guardrails</div>
-          <div class="work-item-desc">Audit non-English text in judge-visible paths and create automated guard to prevent regression</div>
+          <div class="work-item-desc">Audit non-English text in judge-visible paths and create automated guard to
+            prevent regression</div>
           <span class="status-badge status-completed">Completed</span>
         </div>
         <div class="work-item" data-id="la1-p0-09" data-status="completed">
           <div class="work-item-id">LA1-P0-09</div>
           <div class="work-item-title">Hosted URL Persistence Helper</div>
-          <div class="work-item-desc">Add local gitignored .hosted_url file and pnpm hosted:url script for quick Devpost URL retrieval</div>
+          <div class="work-item-desc">Add local gitignored .hosted_url file and pnpm hosted:url script for quick Devpost
+            URL retrieval</div>
           <span class="status-badge status-completed">Completed</span>
+        </div>
+        <div class="work-item" data-id="la1-p0-10" data-status="pending">
+          <div class="work-item-id">LA1-P0-10</div>
+          <div class="work-item-title">Publish 3-minute Demo Video and Set DEMO_VIDEO_URL</div>
+          <div class="work-item-desc">Publish public YouTube/Vimeo video ≤ 3 minutes with English audio or subtitles;
+            update DEMO_VIDEO_URL in docs/devpost-draft.md</div>
+          <div class="work-item-notes">DoD: pnpm devpost:fields shows no placeholders; DEMO_VIDEO_URL set to real public
+            URL</div>
+          <span class="status-badge status-pending">Pending</span>
         </div>
       </div>
     </div>
@@ -303,7 +316,8 @@
         <div class="work-item" data-id="la3-p1-01" data-status="completed">
           <div class="work-item-id">LA3-P1-01</div>
           <div class="work-item-title">Connect voice conversation into main learning flow</div>
-          <div class="work-item-desc">Add Voice Conversation CTAs to home page, navigation, demo page, and lesson player with e2e tests</div>
+          <div class="work-item-desc">Add Voice Conversation CTAs to home page, navigation, demo page, and lesson player
+            with e2e tests</div>
           <span class="status-badge status-completed">Completed</span>
         </div>
         <div class="work-item" data-id="la3-p0-02" data-status="pending">
@@ -315,13 +329,15 @@
         <div class="work-item" data-id="la3-p0-03" data-status="completed">
           <div class="work-item-id">LA3-P0-03</div>
           <div class="work-item-title">README.md Rewrite</div>
-          <div class="work-item-desc">Create judge-friendly README with pitch, tech stack, setup, and deployment info</div>
+          <div class="work-item-desc">Create judge-friendly README with pitch, tech stack, setup, and deployment info
+          </div>
           <span class="status-badge status-completed">Completed</span>
         </div>
         <div class="work-item" data-id="la3-p0-04" data-status="completed">
           <div class="work-item-id">LA3-P0-04</div>
           <div class="work-item-title">Submission Documentation</div>
-          <div class="work-item-desc">Create docs/submission.md with Devpost write-up sections and pre-submit checklist</div>
+          <div class="work-item-desc">Create docs/submission.md with Devpost write-up sections and pre-submit checklist
+          </div>
           <span class="status-badge status-completed">Completed</span>
         </div>
       </div>
@@ -333,6 +349,9 @@
   </div>
 
   <script>
+    // LocalStorage key for progress tracking - bump version when task list changes
+    const PROGRESS_STORAGE_KEY = 'lessonarcade_progress_v21';
+
     // Update work item status by editing the data-status attribute
     // Valid values: 'pending', 'in-progress', 'completed'
 

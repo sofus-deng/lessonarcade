@@ -95,7 +95,12 @@ main() {
         test_failed=1
     fi
     
-    # Test 6: GET /studio returns 200 with Basic Auth (optional)
+    # Test 6: GET /api/studio/health returns 401 without auth
+    if ! assert_status "$SERVICE_URL/api/studio/health" "401" "" "API studio health without auth"; then
+        test_failed=1
+    fi
+    
+    # Test 7: GET /studio returns 200 with Basic Auth (optional)
     if [ -n "$STUDIO_BASIC_AUTH_USER" ] && [ -n "$STUDIO_BASIC_AUTH_PASS" ]; then
         log_info "Auth credentials provided; testing authenticated access"
         
@@ -107,8 +112,13 @@ main() {
         if ! assert_status "$SERVICE_URL/studio" "200" "$auth_header" "Studio with auth"; then
             test_failed=1
         fi
+        
+        # Test 8: GET /api/studio/health returns 200 with Basic Auth (optional)
+        if ! assert_status "$SERVICE_URL/api/studio/health" "200" "$auth_header" "API studio health with auth"; then
+            test_failed=1
+        fi
     else
-        log_warn "Auth credentials not provided; skipping auth-200 check"
+        log_warn "Auth credentials not provided; skipping auth-200 checks"
     fi
     
     # Final result

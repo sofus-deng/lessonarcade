@@ -11,6 +11,7 @@
     "test:e2e": "playwright test",
     "test:e2e:report": "playwright show-report",
     "test:e2e:ci": "playwright test --reporter=line --project=chromium",
+    "test:smoke": "playwright test e2e/smoke.spec.ts --reporter=line --project=chromium",
     "typecheck": "tsc --noEmit",
     "presskit:check": "node scripts/presskit/check.mjs",
     "audit:english": "tsx scripts/audit-english.ts",

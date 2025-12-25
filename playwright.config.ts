@@ -73,6 +73,9 @@ export default defineConfig({
       GEMINI_VERTEX_MOCK: '1',
       // Mock ElevenLabs signed URL for deterministic E2E tests
       E2E_ELEVENLABS_SIGNED_URL: 'https://mock-signed-url-e2e-test.com',
+      // Configure Basic Auth for Studio routes during E2E tests
+      STUDIO_BASIC_AUTH_USER: 'e2e',
+      STUDIO_BASIC_AUTH_PASS: 'e2e',
     },
   },
 });

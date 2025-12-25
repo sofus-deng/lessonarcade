@@ -2,41 +2,48 @@
 
 import { useConversation } from "@elevenlabs/react"
 import { Button } from "@/components/ui/button"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
-/**
- * ElevenLabsConversation Component
- *
- * A React component that provides a voice conversation interface with ElevenLabs Agents.
- * Uses the useConversation hook from @elevenlabs/react to manage conversation state.
- *
- * Features:
- * - Start/Stop conversation buttons
- * - Microphone permission request (only on user click)
- * - Status display (connected/disconnected, speaking)
- * - Error handling and display
- */
-export function ElevenLabsConversation() {
+interface LessonContext {
+  id: string
+  title: string
+  summary: string
+  keyPoints: string[]
+  suggestedQuestions: string[]
+}
+
+interface ElevenLabsConversationProps {
+  lessonContext?: LessonContext | null
+}
+
+export function ElevenLabsConversation({ lessonContext }: ElevenLabsConversationProps) {
   const conversation = useConversation()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [hasSentContext, setHasSentContext] = useState(false)
 
-  /**
-   * Handle starting a conversation
-   *
-   * 1. Request microphone permission
-   * 2. Fetch signed URL from API
-   * 3. Start WebRTC session with ElevenLabs
-   */
+  useEffect(() => {
+    if (
+      conversation.status === "connected" &&
+      lessonContext &&
+      !hasSentContext
+    ) {
+      const contextMessage = `The user is studying the lesson "${lessonContext.title}". 
+        Summary: ${lessonContext.summary}. 
+        Key points: ${lessonContext.keyPoints.join(", ")}.`
+      
+      conversation.sendContextualUpdate(contextMessage)
+      setHasSentContext(true)
+    }
+  }, [conversation.status, lessonContext, hasSentContext, conversation])
+
   const handleStart = async () => {
     setError(null)
     setIsLoading(true)
 
     try {
-      // Request microphone permission
       await navigator.mediaDevices.getUserMedia({ audio: true })
 
-      // Get signed URL from our API route
       const response = await fetch("/api/get-signed-url")
       if (!response.ok) {
         const errorData = await response.json()
@@ -44,9 +51,7 @@ export function ElevenLabsConversation() {
       }
 
       const { signedUrl } = await response.json()
-
-      // Start conversation session with signed URL
-      // Using signedUrl from API endpoint for WebRTC connection
+      
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await conversation.startSession(signedUrl as any)
     } catch (err) {
@@ -58,17 +63,13 @@ export function ElevenLabsConversation() {
     }
   }
 
-  /**
-   * Handle stopping a conversation
-   *
-   * Ends the active WebRTC session with ElevenLabs
-   */
   const handleStop = async () => {
     setError(null)
     setIsLoading(true)
 
     try {
       await conversation.endSession()
+      setHasSentContext(false)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to stop conversation"
       setError(errorMessage)
@@ -78,12 +79,10 @@ export function ElevenLabsConversation() {
     }
   }
 
-  // Determine if conversation is connected based on status
   const isConnected = conversation.status === "connected"
 
   return (
     <div className="flex flex-col items-center gap-6">
-      {/* Status Display */}
       <div className="flex items-center gap-6 text-sm">
         <div className="flex items-center gap-2">
           <span className="text-gray-600">Connection:</span>
@@ -107,7 +106,6 @@ export function ElevenLabsConversation() {
         </div>
       </div>
 
-      {/* Control Buttons */}
       {!isConnected ? (
         <Button
           onClick={handleStart}
@@ -127,7 +125,6 @@ export function ElevenLabsConversation() {
         </Button>
       )}
 
-      {/* Error Display */}
       {error && (
         <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 px-4 py-2 rounded-md">
           <svg
@@ -147,10 +144,9 @@ export function ElevenLabsConversation() {
         </div>
       )}
 
-      {/* Info Text */}
       {!isConnected && !error && (
         <p className="text-xs text-gray-500 text-center max-w-md">
-          Click &quot;Start Conversation&quot; to begin. Your browser will request microphone
+          Click {`Start Conversation`} to begin. Your browser will request microphone
           permission.
         </p>
       )}

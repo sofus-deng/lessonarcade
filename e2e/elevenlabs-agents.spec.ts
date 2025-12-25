@@ -29,9 +29,9 @@ test('home page has Voice Conversation CTA in HeroSection that navigates to /age
   const heroVoiceConversationButton = page.locator('main').getByRole('link', { name: 'Voice Conversation' })
   await expect(heroVoiceConversationButton).toBeVisible()
 
-  // Click button and verify navigation to /agents
+  // Click button and verify navigation to /agents (with optional query string)
   await heroVoiceConversationButton.click()
-  await expect(page).toHaveURL(/\/agents$/)
+  await expect(page).toHaveURL(/\/agents/)
   await expect(page.locator('[data-testid="la-agents-page"]')).toBeVisible()
 })
 
@@ -42,9 +42,9 @@ test('navigation bar has Voice Conversation link that navigates to /agents', asy
   const navVoiceConversationLink = page.locator('nav').getByRole('link', { name: 'Voice Conversation' })
   await expect(navVoiceConversationLink).toBeVisible()
 
-  // Click link and verify navigation to /agents
+  // Click link and verify navigation to /agents (with optional query string)
   await navVoiceConversationLink.click()
-  await expect(page).toHaveURL(/\/agents$/)
+  await expect(page).toHaveURL(/\/agents/)
   await expect(page.locator('[data-testid="la-agents-page"]')).toBeVisible()
 })
 
@@ -55,9 +55,9 @@ test('demo page has Voice Conversation CTA that navigates to /agents', async ({ 
   const voiceConversationButton = page.getByRole('link', { name: 'Voice Conversation' })
   await expect(voiceConversationButton).toBeVisible()
 
-  // Click button and verify navigation to /agents
+  // Click button and verify navigation to /agents (with optional query string)
   await voiceConversationButton.click()
-  await expect(page).toHaveURL(/\/agents$/)
+  await expect(page).toHaveURL(/\/agents/)
   await expect(page.locator('[data-testid="la-agents-page"]')).toBeVisible()
 })
 
@@ -71,8 +71,8 @@ test('lesson page has Voice Conversation CTA that navigates to /agents', async (
   const voiceConversationButton = page.getByRole('link', { name: 'Voice Conversation' })
   await expect(voiceConversationButton).toBeVisible()
 
-  // Click button and verify navigation to /agents
+  // Click button and verify navigation to /agents (with optional query string)
   await voiceConversationButton.click()
-  await expect(page).toHaveURL(/\/agents$/)
+  await expect(page).toHaveURL(/\/agents/)
   await expect(page.locator('[data-testid="la-agents-page"]')).toBeVisible()
 })

@@ -355,7 +355,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
               {/* Language Toggle and Voice Conversation CTA */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/agents">
+                  <Link href={`/agents?lesson=${encodeURIComponent(lesson.slug)}`}>
                     Voice Conversation
                   </Link>
                 </Button>

@@ -14,6 +14,7 @@
     "presskit:check": "node scripts/presskit/check.mjs"
   },
   "dependencies": {
+    "@elevenlabs/react": "^0.12.3",
     "@google-cloud/vertexai": "^1.10.0",
     "@google/genai": "^1.33.0",
     "@radix-ui/react-dialog": "^1.1.15",

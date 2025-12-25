@@ -19,11 +19,11 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: 'http://127.0.0.1:3100',
-    
+
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
   },
-  
+
   /* Configure projects for major browsers */
   projects: [
     {
@@ -69,7 +69,10 @@ export default defineConfig({
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,
     env: {
+      // Mock Gemini Vertex AI for deterministic tests
       GEMINI_VERTEX_MOCK: '1',
+      // Mock ElevenLabs signed URL for deterministic E2E tests
+      E2E_ELEVENLABS_SIGNED_URL: 'https://mock-signed-url-e2e-test.com',
     },
   },
 });

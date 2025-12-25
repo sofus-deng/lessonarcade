@@ -14,6 +14,7 @@ LessonArcade is a voice-first educational platform that delivers engaging, acces
 - **Advanced Guardrails** — Acknowledgment system, cooldown periods, and multi-tier rate limiting
 - **Voice Analytics** — Real-time telemetry tracking completion rates, replay patterns, and interruption points
 - **Privacy-First Design** — All telemetry uses hashed IP addresses with no personal data collection
+- **Conversational AI Agents** — Real-time voice conversations with ElevenLabs Agents for interactive learning
 
 ## Technology Stack
 
@@ -32,6 +33,7 @@ LessonArcade is a voice-first educational platform that delivers engaging, acces
 ### Partner Technology
 - **ElevenLabs** — Industry-leading AI voice synthesis for natural narration
 - **ElevenLabs API** — Multi-language text-to-speech with customizable voice presets
+- **ElevenLabs Agents** — Conversational AI for real-time voice interactions
 
 ### Testing & Quality
 - **Vitest** — Fast unit testing framework
@@ -119,6 +121,22 @@ VOICE_TTS_VOICE_ID_EN_NARRATOR=your_voice_id
 VOICE_TTS_VOICE_ID_ZH_INSTRUCTOR=your_voice_id
 VOICE_TTS_VOICE_ID_ZH_NARRATOR=your_voice_id
 ```
+
+### ElevenLabs Agents Configuration
+
+For conversational AI features, configure the following:
+
+```bash
+# ElevenLabs Agent ID (public, safe to expose)
+# Create an agent at: https://elevenlabs.io/app/convai/agents
+NEXT_PUBLIC_AGENT_ID=your_agent_id_here
+
+# E2E Testing Mock Mode (for CI only)
+# Set to a mock signed URL for deterministic E2E tests
+E2E_ELEVENLABS_SIGNED_URL=https://mock-signed-url.com
+```
+
+**Note**: `NEXT_PUBLIC_AGENT_ID` is safe to be public as it's only used to identify which agent to connect to. The actual authentication happens server-side using `ELEVENLABS_API_KEY`.
 
 ### Running the Development Server
 
@@ -275,19 +293,22 @@ graph TB
     B --> C[Voice API Routes]
     B --> D[Studio Analytics]
     B --> E[Vertex AI API Route]
-    C --> F[ElevenLabs TTS API]
-    C --> G[Rate Limiter]
-    C --> H[Telemetry Emitter]
-    D --> I[Voice Analytics Dashboard]
+    B --> F[ElevenLabs Agents API Route]
+    C --> G[ElevenLabs TTS API]
+    C --> H[Rate Limiter]
+    C --> I[Telemetry Emitter]
+    D --> J[Voice Analytics Dashboard]
     G --> I
-    E --> J[Vertex AI Client]
-    J --> K[Application Default Credentials]
-    K --> L[Cloud Run Service Account]
-    L --> M[Vertex AI API]
-    M --> N[Gemini Model]
-    B --> O[Google Cloud Run]
-    O --> P[Artifact Registry]
-    O --> Q[Cloud Secrets Manager]
+    E --> K[Vertex AI Client]
+    K --> L[Application Default Credentials]
+    L --> M[Cloud Run Service Account]
+    M --> N[Vertex AI API]
+    N --> O[Gemini Model]
+    F --> P[ElevenLabs ConvAI API]
+    P --> Q[ElevenLabs Agent]
+    B --> R[Google Cloud Run]
+    R --> S[Artifact Registry]
+    R --> T[Cloud Secrets Manager]
 ```
 
 ## Demo

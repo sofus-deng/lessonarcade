@@ -101,6 +101,30 @@ Remember to fill in the placeholders at the top of [`docs/devpost-draft.md`](dev
 
 ---
 
+## Quick Devpost Field Retrieval
+
+The fastest way to copy Devpost submission fields is to run:
+
+```bash
+pnpm devpost:fields
+```
+
+This prints all required fields in a stable format:
+
+```
+PROJECT_NAME=LessonArcade
+ONE_LINE_PITCH=AI-Powered Voice Lessons for Modern Education...
+HOSTED_URL=https://your-cloud-run-url.a.run.app
+REPO_URL=https://github.com/your-username/lessonarcade
+DEMO_VIDEO_URL=https://youtube.com/watch?v=YOUR_VIDEO_ID
+```
+
+Copy these values directly to your Devpost submission form.
+
+**Note:** The `HOSTED_URL` is read from the `.hosted_url` file (created by deployment), and `REPO_URL` is derived from your git remote origin. The `DEMO_VIDEO_URL` will show a placeholder until you upload your video and update `docs/devpost-draft.md`.
+
+---
+
 ## Pre-Submit Checklist
 
 ### Code & Repository
@@ -127,6 +151,7 @@ Remember to fill in the placeholders at the top of [`docs/devpost-draft.md`](dev
 ### Documentation
 - [ ] docs/submission.md created with all sections
 - [ ] docs/devpost-draft.md created with Devpost write-up
+- [ ] docs/demo-video.md created with demo video recording guide
 - [ ] Progress tracking HTML file added for work items
 - [ ] Local dev setup instructions complete
 - [ ] Deployment instructions for Cloud Run included
@@ -141,6 +166,7 @@ Remember to fill in the placeholders at the top of [`docs/devpost-draft.md`](dev
 - [ ] Video is in English or has English subtitles
 - [ ] Text description completed with all required sections
 - [ ] Challenge selected: ElevenLabs Challenge
+- [ ] Run `pnpm devpost:fields` to verify all fields are ready
 
 ---
 

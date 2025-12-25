@@ -150,7 +150,8 @@ export function ElevenLabsConversation() {
       {/* Info Text */}
       {!isConnected && !error && (
         <p className="text-xs text-gray-500 text-center max-w-md">
-          Click "Start Conversation" to begin. Your browser will request microphone permission.
+          Click &quot;Start Conversation&quot; to begin. Your browser will request microphone
+          permission.
         </p>
       )}
     </div>

@@ -34,10 +34,10 @@ export default function AgentsPage() {
             <strong>How it works:</strong>
           </p>
           <ul className="list-disc list-inside space-y-2 ml-4">
-            <li>Click "Start Conversation" to begin</li>
+            <li>Click &quot;Start Conversation&quot; to begin</li>
             <li>Grant microphone permission when prompted</li>
             <li>Speak naturally with AI agent</li>
-            <li>Click "Stop Conversation" to end</li>
+            <li>Click &quot;Stop Conversation&quot; to end</li>
           </ul>
         </div>
       </div>

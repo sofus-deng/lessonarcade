@@ -82,17 +82,18 @@ describe('/api/get-signed-url', () => {
       process.env.ELEVENLABS_API_KEY = 'test-api-key'
       process.env.NEXT_PUBLIC_AGENT_ID = 'test-agent-id'
 
-      // Mock fetch to return 401
-      vi.stubGlobal('fetch', () =>
+      const fetchMock = vi.fn(() =>
         Promise.resolve({
           ok: false,
           status: 401,
           statusText: 'Unauthorized',
           json: async () => Promise.resolve({ error: 'Unauthorized' }),
+          text: async () => 'Unauthorized',
           headers: new Headers(),
           url: '',
         } as unknown as Response)
       )
+      vi.stubGlobal('fetch', fetchMock)
 
       const response = await GET()
       const data = await response.json()
@@ -110,24 +111,25 @@ describe('/api/get-signed-url', () => {
       process.env.ELEVENLABS_API_KEY = 'test-api-key'
       process.env.NEXT_PUBLIC_AGENT_ID = 'test-agent-id'
 
-      // Mock fetch to return successful response
-      vi.stubGlobal('fetch', () =>
+      const fetchMock = vi.fn(() =>
         Promise.resolve({
           ok: true,
           status: 200,
           statusText: 'OK',
-          json: async () => Promise.resolve({ signed_url: 'https://api.elevenlabs.io/signed-url-123' }),
+          json: async () =>
+            Promise.resolve({ signed_url: 'https://api.elevenlabs.io/signed-url-123' }),
           headers: new Headers(),
           url: '',
         } as unknown as Response)
       )
+      vi.stubGlobal('fetch', fetchMock)
 
       const response = await GET()
       const data = await response.json()
 
       expect(response.status).toBe(200)
       expect(data.signedUrl).toBe('https://api.elevenlabs.io/signed-url-123')
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining('api.elevenlabs.io/v1/convai/conversation/get-signed-url'),
         expect.objectContaining({
           headers: expect.objectContaining({

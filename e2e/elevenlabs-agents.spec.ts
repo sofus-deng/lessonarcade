@@ -17,7 +17,7 @@ test('/agents page renders and shows start button', async ({ page }) => {
   await expect(page.locator('[data-testid="la-agents-page"]')).toBeVisible()
 
   // Verify start button is visible
-  await expect(page.getByText('Start Conversation')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Start Conversation' })).toBeVisible()
 
   // IMPORTANT: Do not click to avoid mic requirement in CI
 })

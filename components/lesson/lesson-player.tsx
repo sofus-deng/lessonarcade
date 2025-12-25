@@ -10,6 +10,8 @@ import { MultipleChoiceItem } from './items/multiple-choice-item'
 import { OpenEndedItem } from './items/open-ended-item'
 import { CheckpointItem } from './items/checkpoint-item'
 import { LanguageToggle } from '@/components/ui/language-toggle'
+import { Button } from '@/components/ui/button'
+import Link from 'next/link'
 
 interface LessonPlayerProps {
   lesson: LessonArcadeLesson
@@ -339,7 +341,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="max-w-4xl mx-auto space-y-6"
           >
-            {/* Header with Language Toggle */}
+            {/* Header with Language Toggle and Voice Conversation CTA */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex-1 w-full">
                 {/* Lesson Summary */}
@@ -350,8 +352,13 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
                 />
               </div>
               
-              {/* Language Toggle */}
-              <div className="flex-shrink-0">
+              {/* Language Toggle and Voice Conversation CTA */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/agents">
+                    Voice Conversation
+                  </Link>
+                </Button>
                 <LanguageToggle
                   currentLanguage={displayLanguage}
                   onLanguageChange={handleLanguageChange}

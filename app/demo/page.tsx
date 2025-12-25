@@ -40,6 +40,11 @@ export default async function DemoPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
+                <Link href="/agents">
+                  Voice Conversation
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
                 <Link href="/">
                   Back to Home
                 </Link>

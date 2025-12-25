@@ -34,6 +34,16 @@ export function HeroSection() {
                   </Link>
                 </Button>
                 <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3"
+                >
+                  <Link href="/agents">
+                    Voice Conversation
+                  </Link>
+                </Button>
+                <Button
                   variant="outline"
                   size="lg"
                   className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3"

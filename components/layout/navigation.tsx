@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { motion } from "motion/react"
+import Link from "next/link"
 
 export function Navigation() {
   return (
@@ -27,6 +28,11 @@ export function Navigation() {
             </Button>
             <Button variant="ghost" className="text-la-surface hover:text-la-accent">
               For teams
+            </Button>
+            <Button asChild variant="ghost" className="text-la-surface hover:text-la-accent">
+              <Link href="/agents">
+                Voice Conversation
+              </Link>
             </Button>
             <Button className="bg-la-accent text-la-bg hover:bg-la-accent/90">
               Try LessonArcade

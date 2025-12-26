@@ -1,0 +1,211 @@
+// LA3-P0-02: SaaS Data Model Implementation
+// This schema implements the multi-workspace SaaS data model for LessonArcade Phase 3
+// See plans/la3-p0-01-saas-data-model.md for the complete design specification
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+// WorkspaceMemberRole defines the permission levels for workspace members
+enum WorkspaceMemberRole {
+  OWNER   // Full control, can delete workspace, manage billing
+  ADMIN   // Can manage lessons, members, and settings
+  EDITOR  // Can create and edit lessons
+  VIEWER  // Read-only access to lessons and analytics
+}
+
+// LessonStatus defines the lifecycle states of a lesson
+enum LessonStatus {
+  DRAFT     // Lesson is being edited, not visible to learners
+  ACTIVE    // Lesson is published and available to learners
+  ARCHIVED  // Lesson is no longer active but preserved for historical records
+}
+
+// LessonRunMode defines the play modes for lesson runs
+enum LessonRunMode {
+  focus   // Focused learning mode
+  arcade  // Gamified arcade mode
+}
+
+// ============================================================================
+// USER AND WORKSPACE
+// ============================================================================
+
+// User represents an end user or administrator of LessonArcade
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  workspaceMembers WorkspaceMember[]
+  lessonRuns      LessonRun[]
+
+  @@map("users")
+}
+
+// Workspace represents an organization, team, or brand
+model Workspace {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique // URL-friendly identifier
+  brandId   String   @default("lessonarcade-default") // Links to existing BrandId type
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  members          WorkspaceMember[]
+  lessons          Lesson[]
+  lessonRuns       LessonRun[]
+  settings         WorkspaceSettings?
+
+  @@map("workspaces")
+}
+
+// WorkspaceMember is the join table between User and Workspace that defines membership and permissions
+model WorkspaceMember {
+  id         String              @id @default(uuid())
+  userId     String
+  workspaceId String
+  role       WorkspaceMemberRole @default(VIEWER)
+  createdAt  DateTime            @default(now())
+
+  // Relationships
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId]) // Prevent duplicate memberships
+  @@index([userId])
+  @@index([workspaceId])
+  @@map("workspace_members")
+}
+
+// ============================================================================
+// LESSON CONTENT MANAGEMENT
+// ============================================================================
+
+// Lesson represents a logical lesson owned by a workspace
+// A Lesson is a container for multiple versions of lesson content
+model Lesson {
+  id        String       @id @default(uuid())
+  workspaceId String
+  slug      String       // Unique within workspace
+  title     String
+  status    LessonStatus @default(DRAFT)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  // Relationships
+  workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  versions       LessonVersion[]
+  runs           LessonRun[]
+
+  @@unique([workspaceId, slug]) // Slug must be unique within workspace
+  @@index([workspaceId])
+  @@index([status])
+  @@map("lessons")
+}
+
+// LessonVersion represents a specific version of a Lesson's content
+// This allows safe editing of upcoming versions while keeping a stable published version
+model LessonVersion {
+  id            String   @id @default(uuid())
+  lessonId      String
+  versionNumber Int      // Monotonically increasing within a lesson
+  isPublished   Boolean  @default(false) // Only one per lesson should be true
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relationships
+  lesson   Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  content  LessonContent?
+  runs     LessonRun[]
+
+  @@unique([lessonId, versionNumber]) // Version numbers must be unique within a lesson
+  @@index([lessonId])
+  @@index([isPublished])
+  @@map("lesson_versions")
+}
+
+// LessonContent stores the actual LessonArcade JSON blob for a specific lesson version
+// The json field contains the complete lesson structure as defined in lib/lessonarcade/schema.ts
+model LessonContent {
+  id              String   @id @default(uuid())
+  lessonVersionId String   @unique // One-to-one with LessonVersion
+  json            String   // Full LessonArcade lesson structure (matches lib/lessonarcade/schema.ts)
+  checksum        String   // Hash of JSON for integrity and deduplication
+  createdAt       DateTime @default(now())
+
+  // Relationships
+  lessonVersion LessonVersion @relation(fields: [lessonVersionId], references: [id], onDelete: Cascade)
+
+  @@index([checksum]) // For deduplication queries
+  @@map("lesson_contents")
+}
+
+// ============================================================================
+// LESSON RUNS AND ANALYTICS
+// ============================================================================
+
+// LessonRun represents one completed (or in-progress) run of a lesson by a learner
+// This is the basis for analytics and future billing
+model LessonRun {
+  id                 String        @id @default(uuid())
+  lessonId           String
+  workspaceId        String        // Denormalized for efficient analytics queries
+  learnerId          String?       // Optional: authenticated user
+  anonymousSessionId String?       // Optional: anonymous learner session
+  lessonVersionId    String
+  score              Int
+  maxScore           Int
+  correctCount       Int
+  mode               LessonRunMode
+  startedAt          DateTime      @default(now())
+  completedAt        DateTime?
+  metadata           String?       // Additional data: browser info, device type, time per level, etc.
+
+  // Relationships
+  lesson        Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  learner       User?         @relation(fields: [learnerId], references: [id], onDelete: SetNull)
+  lessonVersion LessonVersion @relation(fields: [lessonVersionId], references: [id])
+
+  // Either learnerId or anonymousSessionId should be set, not both
+  @@index([lessonId])
+  @@index([workspaceId])
+  @@index([learnerId])
+  @@index([anonymousSessionId])
+  @@index([completedAt])
+  @@map("lesson_runs")
+}
+
+// ============================================================================
+// WORKSPACE CONFIGURATION
+// ============================================================================
+
+// WorkspaceSettings stores workspace-level configuration and preferences
+model WorkspaceSettings {
+  id                    String   @id @default(uuid())
+  workspaceId           String   @unique // One-to-one with Workspace
+  brandId               String   @default("lessonarcade-default")
+  defaultVoicePresetId  String?
+  featureFlags          String?  // Beta features and toggles
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relationships
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@map("workspace_settings")
+}

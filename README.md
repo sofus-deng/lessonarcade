@@ -345,6 +345,20 @@ graph TB
     R --> T[Cloud Secrets Manager]
 ```
 
+## SaaS Data Model (Phase 3)
+
+LessonArcade Phase 3 introduces a multi-tenant SaaS data model designed for teams, agencies, and brands that want to run many interactive lessons under one roof.
+
+At the core of the design:
+
+- **User & Workspace** – A user can belong to multiple workspaces, and each workspace represents an organization or brand with its own theme and settings.
+- **Lesson & LessonVersion** – Each lesson belongs to exactly one workspace and can have multiple versions, so teams can iterate safely while keeping a stable published version in production.
+- **LessonContent** – Stores the LessonArcade JSON "source of truth" for each version, with checksums to support future deduplication and content analysis.
+- **LessonRun** – Records every learner run (score, mode, timestamps, metadata), forming the basis for analytics, progress tracking, and future billing.
+- **WorkspaceSettings** – Captures workspace-level configuration such as brand/theme, voice presets, and feature flags.
+
+The entire model is documented as a Prisma schema draft with a phased migration plan, so we can evolve from today's single-tenant demo into a full SaaS platform without a disruptive rewrite.
+
 ## Demo
 
 Try the live demo at [demo-url-placeholder] (replace with actual Cloud Run URL).

@@ -2,12 +2,12 @@
  * Brand Theme Provider
  *
  * Client component that sets the `data-brand` attribute on the document element.
- * This enables CSS-based theme switching using the design tokens defined in globals.css.
+ * This enables CSS-based theme switching using design tokens defined in globals.css.
  */
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getBrandPreset } from "@/lib/branding/brandPresets";
 
 interface BrandThemeProviderProps {
@@ -25,15 +25,12 @@ interface BrandThemeProviderProps {
  * The brand can be overridden via the `brand` query string parameter.
  */
 export function BrandThemeProvider({ brandId, children }: BrandThemeProviderProps) {
-  const [activeBrand, setActiveBrand] = useState(brandId);
-
   useEffect(() => {
-    // Read from query param to override the brand
+    // Read from query param to override brand
     const params = new URLSearchParams(window.location.search);
     const brandParam = params.get("brand");
     const resolvedBrand = getBrandPreset(brandParam).id;
 
-    setActiveBrand(resolvedBrand);
     document.documentElement.dataset.brand = resolvedBrand;
   }, [brandId]);
 

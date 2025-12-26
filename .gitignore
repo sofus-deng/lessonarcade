@@ -55,3 +55,6 @@ data/voice-analytics/**/*.jsonl
 
 # Local hosted URL (gitignored, for quick Devpost submission)
 .hosted_url
+
+# Voice Demo stable public URL (gitignored, for sharing with reviewers)
+voice-demo-url.txt

@@ -16,6 +16,15 @@ LessonArcade is a voice-first educational platform that delivers engaging, acces
 - **Privacy-First Design** — All telemetry uses hashed IP addresses with no personal data collection
 - **Conversational AI Agents** — Real-time voice conversations with ElevenLabs Agents for interactive learning
 
+## Voice Demo
+
+LessonArcade ships with a production-ready Voice Demo that turns any JSON lesson into a narrated, interactive experience. The demo showcases TTS-based narration, step-by-step checks for understanding, and telemetry capture for every playback and interaction. There are two primary flows you can try after deployment:
+
+- `/demo/voice/effective-meetings` – linear, lesson-style voice walkthrough
+- `/demo/voice-chat/effective-meetings` – chat-style, conversational flow built on the same lesson data
+
+For deployment and health checks, see `docs/voice-demo-playbook.md`. Once you have a stable public URL, you can record it in `voice-demo-url.txt` (see `voice-demo-url.example`) and share it with reviewers, demo participants, or internal stakeholders.
+
 ## Technology Stack
 
 ### Core Framework
@@ -279,7 +288,7 @@ The deployment script automatically outputs the hosted URL at the end:
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-==========================================
+=========================================
 ```
 
 Alternatively, you can retrieve it manually:

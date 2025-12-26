@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BRAND_PRESETS, getBrandPreset, type BrandId } from "@/lib/branding/brandPresets";
 
 /**
@@ -16,13 +16,18 @@ import { BRAND_PRESETS, getBrandPreset, type BrandId } from "@/lib/branding/bran
  */
 export function BrandSwitcher() {
   const [brandId, setBrandId] = useState<BrandId>("lessonarcade-default");
+  const initializedRef = useRef(false);
 
   // Read from query param on mount to sync with URL
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const brand = params.get("brand");
-    if (brand) {
-      setBrandId(getBrandPreset(brand).id);
+    if (typeof window !== "undefined" && !initializedRef.current) {
+      const params = new URLSearchParams(window.location.search);
+      const brand = params.get("brand");
+      if (brand) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- Reading URL params on mount is a valid use case
+        setBrandId(getBrandPreset(brand).id);
+      }
+      initializedRef.current = true;
     }
   }, []);
 

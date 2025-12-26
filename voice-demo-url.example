@@ -1,0 +1,3 @@
+# This file documents the stable public URL for the LessonArcade Voice Demo.
+# Copy this file to voice-demo-url.txt (ignored by Git) and replace the placeholder URL with your actual deployed Voice Demo URL.
+https://YOUR-VOICE-DEMO-URL.example.com

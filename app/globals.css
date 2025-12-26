@@ -57,6 +57,30 @@
   }
 }
 
+/* ============================================
+ * Brand/Theme Overrides
+ * ============================================ */
+
+/* Warm Paper Theme */
+[data-brand="warm-paper"] {
+  --la-bg: #fffbeb;
+  --la-surface: #fef3c7;
+  --la-primary: #d97706;
+  --la-accent: #059669;
+  --la-muted: #a16207;
+  --la-border: #fde68a;
+}
+
+/* Night Classroom Theme */
+[data-brand="night-classroom"] {
+  --la-bg: #0f172a;
+  --la-surface: #1e1b4b;
+  --la-primary: #8b5cf6;
+  --la-accent: #f43f5e;
+  --la-muted: #64748b;
+  --la-border: #334155;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

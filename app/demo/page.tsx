@@ -1,6 +1,7 @@
 import { Metadata } from "next"
 import { getDemoLessonSummaries } from "@/lib/lessonarcade/loaders"
 import { DemoLessonGrid } from "@/components/demo/DemoLessonGrid"
+import { BrandSwitcher } from "@/components/demo/BrandSwitcher"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
@@ -20,6 +21,9 @@ export default async function DemoPage() {
 
   return (
     <div data-testid="la-demo-page" className="min-h-screen bg-la-bg">
+      {/* Brand Switcher (dev only) */}
+      <BrandSwitcher />
+
       {/* Header Section */}
       <div className="bg-la-surface border-b border-la-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

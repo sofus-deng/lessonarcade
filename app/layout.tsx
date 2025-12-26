@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { BrandThemeProvider } from "@/components/layout/BrandThemeProvider";
+import { getBrandPreset } from "@/lib/branding/brandPresets";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -11,6 +13,10 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+// Get brand from environment variable, default to lessonarcade-default
+const brandId = process.env.NEXT_PUBLIC_BRAND_ID || "lessonarcade-default";
+const brandPreset = getBrandPreset(brandId);
 
 export const metadata: Metadata = {
   title: "LessonArcade - Turn Teaching Videos into Playable Lessons",
@@ -37,11 +43,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
-      </body>
+      <BrandThemeProvider brandId={brandPreset.id}>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        >
+          {children}
+        </body>
+      </BrandThemeProvider>
     </html>
   );
 }

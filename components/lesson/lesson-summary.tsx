@@ -5,6 +5,10 @@ import { type LessonArcadeLesson } from '@/lib/lessonarcade/schema'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/ui/cn'
+import { BadgesStrip } from './BadgesStrip'
+import { LessonLeaderboard } from './LessonLeaderboard'
+import { useGamificationAfterLesson } from '@/hooks/use-gamification-after-lesson'
+import { getAllBadges } from '@/lib/lessonarcade/gamification'
 
 type LessonMode = "focus" | "arcade"
 
@@ -39,7 +43,22 @@ interface LessonSummaryProps {
 export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSummaryProps) {
   // Calculate lesson metrics
   const metrics = calculateLessonMetrics(lesson, scoringState)
-  
+
+  // Check if lesson is completed (all scorable items answered)
+  const isCompleted = metrics.answeredScorableItems === metrics.totalScorableItems
+
+  // Gamification hook - only runs on first completion
+  const { gamificationState, newlyUnlockedBadges } = useGamificationAfterLesson({
+    lessonId: lesson.id,
+    isCompleted,
+    score: scoringState.totalScore,
+    maxScore: metrics.totalPossiblePoints,
+    correctCount: Object.values(scoringState.answeredItems).filter(
+      (item) => item.isSubmitted && item.isCorrect
+    ).length,
+    mode: scoringState.mode,
+  })
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -282,12 +301,12 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
                   <motion.div
                     key={star}
                     initial={{ scale: 0, rotate: -180 }}
-                    animate={{ 
+                    animate={{
                       scale: star <= metrics.starRating ? 1 : 0.3,
                       rotate: star <= metrics.starRating ? 0 : -180,
                       opacity: star <= metrics.starRating ? 1 : 0.2
                     }}
-                    transition={{ 
+                    transition={{
                       delay: (star - 1) * 0.1,
                       duration: 0.3,
                       ease: "easeOut"
@@ -312,6 +331,28 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
           </Card>
         </motion.div>
       </div>
+
+      {/* Gamification Section - Badges and Leaderboard */}
+      {isCompleted && (
+        <>
+          {/* Badges Strip - Show if there are unlocked badges */}
+          {gamificationState.badgesUnlocked.length > 0 && (
+            <BadgesStrip
+              allBadges={getAllBadges()}
+              unlockedBadgeIds={gamificationState.badgesUnlocked}
+              newlyUnlockedBadgeIds={newlyUnlockedBadges.length > 0 ? newlyUnlockedBadges : undefined}
+            />
+          )}
+
+          {/* Leaderboard - Show if there are runs in history for this lesson */}
+          {gamificationState.history.length > 0 && (
+            <LessonLeaderboard
+              lessonId={lesson.id}
+              history={gamificationState.history}
+            />
+          )}
+        </>
+      )}
     </motion.div>
   )
 }
@@ -338,7 +379,7 @@ function calculateLessonMetrics(lesson: LessonArcadeLesson, scoringState: Scorin
   // Calculate totals from lesson data
   let totalScorableItems = 0
   let totalPossiblePoints = 0
-  
+
   lesson.levels.forEach(level => {
     level.items.forEach(item => {
       if (item.kind === 'multiple_choice') {
@@ -347,15 +388,15 @@ function calculateLessonMetrics(lesson: LessonArcadeLesson, scoringState: Scorin
       }
     })
   })
-  
+
   // Calculate earned points and answered items from session state
   let answeredScorableItems = 0
   let completedLevels = 0
-  
+
   lesson.levels.forEach(level => {
     let levelScorableItems = 0
     let levelAnsweredScorableItems = 0
-    
+
     level.items.forEach(item => {
       if (item.kind === 'multiple_choice') {
         levelScorableItems++
@@ -365,25 +406,25 @@ function calculateLessonMetrics(lesson: LessonArcadeLesson, scoringState: Scorin
         }
       }
     })
-    
+
     // Level is complete if all scorable items have been answered
     if (levelScorableItems > 0 && levelScorableItems === levelAnsweredScorableItems) {
       completedLevels++
     }
   })
-  
+
   const earnedPoints = scoringState.totalScore
-  const scorePercentage = totalPossiblePoints > 0 
+  const scorePercentage = totalPossiblePoints > 0
     ? Math.round((earnedPoints / totalPossiblePoints) * 100)
     : 0
-  
+
   const itemsCompletionPercentage = totalScorableItems > 0
     ? Math.round((answeredScorableItems / totalScorableItems) * 100)
     : 0
-  
+
   // Calculate star rating
   const { stars, label } = calculateStarRating(scorePercentage)
-  
+
   return {
     totalLevels: lesson.levels.length,
     completedLevels,

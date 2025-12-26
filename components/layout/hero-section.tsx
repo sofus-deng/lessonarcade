@@ -27,7 +27,7 @@ export function HeroSection() {
                 <Button
                   asChild
                   size="lg"
-                  className="bg-la-accent text-la-bg hover:bg-la-accent/90 text-lg px-8 py-3"
+                  className="bg-la-accent text-la-bg hover:bg-la-accent/90 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                 >
                   <Link href="/demo">
                     Play a demo lesson
@@ -37,18 +37,21 @@ export function HeroSection() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3"
+                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                 >
                   <Link href="/agents">
                     Voice Conversation
                   </Link>
                 </Button>
                 <Button
+                  asChild
                   variant="outline"
                   size="lg"
-                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3"
+                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                 >
-                  For creators
+                  <Link href="#creators">
+                    For creators
+                  </Link>
                 </Button>
               </div>
             </div>
@@ -69,7 +72,7 @@ export function HeroSection() {
                 <div className="relative rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-la-primary/20 to-la-accent/20 h-48 flex items-center justify-center">
                   <div className="absolute inset-0 bg-black/20" />
                   <motion.div
-                    className="relative z-10 bg-la-accent rounded-full p-4 cursor-pointer"
+                    className="relative z-10 bg-la-accent rounded-full p-4 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                   >
@@ -79,7 +82,7 @@ export function HeroSection() {
                 
                 {/* Lesson Info */}
                 <div className="space-y-3">
-                  <h3 className="text-xl font-semibold text-la-bg">
+                  <h3 className="text-xl font-semibold text-la-surface">
                     Introduction to React Hooks
                   </h3>
                   <p className="text-la-muted text-sm">
@@ -87,7 +90,7 @@ export function HeroSection() {
                   </p>
                   
                   {/* Progress Bar */}
-                  <div className="w-full bg-la-border/30 rounded-full h-2">
+                  <div className="w-full bg-la-border/30 rounded-full h-2" role="progressbar" aria-valuenow={35} aria-valuemin={0} aria-valuemax={100} aria-label="Lesson progress">
                     <motion.div 
                       className="bg-la-accent h-2 rounded-full"
                       initial={{ width: 0 }}
@@ -99,11 +102,11 @@ export function HeroSection() {
                   {/* Interactive Elements */}
                   <div className="flex items-center gap-4 pt-2">
                     <div className="flex items-center gap-2 text-la-muted text-sm">
-                      <CheckCircle className="w-4 h-4 text-la-accent" />
+                      <CheckCircle className="w-4 h-4 text-la-accent" aria-hidden="true" />
                       <span>2 completed</span>
                     </div>
                     <div className="flex items-center gap-2 text-la-muted text-sm">
-                      <BarChart3 className="w-4 h-4 text-la-primary" />
+                      <BarChart3 className="w-4 h-4 text-la-primary" aria-hidden="true" />
                       <span>85% score</span>
                     </div>
                   </div>

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function StudioPage() {
   return (
     <div className="min-h-screen bg-la-bg">
-      <div className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
@@ -27,7 +27,7 @@ export default function StudioPage() {
             <LessonStudioForm />
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

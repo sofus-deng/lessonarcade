@@ -79,7 +79,7 @@ const ChatEndSummary = ({
       <CardHeader className="text-center">
         <div className="mx-auto w-16 h-16 rounded-full bg-la-accent text-white flex items-center justify-center mb-4">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0118 0z" />
           </svg>
         </div>
         <h2 className="text-2xl font-bold text-la-bg">Lesson Complete!</h2>
@@ -116,7 +116,7 @@ const ChatEndSummary = ({
             className="flex-1"
           >
             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0118 0M9 12l2 2 4-4m6-3a9 9 0118 0z" />
             </svg>
             Replay Lesson
           </Button>
@@ -192,7 +192,7 @@ export function VoiceChatFlow({ lesson, initialDisplayLanguage }: VoiceChatFlowP
   const handleAnswer = (payload: { kind: 'multiple_choice'; optionId: string } | { kind: 'open_ended'; text: string }) => {
     if (!chatState) return
     
-    // For multiple choice, track the selected option and correctness
+    // For multiple choice, track selected option and correctness
     if (payload.kind === 'multiple_choice' && currentItem.kind === 'multiple_choice') {
       setSelectedOptionId(payload.optionId)
       const correct = currentItem.correctOptionIds.includes(payload.optionId)
@@ -261,26 +261,28 @@ export function VoiceChatFlow({ lesson, initialDisplayLanguage }: VoiceChatFlowP
 
         <Card className="bg-la-surface/40 border-la-border">
           <CardContent className="pt-6 space-y-3">
-            {chatState.messages.map(message => (
-              <div
-                key={message.id}
-                className={cn(
-                  "flex",
-                  message.role === 'user' ? "justify-end" : "justify-start"
-                )}
-              >
+            <div role="log" aria-live="polite" aria-label="Chat messages">
+              {chatState.messages.map(message => (
                 <div
+                  key={message.id}
                   className={cn(
-                    "max-w-[80%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap border",
-                    message.role === 'user'
-                      ? "bg-la-accent text-la-bg border-la-accent/80"
-                      : "bg-la-surface text-la-bg border-la-border"
+                    "flex",
+                    message.role === 'user' ? "justify-end" : "justify-start"
                   )}
                 >
-                  {message.text}
+                  <div
+                    className={cn(
+                      "max-w-[80%] rounded-2xl px-4 py-2 text-sm whitespace-pre-wrap border",
+                      message.role === 'user'
+                        ? "bg-la-accent text-la-bg border-la-accent/80"
+                        : "bg-la-surface text-la-bg border-la-border"
+                    )}
+                  >
+                    {message.text}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
@@ -299,7 +301,7 @@ export function VoiceChatFlow({ lesson, initialDisplayLanguage }: VoiceChatFlowP
                     {getItemPrompt(currentItem, displayLanguage)}
                   </div>
                   {currentItem.kind === 'multiple_choice' && (
-                    <div className="grid gap-2">
+                    <div className="grid gap-2" role="radiogroup" aria-label="Answer options">
                       {currentItem.options.map((option, index) => {
                         const optionText = getLocalizedText(option.textI18n, option.text, displayLanguage)
                         const isSelected = selectedOptionId === option.id
@@ -310,13 +312,14 @@ export function VoiceChatFlow({ lesson, initialDisplayLanguage }: VoiceChatFlowP
                             key={option.id}
                             variant="outline"
                             className={cn(
-                              "justify-start text-left h-auto p-4",
+                              "justify-start text-left h-auto p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent",
                               isSelected && showFeedback && isOptionCorrect && "bg-green-50 border-green-300 text-green-900",
                               isSelected && showFeedback && !isOptionCorrect && "bg-red-50 border-red-300 text-red-900",
                               awaitingNext && "cursor-not-allowed opacity-75"
                             )}
                             onClick={() => !awaitingNext && handleAnswer({ kind: 'multiple_choice', optionId: option.id })}
                             disabled={awaitingNext}
+                            aria-pressed={isSelected}
                           >
                             <div className="flex items-center gap-3 w-full">
                               <div className={cn(
@@ -355,17 +358,30 @@ export function VoiceChatFlow({ lesson, initialDisplayLanguage }: VoiceChatFlowP
                         )}
                         rows={4}
                         disabled={awaitingNext}
-                        className={awaitingNext ? "opacity-75 cursor-not-allowed" : ""}
+                        className={cn(
+                          awaitingNext ? "opacity-75 cursor-not-allowed" : "",
+                          "focus-visible:ring-2 focus-visible:ring-la-accent"
+                        )}
+                        aria-label={getLocalizedText(
+                          currentItem.placeholderI18n,
+                          currentItem.prompt || 'Your answer',
+                          displayLanguage
+                        )}
                       />
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={() => handleAnswer({ kind: 'open_ended', text: openEndedText.trim() })}
                           disabled={awaitingNext || openEndedText.trim().length === 0}
+                          className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent"
                         >
                           Submit
                         </Button>
                         {awaitingNext && (
-                          <Button variant="outline" onClick={handleNextStep}>
+                          <Button 
+                            variant="outline" 
+                            onClick={handleNextStep}
+                            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent"
+                          >
                             Next
                           </Button>
                         )}
@@ -375,12 +391,21 @@ export function VoiceChatFlow({ lesson, initialDisplayLanguage }: VoiceChatFlowP
 
                   {currentItem.kind === 'checkpoint' && (
                     <div className="flex items-center gap-2">
-                      <Button onClick={handleNextStep}>Continue</Button>
+                      <Button 
+                        onClick={handleNextStep}
+                        className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent"
+                      >
+                        Continue
+                      </Button>
                     </div>
                   )}
 
                   {currentItem.kind === 'multiple_choice' && awaitingNext && (
-                    <Button variant="outline" onClick={handleNextStep}>
+                    <Button 
+                      variant="outline" 
+                      onClick={handleNextStep}
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent"
+                    >
                       Next
                     </Button>
                   )}

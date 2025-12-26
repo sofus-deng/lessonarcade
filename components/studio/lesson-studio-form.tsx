@@ -96,24 +96,24 @@ export function LessonStudioForm() {
           case "RATE_LIMIT":
             const retryAfter = result.error?.retryAfter
             userFriendlyMessage = retryAfter
-              ? `You've reached the generation limit. Please wait ${retryAfter} seconds before trying again.`
-              : "You've reached the generation limit. Please wait a while before trying again."
+              ? `You've reached generation limit. Please wait ${retryAfter} seconds before trying again.`
+              : "You've reached generation limit. Please wait a while before trying again."
             nextStep = "Consider upgrading your plan or try again later."
             break
             
           case "VALIDATION":
             userFriendlyMessage = "Please check your input and try again."
-            nextStep = "Make sure the YouTube URL is valid and transcript text is provided for Accurate mode."
+            nextStep = "Make sure YouTube URL is valid and transcript text is provided for Accurate mode."
             break
             
           case "GEMINI_ERROR":
-            userFriendlyMessage = "There was an issue with the AI service."
-            nextStep = "Please try again in a few moments. If the problem persists, contact support."
+            userFriendlyMessage = "There was an issue with AI service."
+            nextStep = "Please try again in a few moments. If problem persists, contact support."
             break
             
           default:
             userFriendlyMessage = errorMessage
-            nextStep = "Please try again or contact support if the issue persists."
+            nextStep = "Please try again or contact support if issue persists."
         }
         
         const fullMessage = nextStep ? `${userFriendlyMessage} ${nextStep}` : userFriendlyMessage
@@ -158,27 +158,27 @@ export function LessonStudioForm() {
           case "RATE_LIMIT":
             const retryAfter = result.error?.retryAfter
             userFriendlyMessage = retryAfter
-              ? `You've reached the publishing limit. Please wait ${retryAfter} seconds before trying again.`
-              : "You've reached the publishing limit. Please wait a while before trying again."
+              ? `You've reached publishing limit. Please wait ${retryAfter} seconds before trying again.`
+              : "You've reached publishing limit. Please wait a while before trying again."
             nextStep = "Consider upgrading your plan or try again later."
             break
             
           case "VALIDATION":
             userFriendlyMessage = "The lesson data is invalid."
-            nextStep = "Please regenerate the lesson or check the lesson content."
+            nextStep = "Please regenerate lesson or check lesson content."
             break
             
           case "SLUG_COLLISION":
             const suggestedSlug = result.error?.suggestion
             userFriendlyMessage = `The lesson slug "${result.error?.reservedSlug}" is already in use.`
             nextStep = suggestedSlug
-              ? `Try using "${suggestedSlug}" as the slug instead.`
+              ? `Try using "${suggestedSlug}" as slug instead.`
               : "Please choose a different slug for your lesson."
             break
             
           default:
             userFriendlyMessage = errorMessage
-            nextStep = "Please try again or contact support if the issue persists."
+            nextStep = "Please try again or contact support if issue persists."
         }
         
         const fullMessage = nextStep ? `${userFriendlyMessage} ${nextStep}` : userFriendlyMessage
@@ -221,6 +221,8 @@ export function LessonStudioForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg"
+            role="alert"
+            aria-live="assertive"
           >
             {formState.error}
           </motion.div>
@@ -235,10 +237,12 @@ export function LessonStudioForm() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-lg"
+            role="status"
+            aria-live="polite"
           >
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold">Lesson Published Successfully!</h3>
+                <h2 className="font-semibold">Lesson Published Successfully!</h2>
                 <p className="text-sm mt-1">
                   Your lesson is now available at{" "}
                   <a 
@@ -253,7 +257,7 @@ export function LessonStudioForm() {
                 variant="outline" 
                 size="sm" 
                 onClick={resetForm}
-                className="ml-4"
+                className="ml-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 Create New Lesson
               </Button>
@@ -276,7 +280,8 @@ export function LessonStudioForm() {
               placeholder="https://www.youtube.com/watch?v=..."
               value={formState.data.youtubeUrl}
               onChange={(e) => updateFormData("youtubeUrl", e.target.value)}
-              className="w-full"
+              className="w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
+              required
             />
             <p className="text-xs text-la-muted mt-1">
               Enter a YouTube video URL to create a lesson from
@@ -284,11 +289,11 @@ export function LessonStudioForm() {
           </div>
 
           {/* Generation Mode */}
-          <div>
-            <label className="block text-sm font-medium text-la-surface mb-2">
+          <fieldset className="border-0 p-0 m-0">
+            <legend className="block text-sm font-medium text-la-surface mb-2">
               Generation Mode
-            </label>
-            <div className="flex space-x-4">
+            </legend>
+            <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="radio"
@@ -296,7 +301,7 @@ export function LessonStudioForm() {
                   value="quick"
                   checked={formState.data.generationMode === "quick"}
                   onChange={(e) => updateFormData("generationMode", e.target.value as GenerationMode)}
-                  className="text-la-primary"
+                  className="text-la-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
                 />
                 <div>
                   <span className="font-medium">Quick Mode</span>
@@ -310,7 +315,7 @@ export function LessonStudioForm() {
                   value="accurate"
                   checked={formState.data.generationMode === "accurate"}
                   onChange={(e) => updateFormData("generationMode", e.target.value as GenerationMode)}
-                  className="text-la-primary"
+                  className="text-la-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
                 />
                 <div>
                   <span className="font-medium">Accurate Mode</span>
@@ -318,7 +323,7 @@ export function LessonStudioForm() {
                 </div>
               </label>
             </div>
-          </div>
+          </fieldset>
 
           {/* Transcript Text (Conditional) */}
           {formState.data.generationMode === "accurate" && (
@@ -328,25 +333,26 @@ export function LessonStudioForm() {
               </label>
               <Textarea
                 id="transcriptText"
-                placeholder="Paste the video transcript here..."
+                placeholder="Paste video transcript here..."
                 value={formState.data.transcriptText}
                 onChange={(e) => updateFormData("transcriptText", e.target.value)}
                 rows={8}
-                className="w-full"
+                className="w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
+                required={formState.data.generationMode === "accurate"}
               />
               <p className="text-xs text-la-muted mt-1">
-                Paste the full transcript of the video for accurate lesson generation
+                Paste full transcript of video for accurate lesson generation
               </p>
             </div>
           )}
 
           {/* Advanced Options */}
-          <details className="border border-la-border rounded-lg p-4">
-            <summary className="cursor-pointer font-medium text-la-surface">
+          <details className="border border-la-border rounded-lg p-4 focus-within:ring-2 focus-within:ring-la-primary/50">
+            <summary className="cursor-pointer font-medium text-la-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary/50">
               Advanced Options
             </summary>
             <div className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="desiredLevelCount" className="block text-sm font-medium text-la-surface mb-2">
                     Number of Levels
@@ -358,7 +364,7 @@ export function LessonStudioForm() {
                     max="10"
                     value={formState.data.desiredLevelCount}
                     onChange={(e) => updateFormData("desiredLevelCount", parseInt(e.target.value) || 3)}
-                    className="w-full"
+                    className="w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
                   />
                 </div>
                 <div>
@@ -372,7 +378,7 @@ export function LessonStudioForm() {
                     max="10"
                     value={formState.data.desiredItemsPerLevel}
                     onChange={(e) => updateFormData("desiredItemsPerLevel", parseInt(e.target.value) || 4)}
-                    className="w-full"
+                    className="w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
                   />
                 </div>
               </div>
@@ -384,7 +390,7 @@ export function LessonStudioForm() {
                   id="language"
                   value={formState.data.language}
                   onChange={(e) => updateFormData("language", e.target.value)}
-                  className="w-full px-3 py-2 border border-la-border rounded-md focus:outline-none focus:ring-2 focus:ring-la-primary"
+                  className="w-full px-3 py-2 border border-la-border rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary"
                 >
                   <option value="en">English</option>
                   <option value="es">Spanish</option>
@@ -401,7 +407,7 @@ export function LessonStudioForm() {
           <Button
             onClick={handleGenerate}
             disabled={formState.isGenerating}
-            className="w-full bg-la-primary hover:bg-la-primary/90 text-white"
+            className="w-full bg-la-primary hover:bg-la-primary/90 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
           >
             {formState.isGenerating ? "Generating Lesson..." : "Generate Lesson"}
           </Button>
@@ -411,19 +417,19 @@ export function LessonStudioForm() {
       {/* Preview and Publish */}
       {formState.generatedLesson && !formState.publishedSlug && (
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <h2 className="text-2xl font-bold text-la-surface">Lesson Preview</h2>
-            <div className="space-x-2">
+            <div className="flex space-x-2">
               <Button
                 variant="outline"
                 onClick={resetForm}
-                className="border-la-border"
+                className="border-la-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 Start Over
               </Button>
               <Button
                 onClick={handlePublish}
-                className="bg-la-accent hover:bg-la-accent/90 text-white"
+                className="bg-la-accent hover:bg-la-accent/90 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 Publish Lesson
               </Button>

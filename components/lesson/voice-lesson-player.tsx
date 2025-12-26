@@ -106,22 +106,22 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
   const isBufferingRef = useRef(false)
   const prefetchPromiseRef = useRef<Promise<void> | null>(null)
   const currentScriptRef = useRef<string>('')
-
+  
   // Check if speech synthesis is supported
   const isSpeechSupported = speechStatus !== 'unsupported'
-
+  
   // Create cache key for deduplication (same as server)
   const createCacheKey = useCallback((text: string, lang: string, voiceId: string, rate: number): string => {
     return createHash('sha256')
       .update(`${text}:${lang}:${voiceId}:${rate}`)
       .digest('hex')
   }, [])
-
+  
   // Create item key for cooldown tracking
   const createItemKey = useCallback((): string => {
     return `${lesson.slug}-${currentLevelIndex}-${currentItemIndex}-${displayLanguage}-${selectedPresetKey}-${speechRate}`
   }, [lesson.slug, currentLevelIndex, currentItemIndex, displayLanguage, selectedPresetKey, speechRate])
-
+  
   // Send telemetry event
   const sendTelemetryEvent = useCallback((
     event: 'voice_play' | 'voice_pause' | 'voice_resume' | 'voice_stop' | 'voice_end' | 'voice_error',
@@ -147,14 +147,14 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         textHash: createTextHash(scriptText), // Hash of script text only
         sessionId
       }
-
+  
       // Add reason if provided
       if (reason) {
         (telemetryData as Record<string, unknown>).reason = reason
       }
-
+  
       const jsonData = JSON.stringify(telemetryData)
-
+  
       // Use sendBeacon for stop/navigation events (survives page unload)
       if (useBeacon && navigator.sendBeacon) {
         navigator.sendBeacon('/api/voice/telemetry', jsonData)
@@ -174,7 +174,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       console.warn('Failed to send telemetry event:', error)
     }
   }, [lesson.slug, currentLevelIndex, currentItemIndex, voiceEngine, displayLanguage, selectedPresetKey, speechRate, sessionId])
-
+  
   // Handle AI Voice acknowledgment
   const handleAcknowledgeAI = useCallback(() => {
     setAiVoiceAcknowledged(true)
@@ -183,7 +183,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       localStorage.setItem('la:aiVoiceAcknowledged', 'true')
     }
   }, [])
-
+  
   // Speak text with current settings (browser engine)
   const speakText = useCallback((text: string): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -191,7 +191,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         reject(new Error('Speech synthesis not supported'))
         return
       }
-
+  
       // Cancel any ongoing speech
       speechSynthesisRef.current.cancel()
       
@@ -207,7 +207,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       speechSynthesisRef.current.speak(utterance)
     })
   }, [isSpeechSupported, speechRate])
-
+  
   // Fetch audio for a text chunk with deduplication
   const fetchAudioChunk = useCallback(async (text: string, signal: AbortSignal): Promise<Blob> => {
     // Create cache key for deduplication
@@ -269,7 +269,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       })
     }
   }, [speechRate, displayLanguage, selectedPresetKey, createCacheKey, inFlightRequests])
-
+  
   // Prefetch: next chunk while current one is playing
   const prefetchNextChunk = useCallback(async (chunkIndex: number): Promise<void> => {
     if (
@@ -289,12 +289,12 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         url,
         text: nextChunkText
       })
-    } catch (err) {
+    } catch (prefetchError) {
       // Silently fail prefetch errors, they'll be handled when playing the chunk
-      console.warn('Failed to prefetch next chunk:', err)
+      console.warn('Failed to prefetch next chunk:', prefetchError)
     }
   }, [fetchAudioChunk])
-
+  
   // Play AI voice using buffered chunking
   const playAIVoiceChunked = useCallback(async (): Promise<void> => {
     return new Promise((resolve, reject) => {
@@ -362,10 +362,10 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
             }
             
             audioQueueRef.current.push(audioItem)
-          } catch (err) {
-            if (err instanceof Error && err.name !== 'AbortError') {
+          } catch (chunkError) {
+            if (chunkError instanceof Error && chunkError.name !== 'AbortError') {
               sendTelemetryEvent('voice_error', 'error')
-              reject(err)
+              reject(chunkError)
             }
             return
           }
@@ -432,7 +432,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       playNextChunk(0).catch(reject)
     })
   }, [lesson, currentLevelIndex, currentItemIndex, displayLanguage, fetchAudioChunk, prefetchNextChunk, sendTelemetryEvent])
-
+  
   // Stop speech with enhanced cleanup
   const stopSpeech = useCallback((reason?: 'user_stop' | 'navigation') => {
     // Cancel browser speech
@@ -476,7 +476,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       sendTelemetryEvent('voice_stop', reason, true) // Use beacon for stop events
     }
   }, [isPlaying, sendTelemetryEvent])
-
+  
   // Handle preset change
   const handlePresetChange = useCallback((presetKey: string) => {
     setSelectedPresetKey(presetKey)
@@ -493,7 +493,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     // Stop any current playback to apply new voice
     stopSpeech()
   }, [stopSpeech])
-
+  
   // Fetch presets function
   const fetchPresets = useCallback(async () => {
     setPresetsLoading(true)
@@ -531,7 +531,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       setPresetsLoading(false)
     }
   }, [selectedPresetKey, displayLanguage, handlePresetChange])
-
+  
   // Play current item with guardrails
   const playCurrentItem = useCallback(async () => {
     if (!isSpeechSupported && voiceEngine === 'browser') return
@@ -622,7 +622,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       }
     }
   }, [speechStatus, isSpeechSupported, voiceEngine, currentLevelIndex, currentItemIndex, displayLanguage, lesson, playAIVoiceChunked, speakText, aiVoiceAcknowledged, createItemKey, lastPlayedItem, sendTelemetryEvent])
-
+  
   // Initialize speech synthesis and check AI voice availability
   useEffect(() => {
     // Check browser speech synthesis support
@@ -664,14 +664,14 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       stopSpeech()
     }
   }, [stopSpeech])
-
+  
   // Fetch presets when AI voice engine is selected
   useEffect(() => {
     if (voiceEngine === 'ai' && isAIVoiceAvailable) {
       fetchPresets()
     }
   }, [voiceEngine, isAIVoiceAvailable, fetchPresets])
-
+  
   // Handle language change with localStorage persistence
   const handleLanguageChange = (language: LanguageCode) => {
     setDisplayLanguage(language)
@@ -679,7 +679,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       localStorage.setItem('la:displayLanguage', language)
     }
   }
-
+  
   // Handle voice engine change with acknowledgment check
   const handleVoiceEngineChange = (engine: VoiceEngine) => {
     // Stop any current playback
@@ -695,16 +695,16 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
     setVoiceEngine(engine)
     setError(null)
   }
-
+  
   // Get current level and item
   const currentLevel = lesson.levels[currentLevelIndex]
   const currentItem = currentLevel.items[currentItemIndex]
-
+  
   // Get presets for current language
   const presetsForCurrentLanguage = availablePresets.filter(
     preset => preset.languageCode === displayLanguage
   )
-
+  
   // Pause/Resume speech
   const togglePause = () => {
     if (voiceEngine === 'browser' && speechSynthesisRef.current) {
@@ -731,7 +731,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       }
     }
   }
-
+  
   // Replay current item
   const replayCurrentItem = useCallback(() => {
     stopSpeech()
@@ -739,7 +739,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       playCurrentItem()
     }, 100)
   }, [stopSpeech, playCurrentItem])
-
+  
   // Navigate to next item
   const nextItem = () => {
     // Send telemetry before stopping if we're currently playing
@@ -756,7 +756,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       setCurrentItemIndex(0)
     }
   }
-
+  
   // Navigate to previous item
   const previousItem = () => {
     // Send telemetry before stopping if we're currently playing
@@ -773,7 +773,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       setCurrentItemIndex(lesson.levels[currentLevelIndex - 1].items.length - 1)
     }
   }
-
+  
   // Render current item content
   const renderCurrentItem = () => {
     switch (currentItem.kind) {
@@ -854,7 +854,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         )
     }
   }
-
+  
   // Render preset selector
   const renderPresetSelector = () => {
     if (presetsLoading) {
@@ -865,7 +865,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         </div>
       )
     }
-
+  
     if (presetsError) {
       return (
         <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded border border-amber-200">
@@ -873,7 +873,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         </div>
       )
     }
-
+  
     if (presetsForCurrentLanguage.length === 0) {
       return (
         <div className="text-xs text-la-muted">
@@ -881,7 +881,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         </div>
       )
     }
-
+  
     // Use segmented control for ≤5 presets, dropdown for more
     if (presetsForCurrentLanguage.length <= 5) {
       return (
@@ -894,7 +894,8 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 variant={selectedPresetKey === preset.presetKey ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => handlePresetChange(preset.presetKey)}
-                className="text-xs"
+                className="text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+                aria-pressed={selectedPresetKey === preset.presetKey}
               >
                 {preset.label}
               </Button>
@@ -910,7 +911,8 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           <select
             value={selectedPresetKey}
             onChange={(e) => handlePresetChange(e.target.value)}
-            className="text-xs px-2 py-1 border border-la-border rounded"
+            className="text-xs px-2 py-1 border border-la-border rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50"
+            aria-label="Select voice preset"
           >
             <option value="">Select voice...</option>
             {presetsForCurrentLanguage.map(preset => (
@@ -923,7 +925,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       )
     }
   }
-
+  
   // Render voice controls
   const renderVoiceControls = () => {
     if (!isSpeechSupported) {
@@ -938,7 +940,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
         </Card>
       )
     }
-
+  
     return (
       <Card className="bg-la-surface border-la-border">
         <CardContent className="pt-6">
@@ -952,7 +954,8 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                     variant={voiceEngine === 'browser' ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => handleVoiceEngineChange('browser')}
-                    className="text-xs"
+                    className="text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+                    aria-pressed={voiceEngine === 'browser'}
                   >
                     Browser
                   </Button>
@@ -961,7 +964,8 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                     size="sm"
                     onClick={() => handleVoiceEngineChange('ai')}
                     disabled={!isAIVoiceAvailable}
-                    className="text-xs"
+                    className="text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+                    aria-pressed={voiceEngine === 'ai'}
                     title={!isAIVoiceAvailable ? "AI Voice is not configured" : undefined}
                   >
                     AI Voice
@@ -980,9 +984,9 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 renderPresetSelector()
               )}
             </div>
-
+  
             {/* Status indicator */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" role="status" aria-live="polite" aria-label="Voice playback status">
               <div className={cn(
                 "w-3 h-3 rounded-full",
                 speechStatus === 'speaking' ? "bg-green-500" :
@@ -997,20 +1001,20 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                  "Ready"}
               </span>
             </div>
-
+  
             {/* Error display */}
             {error && (
-              <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200">
+              <div className="text-sm text-red-600 bg-red-50 p-2 rounded border border-red-200" role="alert" aria-live="assertive">
                 {error}
               </div>
             )}
-
+  
             {/* Control buttons */}
             <div className="flex items-center gap-2">
               {!isPlaying ? (
                 <Button
                   onClick={playCurrentItem}
-                  className="bg-la-accent text-la-bg hover:bg-la-accent/90"
+                  className="bg-la-accent text-la-bg hover:bg-la-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                   size="sm"
                 >
                   <Play className="w-4 h-4 mr-1" />
@@ -1023,6 +1027,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                       onClick={togglePause}
                       variant="outline"
                       size="sm"
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                     >
                       <Pause className="w-4 h-4 mr-1" />
                       Pause
@@ -1032,6 +1037,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                       onClick={togglePause}
                       variant="outline"
                       size="sm"
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                     >
                       <Play className="w-4 h-4 mr-1" />
                       Resume
@@ -1044,6 +1050,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 onClick={() => stopSpeech('user_stop')}
                 variant="outline"
                 size="sm"
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 <Square className="w-4 h-4 mr-1" />
                 Stop
@@ -1053,12 +1060,13 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 onClick={replayCurrentItem}
                 variant="outline"
                 size="sm"
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 <RotateCcw className="w-4 h-4 mr-1" />
                 Replay
               </Button>
             </div>
-
+  
             {/* Speech rate control */}
             <div className="flex items-center gap-3">
               <span className="text-sm text-la-muted">Speed:</span>
@@ -1069,7 +1077,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 step="0.1"
                 value={speechRate}
                 onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                className="flex-1"
+                className="flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50"
+                aria-label="Speech rate"
+                aria-valuemin={0.8}
+                aria-valuemax={1.2}
+                aria-valuenow={speechRate}
               />
               <span className="text-sm text-la-muted w-10">{speechRate}x</span>
             </div>
@@ -1078,7 +1090,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
       </Card>
     )
   }
-
+  
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Sidebar - Levels List */}
@@ -1088,27 +1100,33 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           <div className="space-y-2">
             {lesson.levels.map((level, levelIndex) => (
               <div key={level.id} className="space-y-1">
-                <div className={cn(
-                  "p-2 rounded-lg text-sm font-medium cursor-pointer transition-colors",
-                  levelIndex === currentLevelIndex
-                    ? "bg-la-accent text-white"
-                    : "bg-la-surface/20 text-la-muted hover:bg-la-surface/30"
-                )}
+                <button
+                  type="button"
+                  className={cn(
+                    "w-full text-left p-2 rounded-lg border transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg",
+                    levelIndex === currentLevelIndex
+                      ? "bg-la-accent text-white"
+                      : "bg-la-surface/20 text-la-muted hover:bg-la-surface/30"
+                  )}
                   onClick={() => {
                     setCurrentLevelIndex(levelIndex)
                     setCurrentItemIndex(0)
                     stopSpeech()
                   }}
+                  aria-pressed={levelIndex === currentLevelIndex}
                 >
                   {levelIndex + 1}. {level.title}
-                </div>
+                </button>
                 {levelIndex === currentLevelIndex && (
                   <div className="ml-4 space-y-1">
                     {level.items.map((item, itemIndex) => (
-                      <div
+                      <button
+                        type="button"
                         key={item.id}
                         className={cn(
                           "p-1 rounded text-xs cursor-pointer transition-colors",
+                          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg",
                           itemIndex === currentItemIndex
                             ? "bg-la-accent/20 text-la-surface"
                             : "text-la-muted hover:text-la-surface"
@@ -1117,10 +1135,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                           setCurrentItemIndex(itemIndex)
                           stopSpeech()
                         }}
+                        aria-pressed={itemIndex === currentItemIndex}
                       >
                         {item.kind === 'multiple_choice' ? 'Q' :
                          item.kind === 'open_ended' ? 'OE' : 'CP'} {itemIndex + 1}
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -1129,7 +1148,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           </div>
         </div>
       </div>
-
+  
       {/* Main Content Area */}
       <div className="flex-1 p-4 lg:p-8">
         <AnimatePresence mode="wait">
@@ -1159,19 +1178,20 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 onLanguageChange={handleLanguageChange}
               />
             </div>
-
+  
             {/* Voice Controls */}
             {renderVoiceControls()}
-
+  
             {/* Current Item Content */}
             {renderCurrentItem()}
-
+  
             {/* Navigation */}
             <div className="flex justify-between items-center pt-4">
               <Button
                 onClick={previousItem}
                 variant="outline"
                 disabled={currentLevelIndex === 0 && currentItemIndex === 0}
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 Previous
               </Button>
@@ -1182,6 +1202,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                   currentLevelIndex === lesson.levels.length - 1 && 
                   currentItemIndex === currentLevel.items.length - 1
                 }
+                className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
               >
                 Next
               </Button>
@@ -1189,7 +1210,7 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
           </motion.div>
         </AnimatePresence>
       </div>
-
+  
       {/* AI Voice Acknowledgment Dialog */}
       <Dialog open={showAcknowledgmentDialog} onOpenChange={setShowAcknowledgmentDialog}>
         <DialogContent>
@@ -1207,10 +1228,11 @@ export function VoiceLessonPlayer({ lesson }: VoiceLessonPlayerProps) {
                 setVoiceEngine('browser')
               }}
               variant="outline"
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
             >
               Cancel
             </Button>
-            <Button onClick={handleAcknowledgeAI}>
+            <Button onClick={handleAcknowledgeAI} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
               Confirm
             </Button>
           </DialogFooter>

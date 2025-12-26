@@ -67,32 +67,34 @@ export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) 
   if (error) {
     return (
       <div data-testid="la-voice-page" className="min-h-screen bg-la-bg p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-la-surface rounded-lg border border-la-border p-8 text-center">
-            <h1 className="text-3xl font-bold text-la-bg mb-4">
-              Voice Lesson Unavailable
-            </h1>
-            <p className="text-la-muted mb-6">
-              An unexpected error occurred while loading this voice lesson.
-            </p>
-            <div className="space-y-4">
-              <Link href="/demo">
-                <Button>
-                  Browse Demo Lessons
-                </Button>
-              </Link>
-              <div className="text-sm text-la-muted">
-                or{" "}
-                <Link
-                  href="/studio"
-                  className="text-la-accent hover:text-la-accent/80 underline"
-                >
-                  create your own lesson
+        <main>
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-la-surface rounded-lg border border-la-border p-8 text-center">
+              <h1 className="text-3xl font-bold text-la-bg mb-4">
+                Voice Lesson Unavailable
+              </h1>
+              <p className="text-la-muted mb-6">
+                An unexpected error occurred while loading this voice lesson.
+              </p>
+              <div className="space-y-4">
+                <Link href="/demo">
+                  <Button>
+                    Browse Demo Lessons
+                  </Button>
                 </Link>
+                <div className="text-sm text-la-muted">
+                  or{" "}
+                  <Link
+                    href="/studio"
+                    className="text-la-accent hover:text-la-accent/80 underline"
+                  >
+                    create your own lesson
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     )
   }
@@ -101,7 +103,9 @@ export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) 
   if (lesson) {
     return (
       <div data-testid="la-voice-page" className="min-h-screen bg-la-bg">
-        <VoiceLessonPlayer lesson={lesson} />
+        <main>
+          <VoiceLessonPlayer lesson={lesson} />
+        </main>
       </div>
     )
   }
@@ -109,23 +113,25 @@ export default async function VoiceLessonPage({ params }: VoiceLessonPageProps) 
   // Fallback if lesson is null for some reason
   return (
     <div data-testid="la-voice-page" className="min-h-screen bg-la-bg p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-la-surface rounded-lg border border-la-border p-8 text-center">
-          <h1 className="text-3xl font-bold text-la-bg mb-4">
-            Voice Lesson Unavailable
-          </h1>
-          <p className="text-la-muted mb-6">
-            The voice lesson could not be loaded.
-          </p>
-          <div className="space-y-4">
-            <Link href="/demo">
-              <Button>
-                Browse Demo Lessons
-              </Button>
-            </Link>
+      <main>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-la-surface rounded-lg border border-la-border p-8 text-center">
+            <h1 className="text-3xl font-bold text-la-bg mb-4">
+              Voice Lesson Unavailable
+            </h1>
+            <p className="text-la-muted mb-6">
+              The voice lesson could not be loaded.
+            </p>
+            <div className="space-y-4">
+              <Link href="/demo">
+                <Button>
+                  Browse Demo Lessons
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
 }

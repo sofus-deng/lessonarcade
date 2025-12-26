@@ -62,18 +62,22 @@ export default async function VoiceChatPage({ params, searchParams }: VoiceChatP
     const normalizedError = normalizeLessonLoadError(error)
     return (
       <div data-testid="la-voice-chat-page" className="min-h-screen bg-la-bg">
-        <LessonLoadErrorView 
-          error={normalizedError} 
-          debug={sp.debug === "1" || sp.debug === "true"} 
-        />
+        <main>
+          <LessonLoadErrorView 
+            error={normalizedError} 
+            debug={sp.debug === "1" || sp.debug === "true"} 
+          />
+        </main>
       </div>
     )
   }
 
   const displayLanguage = resolveDisplayLanguage(sp.displayLanguage)
   return (
-    <div data-testid="la-voice-chat-page">
-      <VoiceChatFlow lesson={lessonData} initialDisplayLanguage={displayLanguage} />
+    <div data-testid="la-voice-chat-page" className="min-h-screen bg-la-bg">
+      <main>
+        <VoiceChatFlow lesson={lessonData} initialDisplayLanguage={displayLanguage} />
+      </main>
     </div>
   )
 }

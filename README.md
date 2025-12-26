@@ -25,6 +25,8 @@ LessonArcade ships with a production-ready Voice Demo that turns any JSON lesson
 
 For deployment and health checks, see `docs/voice-demo-playbook.md`. Once you have a stable public URL, you can record it in `voice-demo-url.txt` (see `voice-demo-url.example`) and share it with reviewers, demo participants, or internal stakeholders.
 
+For a short, copy-paste friendly overview of the Voice Demo suitable for proposals and slide decks, see `docs/voice-demo-overview.md`.
+
 ## Technology Stack
 
 ### Core Framework
@@ -139,8 +141,10 @@ For conversational AI features, configure the following:
 # ElevenLabs Agent ID (public, safe to expose)
 # Create an agent at: https://elevenlabs.io/app/convai/agents
 NEXT_PUBLIC_AGENT_ID=your_agent_id_here
+```
 
-# E2E Testing Mock Mode (for CI only)
+### E2E Testing Mock Mode (for CI only)
+
 # Set to a mock signed URL for deterministic E2E tests
 E2E_ELEVENLABS_SIGNED_URL=https://mock-signed-url.com
 ```
@@ -173,6 +177,7 @@ pnpm test
 ```
 
 ### End-to-End Tests
+
 ```bash
 # Run all E2E tests
 pnpm test:e2e
@@ -204,8 +209,8 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregi
 PROJECT_NUMBER=$(gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)')
 SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
-  --member="serviceAccount:$SERVICE_ACCOUNT" \
-  --role="roles/aiplatform.user"
+   --member="serviceAccount:$SERVICE_ACCOUNT" \
+   --role="roles/aiplatform.user"
 
 # 4. Run the deployment script
 ./scripts/cloud-run/deploy.sh
@@ -288,15 +293,15 @@ The deployment script automatically outputs the hosted URL at the end:
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-=========================================
+========================================
 ```
 
 Alternatively, you can retrieve it manually:
 
 ```bash
 SERVICE_URL=$(gcloud run services describe lessonarcade \
-    --region=us-central1 \
-    --format="value(status.url)")
+     --region=us-central1 \
+     --format="value(status.url)")
 
 echo "$SERVICE_URL"
 ```
@@ -324,12 +329,11 @@ graph TB
     B --> D[Studio Analytics]
     B --> E[Vertex AI API Route]
     B --> F[ElevenLabs Agents API Route]
-    C --> G[ElevenLabs TTS API]
+    B --> C --> G[ElevenLabs TTS API]
     C --> H[Rate Limiter]
     C --> I[Telemetry Emitter]
     D --> J[Voice Analytics Dashboard]
-    G --> I
-    E --> K[Vertex AI Client]
+    G --> I[Vertex AI Client]
     K --> L[Application Default Credentials]
     L --> M[Cloud Run Service Account]
     M --> N[Vertex AI API]
@@ -343,11 +347,11 @@ graph TB
 
 ## Demo
 
-Try the live demo at [demo-url-placeholder] (replace with actual Cloud Run URL)
+Try the live demo at [demo-url-placeholder] (replace with actual Cloud Run URL).
 
 ## Devpost Submission
 
-For complete submission requirements and the canonical Devpost write-up, see:
+For complete submission requirements and canonical Devpost write-up, see:
 
 - **[`docs/devpost-draft.md`](docs/devpost-draft.md)** — Copy-paste ready Devpost submission content with all required sections (Problem, Solution, How We Built It, Architecture, Challenges, Accomplishments, What We Learned, What's Next)
 - **[`docs/submission.md`](docs/submission.md)** — Complete checklist for contest compliance, pre-submit verification, and final steps
@@ -360,7 +364,7 @@ For complete submission requirements and the canonical Devpost write-up, see:
 
 ## Contributing
 
-This project is open source under the Apache-2.0 license. Contributions are welcome!
+This project is open source under the Apache 2.0 license. Contributions are welcome!
 
 ## License
 
@@ -372,4 +376,4 @@ For questions or issues, please open an issue in the repository.
 
 ---
 
-**Built for the AI Partner Catalyst Hackathon — ElevenLabs Challenge**
+**Built for AI Partner Catalyst Hackathon — ElevenLabs Challenge**

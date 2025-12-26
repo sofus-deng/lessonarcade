@@ -1,9 +1,11 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { FadeInSection } from "./fade-in-section"
 import { motion } from "motion/react"
 import { Video, Users, GraduationCap } from "lucide-react"
+import Link from "next/link"
 
 const pillars = [
   {
@@ -39,10 +41,10 @@ export function PillarsSection() {
             Built for everyone in learning ecosystem
           </h2>
           <p className="text-xl text-la-muted max-w-3xl mx-auto">
-            Whether you&apos;re creating content, managing teams, or hungry to learn, LessonArcade adapts to your needs
+            Whether you are creating content, managing teams, or hungry to learn, LessonArcade adapts to your needs
           </p>
         </FadeInSection>
-
+        
         {/* Pillars Grid */}
         <div className="grid md:grid-cols-3 gap-8">
           {pillars.map((pillar, index) => (
@@ -63,7 +65,7 @@ export function PillarsSection() {
                       }}
                       transition={{ duration: 0.2 }}
                     >
-                      <pillar.icon className="w-8 h-8 text-la-primary" />
+                      <pillar.icon className="w-8 h-8 text-la-primary" aria-hidden="true" />
                     </motion.div>
                     <CardTitle className="text-2xl font-bold text-la-bg">
                       {pillar.title}
@@ -87,7 +89,7 @@ export function PillarsSection() {
                             duration: 0.5
                           }}
                         >
-                          <div className="w-2 h-2 bg-la-accent rounded-full" />
+                          <div className="w-2 h-2 bg-la-accent rounded-full" aria-hidden="true" />
                           <span className="text-sm text-la-bg font-medium">
                             {feature}
                           </span>
@@ -100,7 +102,7 @@ export function PillarsSection() {
             </FadeInSection>
           ))}
         </div>
-
+        
         {/* Call to Action */}
         <FadeInSection direction="up" delay={0.8} className="text-center mt-16">
           <motion.div
@@ -110,19 +112,23 @@ export function PillarsSection() {
           >
             <div className="bg-gradient-to-r from-la-primary to-la-accent p-1 rounded-lg">
               <div className="bg-la-bg rounded-lg px-8 py-6">
-                <h3 className="text-2xl font-bold text-la-surface mb-2">
+                <h2 className="text-2xl font-bold text-la-surface mb-2">
                   Ready to transform your learning experience?
-                </h3>
+                </h2>
                 <p className="text-la-muted mb-4">
                   Join thousands of creators, teams, and learners already using LessonArcade
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button className="bg-la-accent text-la-bg hover:bg-la-accent/90 font-medium py-3 px-6 rounded-lg transition-colors duration-200">
-                    Start creating lessons
-                  </button>
-                  <button className="border border-la-border text-la-surface hover:bg-la-muted/20 font-medium py-3 px-6 rounded-lg transition-colors duration-200">
-                    View case studies
-                  </button>
+                  <Button asChild className="bg-la-accent text-la-bg hover:bg-la-accent/90 font-medium py-3 px-6 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
+                    <Link href="/studio">
+                      Start creating lessons
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" className="border-la-border text-la-surface hover:bg-la-muted/20 font-medium py-3 px-6 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
+                    <Link href="#case-studies">
+                      View case studies
+                    </Link>
+                  </Button>
                 </div>
               </div>
             </div>

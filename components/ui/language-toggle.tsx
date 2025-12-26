@@ -31,6 +31,8 @@ export function LanguageToggle({
         "focus-within:ring-2 focus-within:ring-la-accent/50 focus-within:ring-offset-2 focus-within:ring-offset-la-bg",
         className
       )}
+      role="group"
+      aria-label="Language selection"
     >
       {languages.map((lang) => (
         <motion.div key={lang.code} className="relative">
@@ -50,6 +52,8 @@ export function LanguageToggle({
                   ? "bg-la-primary text-white shadow-sm"
                   : "text-la-muted hover:text-la-bg hover:bg-la-muted/20"
               )}
+              aria-pressed={currentLanguage === lang.code}
+              aria-label={`Switch to ${lang.label === 'EN' ? 'English' : 'Chinese'}`}
             >
               <span className="mr-1.5">{lang.flag}</span>
               {lang.label}

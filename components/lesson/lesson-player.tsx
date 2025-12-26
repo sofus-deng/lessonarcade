@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { type LessonArcadeLesson, type LessonArcadeItem, type LessonArcadeMultipleChoiceItem, type LanguageCode } from '@/lib/lessonarcade/schema'
 import { LevelSidebar } from './level-sidebar'
@@ -21,10 +21,10 @@ type LessonMode = "focus" | "arcade"
 
 interface AnswerState {
   selectedOptions: string[]  // Current selected options
-  isSubmitted: boolean       // Whether the answer has been submitted/locked
-  isCorrect?: boolean        // Whether the answer is correct (for multiple choice)
+  isSubmitted: boolean       // Whether to answer has been submitted/locked
+  isCorrect?: boolean        // Whether to answer is correct (for multiple choice)
   pointsEarned?: number      // Points earned for this answer
-  basePointsEarned?: number  // Base points earned (separate from bonus)
+  basePointsEarned?: number // Base points earned (separate from bonus)
   bonusPointsEarned?: number // Bonus points earned (Arcade mode only)
   firstShownAt?: number      // Timestamp when item was first shown (Arcade mode)
   submittedAt?: number       // Timestamp when item was submitted (Arcade mode)
@@ -64,6 +64,10 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     answeredItems: {},
     itemFirstShown: {}
   })
+  
+  // Refs for focus management
+  const levelHeaderRef = useRef<HTMLDivElement>(null)
+  const summaryRef = useRef<HTMLDivElement>(null)
 
   // Handle language change with localStorage persistence
   const handleLanguageChange = (language: LanguageCode) => {
@@ -98,6 +102,10 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
 
   const handleLevelSelect = (index: number) => {
     setCurrentLevelIndex(index)
+    // Move focus to level header after level change
+    setTimeout(() => {
+      levelHeaderRef.current?.focus()
+    }, 100)
   }
 
   const calculateMultipleChoiceScore = (
@@ -284,7 +292,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     if (item.kind === 'multiple_choice' && !currentAnswer.isSubmitted) {
       trackItemShown(item.id)
     }
-
+    
     switch (item.kind) {
       case 'multiple_choice':
         return (
@@ -318,6 +326,19 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
     }
   }
 
+  // Check if lesson is complete (all items answered)
+  const isLessonComplete = currentLevel.items.every(item => {
+    const answer = scoringState.answeredItems[item.id]
+    return answer?.isSubmitted
+  })
+
+  // Move focus to summary when lesson completes
+  useEffect(() => {
+    if (isLessonComplete && summaryRef.current) {
+      summaryRef.current.focus()
+    }
+  }, [isLessonComplete])
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
       {/* Sidebar - Levels List */}
@@ -331,7 +352,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 p-4 lg:p-8">
+      <main className="flex-1 p-4 lg:p-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentLevelIndex}
@@ -354,7 +375,7 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
               
               {/* Language Toggle and Voice Conversation CTA */}
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Button asChild variant="outline" size="sm">
+                <Button asChild variant="outline" size="sm" className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent">
                   <Link href={`/agents?lesson=${encodeURIComponent(lesson.slug)}`}>
                     Voice Conversation
                   </Link>
@@ -367,10 +388,12 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             </div>
 
             {/* Level Header */}
-            <LevelHeader
-              level={currentLevel}
-              scoringState={scoringState}
-            />
+            <div ref={levelHeaderRef} tabIndex={-1}>
+              <LevelHeader
+                level={currentLevel}
+                scoringState={scoringState}
+              />
+            </div>
 
             {/* Items */}
             <div className="space-y-4">
@@ -378,7 +401,25 @@ export function LessonPlayer({ lesson }: LessonPlayerProps) {
             </div>
           </motion.div>
         </AnimatePresence>
-      </div>
+
+        {/* Lesson Complete Summary - shown when all items are answered */}
+        {isLessonComplete && (
+          <div
+            ref={summaryRef}
+            tabIndex={-1}
+            className="mt-8"
+            role="status"
+            aria-live="polite"
+            aria-label="Lesson complete"
+          >
+            <LessonSummary
+              lesson={lesson}
+              scoringState={scoringState}
+              onModeChange={handleModeChange}
+            />
+          </div>
+        )}
+      </main>
     </div>
   )
 }

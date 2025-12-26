@@ -88,7 +88,7 @@ export function MultipleChoiceItem({
   const isCorrect = (optionId: string) => item.correctOptionIds.includes(optionId)
   const isSelected = (optionId: string) => selectedOptions.includes(optionId)
   
-  // Calculate if the overall answer is correct
+  // Calculate if of overall answer is correct
   const isAnswerCorrect =
     selectedOptions.length === item.correctOptionIds.length &&
     selectedOptions.every(option => item.correctOptionIds.includes(option))
@@ -110,7 +110,10 @@ export function MultipleChoiceItem({
               Q
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-la-bg mb-2">
+              <h3 
+                id={`question-${item.id}`}
+                className="text-lg font-semibold text-la-bg mb-2"
+              >
                 {getLocalizedText(item.promptI18n, item.prompt, displayLanguage)}
               </h3>
               <div className="flex items-center gap-4 text-sm text-la-muted">
@@ -145,7 +148,7 @@ export function MultipleChoiceItem({
                       stroke="currentColor"
                       viewBox="0 0 24 24"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0118 0z" />
                     </motion.svg>
                     <motion.span
                       key={`timer-${timeLeft}`}
@@ -174,7 +177,7 @@ export function MultipleChoiceItem({
           </div>
         </CardHeader>
         
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-3" aria-describedby={`question-${item.id}`}>
           {item.options.map((option, index) => {
             const optionIsSelected = isSelected(option.id)
             const optionIsCorrect = isCorrect(option.id)
@@ -185,6 +188,7 @@ export function MultipleChoiceItem({
                 key={option.id}
                 onClick={() => handleOptionClick(option.id)}
                 disabled={isLocked}
+                type="button"
                 className={cn(
                   "w-full text-left p-4 rounded-lg border transition-all duration-300",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-surface",

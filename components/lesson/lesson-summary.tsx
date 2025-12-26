@@ -337,11 +337,13 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
         <>
           {/* Badges Strip - Show if there are unlocked badges */}
           {gamificationState.badgesUnlocked.length > 0 && (
-            <BadgesStrip
-              allBadges={getAllBadges()}
-              unlockedBadgeIds={gamificationState.badgesUnlocked}
-              newlyUnlockedBadgeIds={newlyUnlockedBadges.length > 0 ? newlyUnlockedBadges : undefined}
-            />
+            <div role="status" aria-live="polite">
+              <BadgesStrip
+                allBadges={getAllBadges()}
+                unlockedBadgeIds={gamificationState.badgesUnlocked}
+                newlyUnlockedBadgeIds={newlyUnlockedBadges.length > 0 ? newlyUnlockedBadges : undefined}
+              />
+            </div>
           )}
 
           {/* Leaderboard - Show if there are runs in history for this lesson */}
@@ -494,11 +496,13 @@ function ModeToggle({ currentMode, onModeChange }: {
             size="sm"
             onClick={() => onModeChange("focus")}
             className={cn(
-              "w-full transition-all duration-200 relative",
+              "w-full transition-all duration-200 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent",
               currentMode === "focus"
                 ? "text-white font-medium"
                 : "text-la-muted hover:text-la-bg"
             )}
+            aria-label="Focus mode: No time pressure, focus on learning"
+            aria-pressed={currentMode === "focus"}
           >
             Focus
           </Button>
@@ -513,11 +517,13 @@ function ModeToggle({ currentMode, onModeChange }: {
             size="sm"
             onClick={() => onModeChange("arcade")}
             className={cn(
-              "w-full transition-all duration-200 relative",
+              "w-full transition-all duration-200 relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent",
               currentMode === "arcade"
                 ? "text-white font-medium"
                 : "text-la-muted hover:text-la-bg"
             )}
+            aria-label="Arcade mode: Beat the clock for bonus points"
+            aria-pressed={currentMode === "arcade"}
           >
             Arcade
           </Button>

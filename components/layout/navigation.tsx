@@ -6,7 +6,7 @@ import Link from "next/link"
 
 export function Navigation() {
   return (
-    <motion.nav 
+    <motion.nav
       className="w-full border-b border-la-border/20 bg-la-bg/95 backdrop-blur-sm sticky top-0 z-50"
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
@@ -43,6 +43,11 @@ export function Navigation() {
             <Button asChild variant="ghost" className="text-la-surface hover:text-la-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
               <Link href="/studio/lessons">
                 Lessons Overview
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" className="text-la-surface hover:text-la-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
+              <Link href="/pricing">
+                Pricing
               </Link>
             </Button>
             <Button asChild className="bg-la-accent text-la-bg hover:bg-la-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">

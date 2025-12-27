@@ -9,6 +9,12 @@ import { BadgesStrip } from './BadgesStrip'
 import { LessonLeaderboard } from './LessonLeaderboard'
 import { useGamificationAfterLesson } from '@/hooks/use-gamification-after-lesson'
 import { getAllBadges } from '@/lib/lessonarcade/gamification'
+import {
+  buildPersonalizationSuggestions,
+  getTotalRunsForLesson,
+  type PersonalizationSuggestion,
+} from '@/lib/lessonarcade/personalization'
+import Link from 'next/link'
 
 type LessonMode = "focus" | "arcade"
 
@@ -59,6 +65,20 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
     ).length,
     mode: scoringState.mode,
   })
+
+  // Build personalized suggestions when lesson is completed
+  const personalizedSuggestions = isCompleted
+    ? buildPersonalizationSuggestions({
+        workspaceSlug: 'demo', // Phase 3 scope: always "demo"
+        lessonSlug: lesson.slug,
+        mode: scoringState.mode,
+        score: scoringState.totalScore,
+        maxScore: metrics.totalPossiblePoints,
+        totalRunsForLesson: getTotalRunsForLesson(gamificationState.history, lesson.id),
+        streakDays: gamificationState.currentStreakDays,
+        completedAt: new Date(),
+      })
+    : []
 
   return (
     <motion.div
@@ -354,8 +374,68 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
               history={gamificationState.history}
             />
           )}
+
+          {/* Personalized Next Steps */}
+          {personalizedSuggestions.length > 0 && (
+            <PersonalizedSuggestionsCard suggestions={personalizedSuggestions} />
+          )}
         </>
       )}
+    </motion.div>
+  )
+}
+
+/**
+ * Component for displaying personalized next-step suggestions.
+ */
+function PersonalizedSuggestionsCard({ suggestions }: { suggestions: PersonalizationSuggestion[] }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.4 }}
+      role="status"
+      aria-live="polite"
+      data-testid="la-personalized-suggestions"
+    >
+      <Card className="bg-la-surface border-la-border border-l-4 border-l-la-accent">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg text-la-bg flex items-center gap-2">
+            <svg className="w-5 h-5 text-la-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Personalized next steps
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {suggestions.map((suggestion, index) => (
+            <motion.div
+              key={suggestion.id}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.2, delay: 0.5 + index * 0.1 }}
+              className="p-3 rounded-lg bg-la-bg/50 border border-la-border/20"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <h4 className="text-sm font-medium text-la-bg mb-1">{suggestion.title}</h4>
+                  <p className="text-xs text-la-muted">{suggestion.description}</p>
+                </div>
+                {suggestion.primaryActionHref && suggestion.primaryActionLabel && (
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent"
+                  >
+                    <Link href={suggestion.primaryActionHref}>{suggestion.primaryActionLabel}</Link>
+                  </Button>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </CardContent>
+      </Card>
     </motion.div>
   )
 }

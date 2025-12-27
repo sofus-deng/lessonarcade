@@ -27,6 +27,24 @@ For deployment and health checks, see `docs/voice-demo-playbook.md`. Once you ha
 
 For a short, copy-paste friendly overview of the Voice Demo suitable for proposals and slide decks, see `docs/voice-demo-overview.md`.
 
+## Embeddable Player
+
+LessonArcade lessons can be embedded directly into any website or Learning Management System (LMS) using a simple iframe. The embeddable player delivers the same interactive experience as the main demo, including gamification, completion tracking, and analytics. For Phase 3, only the "demo" workspace is supported, with public demo lessons available for embedding.
+
+For complete documentation and examples, see [docs/embed-player.md](docs/embed-player.md).
+
+### Example
+
+```html
+<iframe
+  src="https://YOUR-DEPLOYED-URL/embed/demo/lesson/effective-meetings"
+  width="100%"
+  height="640"
+  frameborder="0"
+  allowfullscreen
+></iframe>
+```
+
 ## Technology Stack
 
 ### Core Framework

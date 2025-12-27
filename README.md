@@ -415,6 +415,19 @@ At core of the design:
 
 The entire model is documented as a Prisma schema draft with a phased migration plan, so we can evolve from today's single-tenant demo into a full SaaS platform without a disruptive rewrite.
 
+### Dev Database and Prisma
+
+The project uses a local SQLite database at `prisma/dev.db` for development.
+
+- The file is not tracked in Git and can be safely deleted; it will be recreated from the Prisma schema and seed scripts.
+- To sync schema to the local dev DB, run:
+  ```bash
+  pnpm db:push:dev
+  ```
+- There is normally no need to call `npx prisma db push` interactively; for this repo, always prefer the `db:push:dev` script.
+
+**Note:** This is dev-only. Production deployments should use a proper managed database with a separate `DATABASE_URL`.
+
 ## Pricing & Plans (Concept)
 
 LessonArcade is moving toward a multi-workspace SaaS with plans based on workspaces, editor seats, and lesson-run usage. The pricing structure includes three tiers: **Free** (for individuals experimenting with the platform), **Pro** (for small teams with voice and embed support), and **Team** (for larger organizations with multiple workspaces and advanced analytics). Pricing is currently conceptual for prototypes and proposals. For full details on the plan structure, metrics, and billing model, see [`plans/la3-p1-02-pricing-and-plans.md`](plans/la3-p1-02-pricing-and-plans.md). The plan definitions are also mirrored in [`lib/saas/pricing.ts`](lib/saas/pricing.ts) for future UI integration.

@@ -40,6 +40,11 @@ export function Navigation() {
                 Voice Conversation
               </Link>
             </Button>
+            <Button asChild variant="ghost" className="text-la-surface hover:text-la-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
+              <Link href="/studio/lessons">
+                Lessons Overview
+              </Link>
+            </Button>
             <Button asChild className="bg-la-accent text-la-bg hover:bg-la-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
               <Link href="/demo">
                 Try LessonArcade

@@ -45,6 +45,44 @@ For complete documentation and examples, see [docs/embed-player.md](docs/embed-p
 ></iframe>
 ```
 
+## Demo Sign-in and Workspace Switching
+
+LessonArcade includes a minimal, demo-friendly sign-in and workspace switching experience for Phase 3 SaaS development.
+
+### How It Works
+
+The demo sign-in uses a simple email-based authentication system:
+- No password storage or external IdP integration
+- Session stored in a signed cookie
+- **NOT production-grade auth** - for demo/development only
+
+### Seeded Users and Workspaces
+
+Running `pnpm db:seed:demo` creates:
+
+**Users:**
+- Demo Owner: `demo-owner@example.com`
+
+**Workspaces:**
+- Demo Workspace (`demo`): Contains `effective-meetings` and `react-hooks-intro` lessons
+- Sample Team (`sample-team`): Contains `design-feedback-basics` and `feedback-that-lands` lessons
+
+### Sign In
+
+1. Visit `/studio` → redirected to `/auth/demo-signin`
+2. Click "Sign in as Demo Owner" or enter `demo-owner@example.com`
+3. You'll be signed in and redirected to the Studio
+
+### Switch Workspaces
+
+1. In the Studio header, click the workspace switcher dropdown
+2. Select a different workspace
+3. The page will refresh showing data for the selected workspace
+
+### Sign Out
+
+Click "Sign Out" in the Studio header to return to the sign-in page.
+
 ## Technology Stack
 
 ### Core Framework

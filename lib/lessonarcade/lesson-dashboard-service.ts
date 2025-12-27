@@ -79,26 +79,105 @@ export interface LessonsOverviewDTO {
  * @param prisma - Prisma client instance
  * @returns DTO with workspace info, lessons with stats, and totals
  * @throws Error if workspace not found or database error occurs
+ *
+ * @deprecated Use getWorkspaceLessonsOverview instead for multi-workspace support
  */
 export async function getDemoWorkspaceLessonsOverview(
   prisma: PrismaClient
 ): Promise<LessonsOverviewDTO> {
-  // 1. Look up the demo workspace
+  return getWorkspaceLessonsOverview(prisma, DEMO_WORKSPACE_SLUG)
+}
+
+/**
+ * Get workspace lessons overview with aggregated statistics by workspace ID.
+ *
+ * This function:
+ * 1. Looks up the workspace by ID
+ * 2. Queries all lessons for that workspace
+ * 3. Queries all LessonRun records for those lessons
+ * 4. Aggregates stats per lesson (runCount, averageScorePercent, lastCompletedAt)
+ * 5. Computes totals across all lessons
+ *
+ * @param prisma - Prisma client instance
+ * @param workspaceId - Workspace ID
+ * @returns DTO with workspace info, lessons with stats, and totals
+ * @throws Error if workspace not found or database error occurs
+ */
+export async function getWorkspaceLessonsOverviewById(
+  prisma: PrismaClient,
+  workspaceId: string
+): Promise<LessonsOverviewDTO> {
+  // Look up the workspace
   const workspace = await prisma.workspace.findUnique({
-    where: { slug: DEMO_WORKSPACE_SLUG },
+    where: { id: workspaceId },
   })
 
   if (!workspace) {
-    throw new Error(`Workspace with slug "${DEMO_WORKSPACE_SLUG}" not found`)
+    throw new Error(`Workspace with ID "${workspaceId}" not found`)
   }
 
-  // 2. Query all lessons for the workspace
+  return buildLessonsOverview(prisma, workspace)
+}
+
+/**
+ * Get workspace lessons overview with aggregated statistics by workspace slug.
+ *
+ * This function:
+ * 1. Looks up the workspace by slug
+ * 2. Queries all lessons for that workspace
+ * 3. Queries all LessonRun records for those lessons
+ * 4. Aggregates stats per lesson (runCount, averageScorePercent, lastCompletedAt)
+ * 5. Computes totals across all lessons
+ *
+ * @param prisma - Prisma client instance
+ * @param workspaceSlug - Workspace slug
+ * @returns DTO with workspace info, lessons with stats, and totals
+ * @throws Error if workspace not found or database error occurs
+ */
+export async function getWorkspaceLessonsOverview(
+  prisma: PrismaClient,
+  workspaceSlug: string
+): Promise<LessonsOverviewDTO> {
+  // Look up the workspace
+  const workspace = await prisma.workspace.findUnique({
+    where: { slug: workspaceSlug },
+  })
+
+  if (!workspace) {
+    throw new Error(`Workspace with slug "${workspaceSlug}" not found`)
+  }
+
+  return buildLessonsOverview(prisma, workspace)
+}
+
+/**
+ * Internal helper to track statistics for a lesson during aggregation
+ */
+interface AggregatedStats {
+  runCount: number
+  completedCount: number
+  totalScorePercent: number
+  lastCompletedAt: Date | null
+}
+
+/**
+ * Build lessons overview DTO from workspace data.
+ *
+ * @param prisma - Prisma client instance
+ * @param workspace - Workspace entity
+ * @returns DTO with workspace info, lessons with stats, and totals
+ */
+async function buildLessonsOverview(
+  prisma: PrismaClient,
+  workspace: { id: string; slug: string; name: string }
+): Promise<LessonsOverviewDTO> {
+  // Query all lessons for the workspace
   const lessons = await prisma.lesson.findMany({
     where: { workspaceId: workspace.id },
     orderBy: { title: 'asc' },
   })
 
-  // 3. Query all LessonRun records for these lessons
+  // Query all LessonRun records for these lessons
   const lessonIds = lessons.map((l) => l.id)
   const runs = await prisma.lessonRun.findMany({
     where: {
@@ -107,18 +186,15 @@ export async function getDemoWorkspaceLessonsOverview(
     orderBy: { completedAt: 'desc' },
   })
 
-  // 4. Aggregate stats per lesson
-  const lessonStatsMap = new Map<string, LessonStats>()
+  // Aggregate stats per lesson
+  const lessonStatsMap = new Map<string, AggregatedStats>()
 
   // Initialize stats for all lessons
   for (const lesson of lessons) {
     lessonStatsMap.set(lesson.id, {
-      id: lesson.id,
-      slug: lesson.slug,
-      title: lesson.title,
-      status: lesson.status,
       runCount: 0,
-      averageScorePercent: null,
+      completedCount: 0,
+      totalScorePercent: 0,
       lastCompletedAt: null,
     })
   }
@@ -132,15 +208,8 @@ export async function getDemoWorkspaceLessonsOverview(
 
     // Only include completed runs in average score calculation
     if (run.completedAt && run.maxScore > 0) {
-      const scorePercent = (run.score / run.maxScore) * 100
-      if (stats.averageScorePercent === null) {
-        stats.averageScorePercent = scorePercent
-      } else {
-        // Running average
-        stats.averageScorePercent =
-          (stats.averageScorePercent * (stats.runCount - 1) + scorePercent) /
-          stats.runCount
-      }
+      stats.completedCount++
+      stats.totalScorePercent += (run.score / run.maxScore) * 100
 
       // Track most recent completed run
       if (
@@ -152,30 +221,36 @@ export async function getDemoWorkspaceLessonsOverview(
     }
   }
 
-  // Convert map to array and round average scores
-  const lessonsWithStats = Array.from(lessonStatsMap.values()).map(
-    (lesson) => ({
-      ...lesson,
-      averageScorePercent: lesson.averageScorePercent
-        ? Math.round(lesson.averageScorePercent * 10) / 10
-        : null,
-    })
-  )
+  // Convert map to final LessonStats array
+  const lessonsWithStats: LessonStats[] = lessons.map((lesson) => {
+    const agg = lessonStatsMap.get(lesson.id)!
+    return {
+      id: lesson.id,
+      slug: lesson.slug,
+      title: lesson.title,
+      status: lesson.status,
+      runCount: agg.runCount,
+      averageScorePercent:
+        agg.completedCount > 0
+          ? Math.round((agg.totalScorePercent / agg.completedCount) * 10) / 10
+          : null,
+      lastCompletedAt: agg.lastCompletedAt,
+    }
+  })
 
-  // 5. Compute totals
+  // Compute workspace totals
   const totalLessons = lessons.length
   const totalRuns = runs.length
 
-  // Calculate average score across all completed runs
+  // Calculate average score across all completed runs in the workspace
   const completedRuns = runs.filter((r) => r.completedAt && r.maxScore > 0)
   let averageScorePercent: number | null = null
   if (completedRuns.length > 0) {
-    const totalScorePercent = completedRuns.reduce((sum, run) => {
+    const totalWorkspaceScorePercent = completedRuns.reduce((sum, run) => {
       return sum + (run.score / run.maxScore) * 100
     }, 0)
-    averageScorePercent = Math.round(
-      (totalScorePercent / completedRuns.length) * 10
-    ) / 10
+    averageScorePercent =
+      Math.round((totalWorkspaceScorePercent / completedRuns.length) * 10) / 10
   }
 
   return {

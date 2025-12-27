@@ -39,15 +39,16 @@ test('GET /studio returns 401 without Authorization header', async ({ request })
   expect(response.headers()['www-authenticate']).toContain('Basic');
 });
 
-test('GET /studio returns 200 with valid Basic Auth Authorization header', async ({ page }) => {
+test('GET /studio returns 200 and redirects to sign-in page if no session', async ({ page }) => {
   // Set the Authorization header for the page context
   page.setExtraHTTPHeaders({ 'Authorization': AUTH_HEADER });
   
   const response = await page.goto('/studio');
   
   expect(response?.status()).toBe(200);
-  // Verify the studio page content is rendered using a more specific selector
-  await expect(page.getByRole('heading', { name: 'Lesson Studio' })).toBeVisible();
+  // Should be redirected to /auth/demo-signin because no session cookie exists
+  await expect(page).toHaveURL(/\/auth\/demo-signin/);
+  await expect(page.getByRole('heading', { name: 'Sign In' })).toBeVisible();
 });
 
 test('GET /api/studio/health returns 401 without auth', async ({ request }) => {

@@ -41,12 +41,14 @@ enum LessonRunMode {
 // ============================================================================
 
 // User represents an end user or administrator of LessonArcade
+// LA3-P0-02: Added loginToken for demo sign-in (NOT production auth)
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(uuid())
+  email      String   @unique
+  name       String
+  loginToken String?  @unique // For demo sign-in (NOT production auth)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relationships
   workspaceMembers WorkspaceMember[]

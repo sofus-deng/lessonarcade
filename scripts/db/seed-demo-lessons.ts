@@ -10,11 +10,11 @@
 
 import type { PrismaClient } from '@prisma/client'
 import { prisma as defaultPrisma } from '@/lib/db/prisma'
-import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
+import { seedAllDemoData } from '@/lib/test/demo-seed'
 
 export async function seedDemoData(prismaClient?: PrismaClient) {
   const prisma = prismaClient ?? defaultPrisma
-  return seedDemoWorkspaceAndLessons(prisma, { logger: console })
+  return seedAllDemoData(prisma, { logger: console })
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

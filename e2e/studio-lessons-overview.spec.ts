@@ -5,6 +5,11 @@ const AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
 test.describe('Studio Lessons Overview', () => {
   test.beforeEach(async ({ page }) => {
     await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
+    
+    // Sign in as demo owner for session authentication
+    await page.goto('/auth/demo-signin')
+    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await expect(page).toHaveURL(/\/studio/)
   })
 
   test('shows seeded demo lessons in the overview', async ({ page }) => {

@@ -1,34 +1,59 @@
-import { Metadata } from "next"
-import { prisma } from "@/lib/db/prisma"
-import { getDemoWorkspaceLessonsOverview } from "@/lib/lessonarcade/lesson-dashboard-service"
-import { LessonsTableClient } from "./lessons-table-client"
+import { Metadata } from 'next'
+import { prisma } from '@/lib/db/prisma'
+import { requireAuth } from '@/lib/saas/session'
+import { getWorkspaceLessonsOverviewById } from '@/lib/lessonarcade/lesson-dashboard-service'
+import { LessonsTableClient } from './lessons-table-client'
+import { StudioHeader } from '@/components/studio/studio-header'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from '@/components/ui/card'
 
 export const metadata: Metadata = {
-  title: "Lessons Overview | LessonArcade Studio",
-  description: "View and manage lessons in your workspace with aggregated analytics.",
-  keywords: ["lessons", "analytics", "workspace", "studio"],
+  title: 'Lessons Overview | LessonArcade Studio',
+  description: 'View and manage lessons in your workspace with aggregated analytics.',
+  keywords: ['lessons', 'analytics', 'workspace', 'studio'],
 }
 
 /**
  * Server component for the lessons overview page.
  *
  * This page:
+ * - Requires authentication (redirects to sign-in if not signed in)
  * - Fetches workspace and lessons data from the database
  * - Displays a summary panel with totals
  * - Renders a searchable table of lessons with stats
  */
 export default async function LessonsOverviewPage() {
-  let overview: Awaited<ReturnType<typeof getDemoWorkspaceLessonsOverview>> | null = null
+  // Require authentication
+  const session = await requireAuth()
+
+  // Fetch user's workspaces
+  const user = await prisma.user.findUnique({
+    where: { id: session.userId },
+    include: {
+      workspaceMembers: {
+        include: {
+          workspace: true,
+        },
+      },
+    },
+  })
+
+  if (!user) {
+    throw new Error('User not found')
+  }
+
+  const workspaces = user.workspaceMembers.map((m) => m.workspace)
+
+  // Fetch lessons overview for active workspace
+  let overview: Awaited<ReturnType<typeof getWorkspaceLessonsOverviewById>> | null = null
 
   try {
-    overview = await getDemoWorkspaceLessonsOverview(prisma)
+    overview = await getWorkspaceLessonsOverviewById(prisma, session.activeWorkspaceId)
   } catch {
     // If workspace not found, provide a fallback empty state
     overview = null
@@ -36,6 +61,13 @@ export default async function LessonsOverviewPage() {
 
   return (
     <div data-testid="la-lessons-overview-page" className="min-h-screen bg-la-bg">
+      {/* Studio Header */}
+      <StudioHeader
+        currentWorkspaceId={session.activeWorkspaceId}
+        workspaces={workspaces}
+        redirectTo="/studio/lessons"
+      />
+
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Header */}

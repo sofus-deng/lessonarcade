@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "presskit:check": "node scripts/presskit/check.mjs",
     "audit:english": "tsx scripts/audit-english.ts",
+    "db:seed:demo": "tsx scripts/db/seed-demo-lessons.ts",
     "hosted:url": "bash scripts/cloud-run/hosted-url.sh",
     "devpost:fields": "bash scripts/devpost/print-fields.sh"
   },

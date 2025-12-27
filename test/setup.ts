@@ -5,6 +5,9 @@ import { createHash } from 'crypto'
 // Import Next.js mocks
 import './next-mocks'
 
+// Set DATABASE_URL for tests
+process.env.DATABASE_URL = 'file:./dev.db'
+
 // Global test setup
 
 // TextEncoder/TextDecoder polyfills (from node:util)

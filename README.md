@@ -25,7 +25,7 @@ LessonArcade ships with a production-ready Voice Demo that turns any JSON lesson
 
 For deployment and health checks, see `docs/voice-demo-playbook.md`. Once you have a stable public URL, you can record it in `voice-demo-url.txt` (see `voice-demo-url.example`) and share it with reviewers, demo participants, or internal stakeholders.
 
-For a short, copy-paste friendly overview of the Voice Demo suitable for proposals and slide decks, see `docs/voice-demo-overview.md`.
+For a short, copy-paste friendly overview of Voice Demo suitable for proposals and slide decks, see `docs/voice-demo-overview.md`.
 
 ## Embeddable Player
 
@@ -62,16 +62,33 @@ Running `pnpm db:seed:demo` creates:
 
 **Users:**
 - Demo Owner: `demo-owner@example.com`
+- Demo Editor: `demo-editor@example.com`
+- Demo Viewer: `demo-viewer@example.com`
 
 **Workspaces:**
 - Demo Workspace (`demo`): Contains `effective-meetings` and `react-hooks-intro` lessons
 - Sample Team (`sample-team`): Contains `design-feedback-basics` and `feedback-that-lands` lessons
 
+### Demo Identities and Roles
+
+The demo sign-in page provides three pre-configured identities for testing collaboration features:
+
+| Identity | Email | Role | Permissions |
+|-----------|--------|------------|
+| Demo Owner | demo-owner@example.com | OWNER | Full access to workspace, can manage lessons, members, and settings |
+| Demo Editor | demo-editor@example.com | EDITOR | Can create and edit lessons, add comments |
+| Demo Viewer | demo-viewer@example.com | VIEWER | Read-only access to lessons and comments |
+
+**Collaboration Features:**
+- **Lesson Comments**: All roles can view comments on lessons
+- **Add Comments**: Only EDITOR, ADMIN, and OWNER roles can create new comments
+- **Read-Only Mode**: VIEWER role sees comments but cannot post new ones
+
 ### Sign In
 
 1. Visit `/studio` → redirected to `/auth/demo-signin`
-2. Click "Sign in as Demo Owner" or enter `demo-owner@example.com`
-3. You'll be signed in and redirected to the Studio
+2. Click "Sign in as Demo Owner/Editor/Viewer" or enter email
+3. You'll be signed in and redirected to Studio
 
 ### Switch Workspaces
 
@@ -86,11 +103,13 @@ Click "Sign Out" in the Studio header to return to the sign-in page.
 ## Technology Stack
 
 ### Core Framework
+
 - **Next.js 16** — React framework with App Router for server-side rendering
 - **TypeScript** — Type-safe development
 - **Tailwind CSS** — Utility-first styling
 
 ### Google Cloud Hosting & Services
+
 - **Google Cloud Run** — Serverless deployment with automatic scaling
 - **Gemini AI** — Content generation and lesson enhancement
 - **Vertex AI** — Production-grade Gemini integration with Application Default Credentials
@@ -98,11 +117,13 @@ Click "Sign Out" in the Studio header to return to the sign-in page.
 - **Google Cloud Secrets Manager** — Secure API key management
 
 ### Partner Technology
+
 - **ElevenLabs** — Industry-leading AI voice synthesis for natural narration
 - **ElevenLabs API** — Multi-language text-to-speech with customizable voice presets
 - **ElevenLabs Agents** — Conversational AI for real-time voice interactions
 
 ### Testing & Quality
+
 - **Vitest** — Fast unit testing framework
 - **Playwright** — End-to-end testing across browsers
 - **ESLint** — Code linting and style enforcement
@@ -110,6 +131,7 @@ Click "Sign Out" in the Studio header to return to the sign-in page.
 ## Local Development Setup
 
 ### Prerequisites
+
 - Node.js 20+
 - pnpm (recommended) or npm/yarn
 
@@ -153,7 +175,7 @@ For production deployments on Cloud Run, use Vertex AI with Application Default 
 
 ```bash
 # Vertex AI Configuration (Production Mode)
-# When set, uses Vertex AI instead of developer API key
+# When set, uses Vertex AI instead of the developer API key
 GCP_PROJECT_ID=your-gcp-project-id
 GCP_REGION=us-central1
 GCP_VERTEX_MODEL=gemini-2.0-flash-exp
@@ -201,6 +223,7 @@ NEXT_PUBLIC_AGENT_ID=your_agent_id_here
 
 ### E2E Testing Mock Mode (for CI only)
 
+```bash
 # Set to a mock signed URL for deterministic E2E tests
 E2E_ELEVENLABS_SIGNED_URL=https://mock-signed-url.com
 ```
@@ -218,16 +241,19 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Running Tests
 
 ### Linting
+
 ```bash
 pnpm lint
 ```
 
 ### Type Checking
+
 ```bash
 pnpm typecheck
 ```
 
 ### Unit Tests
+
 ```bash
 pnpm test
 ```
@@ -389,7 +415,8 @@ graph TB
     C --> H[Rate Limiter]
     C --> I[Telemetry Emitter]
     D --> J[Voice Analytics Dashboard]
-    G --> I[Vertex AI Client]
+    G --> I
+    I --> K[Vertex AI Client]
     K --> L[Application Default Credentials]
     L --> M[Cloud Run Service Account]
     M --> N[Vertex AI API]
@@ -405,13 +432,14 @@ graph TB
 
 LessonArcade Phase 3 introduces a multi-tenant SaaS data model designed for teams, agencies, and brands that want to run many interactive lessons under one roof.
 
-At core of the design:
+At the core of the design:
 
 - **User & Workspace** – A user can belong to multiple workspaces, and each workspace represents an organization or brand with its own theme and settings.
 - **Lesson & LessonVersion** – Each lesson belongs to exactly one workspace and can have multiple versions, so teams can iterate safely while keeping a stable published version in production.
 - **LessonContent** – Stores the LessonArcade JSON "source of truth" for each version, with checksums to support future deduplication and content analysis.
 - **LessonRun** – Records every learner run (score, mode, timestamps, metadata), forming the basis for analytics, progress tracking, and future billing.
 - **WorkspaceSettings** – Captures workspace-level configuration such as brand/theme, voice presets, and feature flags.
+- **LessonComment** – Allows team members to leave comments on lessons for collaboration and feedback.
 
 The entire model is documented as a Prisma schema draft with a phased migration plan, so we can evolve from today's single-tenant demo into a full SaaS platform without a disruptive rewrite.
 
@@ -422,8 +450,8 @@ The project uses a local SQLite database at `prisma/dev.db` for development.
 - The file is not tracked in Git and can be safely deleted; it will be recreated from the Prisma schema and seed scripts.
 - To sync schema to the local dev DB, run:
   ```bash
-  pnpm db:push:dev
-  ```
+    pnpm db:push:dev
+    ```
 - There is normally no need to call `npx prisma db push` interactively; for this repo, always prefer the `db:push:dev` script.
 
 **Note:** This is dev-only. Production deployments should use a proper managed database with a separate `DATABASE_URL`.
@@ -459,7 +487,7 @@ This project is licensed under the Apache License, Version 2.0. See the [LICENSE
 
 ## Support
 
-For questions or issues, please open an issue in repository.
+For questions or issues, please open an issue in the repository.
 
 ---
 

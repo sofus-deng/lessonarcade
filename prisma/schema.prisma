@@ -36,6 +36,13 @@ enum LessonRunMode {
   arcade  // Gamified arcade mode
 }
 
+// CommentStatus defines the state of a lesson comment
+// LA3-P2-01: Collaboration feature - lesson comments
+enum CommentStatus {
+  OPEN      // Comment is active and visible
+  RESOLVED  // Comment has been resolved and archived
+}
+
 // ============================================================================
 // USER AND WORKSPACE
 // ============================================================================
@@ -53,6 +60,7 @@ model User {
   // Relationships
   workspaceMembers WorkspaceMember[]
   lessonRuns      LessonRun[]
+  lessonComments  LessonComment[] // LA3-P2-01: Comments authored by user
 
   @@map("users")
 }
@@ -71,6 +79,7 @@ model Workspace {
   lessons          Lesson[]
   lessonRuns       LessonRun[]
   settings         WorkspaceSettings?
+  lessonComments   LessonComment[] // LA3-P2-01: Comments in this workspace
 
   @@map("workspaces")
 }
@@ -112,6 +121,7 @@ model Lesson {
   workspace      Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   versions       LessonVersion[]
   runs           LessonRun[]
+  comments       LessonComment[] // LA3-P2-01: Comments on this lesson
 
   @@unique([workspaceId, slug]) // Slug must be unique within workspace
   @@index([workspaceId])
@@ -190,6 +200,36 @@ model LessonRun {
   @@index([anonymousSessionId])
   @@index([completedAt])
   @@map("lesson_runs")
+}
+
+// ============================================================================
+// COLLABORATION
+// ============================================================================
+
+// LessonComment represents a comment on a lesson for collaboration
+// LA3-P2-01: Collaboration feature - lesson comments
+// POC/Demo-grade: Not production-ready for large-scale use
+model LessonComment {
+  id            String        @id @default(uuid())
+  workspace     Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId   String
+  lesson        Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId      String
+  author        User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId      String
+  // Optional: allow comments to be tied to a specific level or item
+  levelIndex    Int?          // e.g. 0-based level index
+  itemKey       String?       // e.g. question id inside the lesson JSON
+  body          String
+  status        CommentStatus @default(OPEN)
+  createdAt     DateTime      @default(now())
+  resolvedAt    DateTime?
+
+  @@index([workspaceId])
+  @@index([lessonId])
+  @@index([authorId])
+  @@index([status])
+  @@map("lesson_comments")
 }
 
 // ============================================================================

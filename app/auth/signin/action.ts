@@ -118,3 +118,97 @@ export async function signInAsDemoOwnerAction() {
   // Redirect to Studio
   redirect('/studio')
 }
+
+/**
+ * Sign in as demo editor (one-click for demo purposes)
+ *
+ * LA3-P2-01: Added for testing collaboration roles
+ *
+ * This action:
+ * 1. Looks up demo editor user
+ * 2. Creates a session
+ * 3. Sets active workspace to demo workspace
+ * 4. Redirects to /studio
+ *
+ * @returns Redirects to /studio
+ */
+export async function signInAsDemoEditorAction() {
+  // Look up demo editor user
+  const user = await prisma.user.findUnique({
+    where: { email: 'demo-editor@example.com' },
+    include: {
+      workspaceMembers: {
+        include: {
+          workspace: true,
+        },
+      },
+    },
+  })
+
+  if (!user) {
+    // For demo purposes, redirect with error message in URL
+    redirect('/auth/demo-signin?error=demo-editor-not-found')
+  }
+
+  // Get demo workspace
+  const demoWorkspace = user.workspaceMembers.find(
+    (m) => m.workspace.slug === 'demo'
+  )?.workspace
+
+  if (!demoWorkspace) {
+    redirect('/auth/demo-signin?error=demo-workspace-not-found')
+  }
+
+  // Set session
+  await setSession(user.id, demoWorkspace.id)
+
+  // Redirect to Studio
+  redirect('/studio')
+}
+
+/**
+ * Sign in as demo viewer (one-click for demo purposes)
+ *
+ * LA3-P2-01: Added for testing collaboration roles
+ *
+ * This action:
+ * 1. Looks up demo viewer user
+ * 2. Creates a session
+ * 3. Sets active workspace to demo workspace
+ * 4. Redirects to /studio
+ *
+ * @returns Redirects to /studio
+ */
+export async function signInAsDemoViewerAction() {
+  // Look up demo viewer user
+  const user = await prisma.user.findUnique({
+    where: { email: 'demo-viewer@example.com' },
+    include: {
+      workspaceMembers: {
+        include: {
+          workspace: true,
+        },
+      },
+    },
+  })
+
+  if (!user) {
+    // For demo purposes, redirect with error message in URL
+    redirect('/auth/demo-signin?error=demo-viewer-not-found')
+  }
+
+  // Get demo workspace
+  const demoWorkspace = user.workspaceMembers.find(
+    (m) => m.workspace.slug === 'demo'
+  )?.workspace
+
+  if (!demoWorkspace) {
+    redirect('/auth/demo-signin?error=demo-workspace-not-found')
+  }
+
+  // Set session
+  await setSession(user.id, demoWorkspace.id)
+
+  // Redirect to Studio
+  redirect('/studio')
+}

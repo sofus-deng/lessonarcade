@@ -24,6 +24,18 @@ export const DEMO_OWNER = {
   name: 'Demo Owner',
 }
 
+// LA3-P2-01: Demo Editor user for testing collaboration roles
+export const DEMO_EDITOR = {
+  email: 'demo-editor@example.com',
+  name: 'Demo Editor',
+}
+
+// LA3-P2-01: Demo Viewer user for testing collaboration roles
+export const DEMO_VIEWER = {
+  email: 'demo-viewer@example.com',
+  name: 'Demo Viewer',
+}
+
 interface LessonJson {
   title?: string
   slug?: string
@@ -74,28 +86,76 @@ export async function seedDemoWorkspaceAndLessons(
   })
   log(`Workspace: ${workspace.name} (${workspace.slug})`)
 
-  const user = await prisma.user.upsert({
+  const owner = await prisma.user.upsert({
     where: { email: DEMO_OWNER.email },
     update: {},
     create: DEMO_OWNER,
   })
-  log(`User: ${user.name} (${user.email})`)
+  log(`User: ${owner.name} (${owner.email})`)
 
-  const member = await prisma.workspaceMember.upsert({
+  const ownerMember = await prisma.workspaceMember.upsert({
     where: {
       userId_workspaceId: {
-        userId: user.id,
+        userId: owner.id,
         workspaceId: workspace.id,
       },
     },
     update: {},
     create: {
-      userId: user.id,
+      userId: owner.id,
       workspaceId: workspace.id,
       role: 'OWNER',
     },
   })
-  log(`WorkspaceMember: ${member.role}`)
+  log(`WorkspaceMember: ${ownerMember.role}`)
+
+  // LA3-P2-01: Create demo editor user
+  const editor = await prisma.user.upsert({
+    where: { email: DEMO_EDITOR.email },
+    update: {},
+    create: DEMO_EDITOR,
+  })
+  log(`User: ${editor.name} (${editor.email})`)
+
+  const editorMember = await prisma.workspaceMember.upsert({
+    where: {
+      userId_workspaceId: {
+        userId: editor.id,
+        workspaceId: workspace.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: editor.id,
+      workspaceId: workspace.id,
+      role: 'EDITOR',
+    },
+  })
+  log(`WorkspaceMember: ${editorMember.role}`)
+
+  // LA3-P2-01: Create demo viewer user
+  const viewer = await prisma.user.upsert({
+    where: { email: DEMO_VIEWER.email },
+    update: {},
+    create: DEMO_VIEWER,
+  })
+  log(`User: ${viewer.name} (${viewer.email})`)
+
+  const viewerMember = await prisma.workspaceMember.upsert({
+    where: {
+      userId_workspaceId: {
+        userId: viewer.id,
+        workspaceId: workspace.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: viewer.id,
+      workspaceId: workspace.id,
+      role: 'VIEWER',
+    },
+  })
+  log(`WorkspaceMember: ${viewerMember.role}`)
 
   let seededLessons = 0
 

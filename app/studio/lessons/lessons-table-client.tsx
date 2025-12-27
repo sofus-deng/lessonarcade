@@ -1,7 +1,9 @@
 "use client"
 
 import { useState, useMemo } from 'react'
+import Link from 'next/link'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -57,6 +59,7 @@ function formatDate(date: Date | null): string {
  * - Search by lesson title or slug (case-insensitive)
  * - Default sorting by lastCompletedAt descending
  * - Lessons with no runs appear after those with runs
+ * - Review button to navigate to lesson review page
  */
 export function LessonsTableClient({ lessons }: LessonsTableClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -118,6 +121,7 @@ export function LessonsTableClient({ lessons }: LessonsTableClientProps) {
                 <TableHead className="text-right">Runs</TableHead>
                 <TableHead className="text-right">Avg Score</TableHead>
                 <TableHead>Last Completed</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -137,6 +141,17 @@ export function LessonsTableClient({ lessons }: LessonsTableClientProps) {
                       : '—'}
                   </TableCell>
                   <TableCell>{formatDate(lesson.lastCompletedAt)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <Link href={`/studio/lessons/${lesson.slug}`}>
+                        Review
+                      </Link>
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -9,7 +9,13 @@
 'use client'
 
 import { useFormState } from 'react-dom'
-import { signInAction, signInAsDemoOwnerAction, SignInState } from '../signin/action'
+import {
+  signInAction,
+  signInAsDemoOwnerAction,
+  signInAsDemoEditorAction,
+  signInAsDemoViewerAction,
+  SignInState,
+} from '../signin/action'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -55,15 +61,40 @@ export function SignInForm() {
       </div>
 
       {/* Quick Demo Sign-in */}
-      <form action={signInAsDemoOwnerAction}>
-        <Button
-          type="submit"
-          variant="outline"
-          className="w-full"
-        >
-          Sign in as Demo Owner
-        </Button>
-      </form>
+      <div className="space-y-3">
+        <p className="text-sm text-la-muted text-center">
+          Quick demo sign-in:
+        </p>
+        <div className="grid grid-cols-3 gap-2">
+          <form action={signInAsDemoOwnerAction}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full text-xs"
+            >
+              Owner
+            </Button>
+          </form>
+          <form action={signInAsDemoEditorAction}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full text-xs"
+            >
+              Editor
+            </Button>
+          </form>
+          <form action={signInAsDemoViewerAction}>
+            <Button
+              type="submit"
+              variant="outline"
+              className="w-full text-xs"
+            >
+              Viewer
+            </Button>
+          </form>
+        </div>
+      </div>
     </>
   )
 }

@@ -50,6 +50,7 @@ export function LessonSummary({ lesson, scoringState, onModeChange }: LessonSumm
   // Gamification hook - only runs on first completion
   const { gamificationState, newlyUnlockedBadges } = useGamificationAfterLesson({
     lessonId: lesson.id,
+    lessonSlug: lesson.slug,  // Pass lesson slug for backend routing
     isCompleted,
     score: scoringState.totalScore,
     maxScore: metrics.totalPossiblePoints,

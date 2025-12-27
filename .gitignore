@@ -58,3 +58,5 @@ data/voice-analytics/**/*.jsonl
 
 # Voice Demo stable public URL (gitignored, for sharing with reviewers)
 voice-demo-url.txt
+
+prisma/dev.db

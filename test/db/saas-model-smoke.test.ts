@@ -7,7 +7,7 @@
  * See: plans/la3-p0-01-saas-data-model.md
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient({

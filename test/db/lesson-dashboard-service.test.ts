@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import { seedDemoData } from '@/scripts/db/seed-demo-lessons'
+import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 import {
   getDemoWorkspaceLessonsOverview,
@@ -24,7 +24,7 @@ describe('Lesson Dashboard Service', () => {
    * Seed demo data before all tests
    */
   beforeAll(async () => {
-    await seedDemoData(prisma)
+    await seedDemoWorkspaceAndLessons(prisma)
   })
 
   /**

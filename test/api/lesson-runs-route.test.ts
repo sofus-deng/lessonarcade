@@ -12,7 +12,7 @@
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { POST } from '@/app/api/lesson-runs/route'
-import { seedDemoData } from '@/scripts/db/seed-demo-lessons'
+import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 
 describe('Lesson Runs API Route', () => {
@@ -20,7 +20,7 @@ describe('Lesson Runs API Route', () => {
    * Seed demo data before all tests
    */
   beforeAll(async () => {
-    await seedDemoData(prisma)
+    await seedDemoWorkspaceAndLessons(prisma)
   })
 
   /**

@@ -25,14 +25,13 @@ export const metadata: Metadata = {
  * - Renders a searchable table of lessons with stats
  */
 export default async function LessonsOverviewPage() {
-  let overview
-  let error: string | null = null
+  let overview: Awaited<ReturnType<typeof getDemoWorkspaceLessonsOverview>> | null = null
 
   try {
     overview = await getDemoWorkspaceLessonsOverview(prisma)
-  } catch (e) {
+  } catch {
     // If workspace not found, provide a fallback empty state
-    error = null
+    overview = null
   }
 
   return (

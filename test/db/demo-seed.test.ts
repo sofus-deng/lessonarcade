@@ -10,7 +10,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
-import { seedDemoData } from '@/scripts/db/seed-demo-lessons'
+import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 
 describe('Demo Seeding', () => {
@@ -18,7 +18,7 @@ describe('Demo Seeding', () => {
    * Seed demo data once before all tests
    */
   beforeAll(async () => {
-    await seedDemoData(prisma)
+    await seedDemoWorkspaceAndLessons(prisma)
   })
 
   /**
@@ -182,7 +182,7 @@ describe('Demo Seeding', () => {
     })
 
     // Run seeding again
-    await seedDemoData(prisma)
+    await seedDemoWorkspaceAndLessons(prisma)
 
     // Get final counts
     const finalWorkspaces = await prisma.workspace.findMany({
@@ -246,7 +246,7 @@ describe('Demo Seeding', () => {
     const firstChecksum = firstContent?.checksum
 
     // Second seed (should update content)
-    await seedDemoData(prisma)
+    await seedDemoWorkspaceAndLessons(prisma)
 
     const secondContent = await prisma.lessonContent.findUnique({
       where: { lessonVersionId: version!.id },

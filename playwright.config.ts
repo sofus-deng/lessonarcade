@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const databaseUrl = process.env.DATABASE_URL ?? 'file:./dev.db';
+process.env.DATABASE_URL = databaseUrl;
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
@@ -15,6 +18,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['html', { open: 'never' }]],
+  globalSetup: './e2e/global-setup.ts',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -76,6 +80,7 @@ export default defineConfig({
       // Configure Basic Auth for Studio routes during E2E tests
       STUDIO_BASIC_AUTH_USER: 'e2e',
       STUDIO_BASIC_AUTH_PASS: 'e2e',
+      DATABASE_URL: databaseUrl,
     },
   },
 });

@@ -367,7 +367,7 @@ graph TB
 
 LessonArcade Phase 3 introduces a multi-tenant SaaS data model designed for teams, agencies, and brands that want to run many interactive lessons under one roof.
 
-At the core of the design:
+At core of the design:
 
 - **User & Workspace** – A user can belong to multiple workspaces, and each workspace represents an organization or brand with its own theme and settings.
 - **Lesson & LessonVersion** – Each lesson belongs to exactly one workspace and can have multiple versions, so teams can iterate safely while keeping a stable published version in production.
@@ -376,6 +376,10 @@ At the core of the design:
 - **WorkspaceSettings** – Captures workspace-level configuration such as brand/theme, voice presets, and feature flags.
 
 The entire model is documented as a Prisma schema draft with a phased migration plan, so we can evolve from today's single-tenant demo into a full SaaS platform without a disruptive rewrite.
+
+## Pricing & Plans (Concept)
+
+LessonArcade is moving toward a multi-workspace SaaS with plans based on workspaces, editor seats, and lesson-run usage. The pricing structure includes three tiers: **Free** (for individuals experimenting with the platform), **Pro** (for small teams with voice and embed support), and **Team** (for larger organizations with multiple workspaces and advanced analytics). Pricing is currently conceptual for prototypes and proposals. For full details on the plan structure, metrics, and billing model, see [`plans/la3-p1-02-pricing-and-plans.md`](plans/la3-p1-02-pricing-and-plans.md). The plan definitions are also mirrored in [`lib/saas/pricing.ts`](lib/saas/pricing.ts) for future UI integration.
 
 ## Demo
 
@@ -404,7 +408,7 @@ This project is licensed under the Apache License, Version 2.0. See the [LICENSE
 
 ## Support
 
-For questions or issues, please open an issue in the repository.
+For questions or issues, please open an issue in repository.
 
 ---
 

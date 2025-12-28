@@ -43,6 +43,12 @@ enum CommentStatus {
   RESOLVED  // Comment has been resolved and archived
 }
 
+// WebhookEventType defines the types of webhook events
+// LA3-P2-02: Webhook-based integration PoC
+enum WebhookEventType {
+  LESSON_COMMENT_CREATED
+}
+
 // ============================================================================
 // USER AND WORKSPACE
 // ============================================================================
@@ -80,6 +86,7 @@ model Workspace {
   lessonRuns       LessonRun[]
   settings         WorkspaceSettings?
   lessonComments   LessonComment[] // LA3-P2-01: Comments in this workspace
+  webhooks         WorkspaceWebhook[] // LA3-P2-02: Webhook endpoints for this workspace
 
   @@map("workspaces")
 }
@@ -250,4 +257,28 @@ model WorkspaceSettings {
   workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
   @@map("workspace_settings")
+}
+
+// ============================================================================
+// INTEGRATIONS (LA3-P2-02: Webhook-based integration PoC)
+// ============================================================================
+
+// WorkspaceWebhook represents a webhook endpoint configured for a workspace
+// LA3-P2-02: Webhook-based integration PoC
+// POC/Demo-grade: Not production-ready for large-scale use
+model WorkspaceWebhook {
+  id            String          @id @default(uuid())
+  workspace     Workspace       @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId   String
+  url           String
+  eventType     WebhookEventType
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  lastTriggered DateTime?
+  lastStatus    Int?
+
+  @@index([workspaceId])
+  @@index([eventType])
+  @@index([isActive])
+  @@map("workspace_webhooks")
 }

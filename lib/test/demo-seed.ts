@@ -230,6 +230,9 @@ export async function seedDemoWorkspaceAndLessons(
   log(`Lessons seeded: ${seededLessons}`)
   log(`Total lessons in workspace: ${totalLessons}`)
 
+  // LA3-P2-02: Seed webhooks for demo workspace
+  await seedDemoWebhooks(prisma, options)
+
   return {
     workspaceId: workspace.id,
     lessonsSeeded: seededLessons,
@@ -358,6 +361,45 @@ export async function seedSampleTeamWorkspaceAndLessons(
     lessonsSeeded: seededLessons,
     totalLessons,
   }
+}
+
+/**
+ * Seed webhooks for demo workspace
+ *
+ * LA3-P2-02: Webhook-based integration PoC
+ * Creates an example webhook endpoint for testing
+ */
+export async function seedDemoWebhooks(
+  prisma: PrismaClient,
+  options: DemoSeedOptions = {}
+): Promise<void> {
+  const log = options.logger?.log ?? (() => {})
+
+  // Get demo workspace
+  const workspace = await prisma.workspace.findUnique({
+    where: { slug: DEMO_WORKSPACE.slug },
+  })
+
+  if (!workspace) {
+    return
+  }
+
+  // Create example webhook
+  await prisma.workspaceWebhook.upsert({
+    where: {
+      id: 'demo-webhook-1', // Fixed ID for consistency
+    },
+    update: {},
+    create: {
+      id: 'demo-webhook-1',
+      workspaceId: workspace.id,
+      url: 'https://example.com/lessonarcade-webhook-demo',
+      eventType: 'LESSON_COMMENT_CREATED',
+      isActive: true,
+    },
+  })
+
+  log(`Webhook: https://example.com/lessonarcade-webhook-demo`)
 }
 
 /**

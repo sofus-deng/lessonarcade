@@ -375,7 +375,7 @@ The deployment script automatically outputs the hosted URL at the end:
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-========================================
+=======================================
 ```
 
 Alternatively, you can retrieve it manually:
@@ -455,6 +455,80 @@ The project uses a local SQLite database at `prisma/dev.db` for development.
 - There is normally no need to call `npx prisma db push` interactively; for this repo, always prefer the `db:push:dev` script.
 
 **Note:** This is dev-only. Production deployments should use a proper managed database with a separate `DATABASE_URL`.
+
+## Integrations & Webhooks (PoC)
+
+LessonArcade v0.3 includes a proof-of-concept webhook system for outbound notifications when collaboration events occur.
+
+### Webhook Events
+
+Currently supported events:
+- `LESSON_COMMENT_CREATED` - Triggered when a new comment is created on a lesson
+
+### Configuring Webhooks
+
+1. Sign in to Studio as an Owner or Admin
+2. Navigate to `/studio/settings/integrations`
+3. Click "Add Webhook" and enter your webhook URL
+4. Select event type (currently only "Lesson comment created")
+5. Toggle the webhook active/inactive as needed
+
+### Webhook Payload Format
+
+When a `LESSON_COMMENT_CREATED` event occurs, webhooks receive a POST request with the following JSON payload:
+
+```json
+{
+  "type": "lesson.comment.created",
+  "workspace": {
+    "id": "workspace-id",
+    "name": "Workspace Name",
+    "slug": "workspace-slug"
+  },
+  "lesson": {
+    "id": "lesson-id",
+    "title": "Lesson Title",
+    "slug": "lesson-slug"
+  },
+  "comment": {
+    "id": "comment-id",
+    "body": "Comment text",
+    "createdAt": "2025-12-28T00:00:00.000Z",
+    "levelIndex": 0,
+    "itemKey": "question-1"
+  },
+  "author": {
+    "id": "user-id",
+    "name": "Author Name",
+    "email": "author@example.com"
+  },
+  "timestamp": "2025-12-28T00:00:00.000Z"
+}
+```
+
+### PoC Limitations
+
+This is a preview/demo feature with the following limitations:
+- No retry logic for failed webhook deliveries
+- No signature verification (webhooks are not authenticated)
+- No rate limiting on webhook delivery
+- No batching of multiple events
+- Only one event type is supported
+
+For production use, this foundation would need to be extended with:
+- Retry queue with exponential backoff
+- HMAC signature verification for security
+- Rate limiting and circuit breakers
+- Event filtering and batching
+- Support for more event types
+
+### Future Integrations
+
+This webhook system is designed as a foundation for future integrations:
+- **Slack**: Post notifications to Slack channels when comments are created
+- **Email**: Send email digests of new comments
+- **LMS**: Push lesson activity to external learning management systems
+- **Custom**: Build custom integrations using the webhook payload
 
 ## Pricing & Plans (Concept)
 

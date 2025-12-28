@@ -15,6 +15,7 @@
 
 import { PrismaClient, WorkspaceMemberRole, CommentStatus } from '@prisma/client'
 import { z } from 'zod'
+import { triggerWorkspaceWebhooksForLessonCommentCreated } from '@/lib/saas/webhook-service'
 
 // ============================================================================
 // TYPES
@@ -191,6 +192,7 @@ export async function listLessonComments(
  * 2. Resolves workspace by slug
  * 3. Resolves lesson by workspace and slug
  * 4. Creates comment with OPEN status
+ * 5. Triggers webhook notification (fire-and-forget)
  *
  * @param prisma - Prisma client instance
  * @param workspaceSlug - Workspace slug
@@ -247,6 +249,18 @@ export async function createLessonComment(
     include: {
       author: true,
     },
+  })
+
+  // LA3-P2-02: Trigger webhook notification (fire-and-forget)
+  // Note: This is called in a voided promise to not block the response
+  // Webhook failures are logged but do not affect the user experience
+  void triggerWorkspaceWebhooksForLessonCommentCreated(
+    prisma,
+    workspace.id,
+    lesson.id,
+    comment.id
+  ).catch((error: unknown) => {
+    console.error('Webhook notification failed:', error)
   })
 
   return {

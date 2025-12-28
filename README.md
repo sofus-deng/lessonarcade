@@ -375,7 +375,7 @@ The deployment script automatically outputs the hosted URL at the end:
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-=======================================
+======================================
 ```
 
 Alternatively, you can retrieve it manually:
@@ -529,6 +529,57 @@ This webhook system is designed as a foundation for future integrations:
 - **Email**: Send email digests of new comments
 - **LMS**: Push lesson activity to external learning management systems
 - **Custom**: Build custom integrations using the webhook payload
+
+## Workspace Insights (v0.3)
+
+LessonArcade v0.3 includes a Workspace Insights dashboard that provides learning effectiveness metrics for each workspace. This dashboard helps teams quickly identify which lessons are healthy, which need work, and what recently happened.
+
+### Accessing Insights
+
+1. Sign in to Studio as any role (Owner, Editor, or Viewer)
+2. Navigate to `/studio/insights` or click "Insights" in the Studio navigation
+3. The dashboard shows metrics for the currently selected workspace
+
+### Metrics Included
+
+The insights dashboard displays the following time-windowed metrics (default: 30 days, with option to switch to 7 days):
+
+| Metric | Description |
+|--------|-------------|
+| **Total Runs** | Count of lesson completions within the time window |
+| **Average Score** | Average percentage score across all completed runs |
+| **Unique Sessions** | Count of distinct learner sessions (via anonymous session IDs) |
+| **Total Comments** | Count of lesson comments created within the time window |
+
+### Lesson-Level Analytics
+
+**Lessons that need attention** – Shows up to 3 lessons with the lowest average scores that have at least 3 runs. This helps identify lessons that may need content revision or clarification.
+
+**Most engaged lessons** – Shows up to 3 lessons with the highest run counts. This helps identify the most popular lessons by engagement.
+
+**Recent activity** – Shows the last 5 events from lesson completions and comments, merged and sorted by timestamp. This provides quick visibility into recent workspace activity.
+
+### Data Sources
+
+The insights dashboard uses the following data from the SaaS data model:
+- **LessonRun** records for metrics on runs, scores, and session tracking
+- **LessonComment** records for collaboration activity tracking
+- **Lesson** metadata for lesson titles and slugs
+
+### Limitations
+
+This is a v0.3 reporting view intended for small teams and demos:
+- No advanced date range picker (only 7/30 day presets)
+- No cohort analysis or per-learner drilldown
+- No export functionality for external reporting
+- No comparison with previous periods
+
+Future versions may include:
+- Custom date range picker
+- Cohort analysis and learner retention
+- Per-learner performance drilldown
+- CSV export for external reporting
+- Integration with the personalization engine
 
 ## Pricing & Plans (Concept)
 

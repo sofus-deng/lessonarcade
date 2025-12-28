@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { BRAND_PRESETS, getBrandPreset, type BrandId } from "@/lib/branding/brandPresets";
 
 /**
@@ -16,19 +16,49 @@ import { BRAND_PRESETS, getBrandPreset, type BrandId } from "@/lib/branding/bran
  */
 export function BrandSwitcher() {
   const [brandId, setBrandId] = useState<BrandId>("lessonarcade-default");
-  const initializedRef = useRef(false);
 
-  // Read from query param on mount to sync with URL
+  // Sync with URL changes
   useEffect(() => {
-    if (typeof window !== "undefined" && !initializedRef.current) {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const getBrandFromURL = (): BrandId => {
       const params = new URLSearchParams(window.location.search);
       const brand = params.get("brand");
-      if (brand) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- Reading URL params on mount is a valid use case
-        setBrandId(getBrandPreset(brand).id);
-      }
-      initializedRef.current = true;
-    }
+      return getBrandPreset(brand).id;
+    };
+
+    // Sync state with URL on mount (wrapped in setTimeout to avoid sync setState)
+    setTimeout(() => {
+      setBrandId(getBrandFromURL());
+    }, 0);
+
+    // Listen for URL changes
+    const handleUrlChange = () => {
+      setBrandId(getBrandFromURL());
+    };
+
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+
+    history.pushState = function(...args) {
+      originalPushState.apply(history, args);
+      handleUrlChange();
+    };
+
+    history.replaceState = function(...args) {
+      originalReplaceState.apply(history, args);
+      handleUrlChange();
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      history.pushState = originalPushState;
+      history.replaceState = originalReplaceState;
+    };
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

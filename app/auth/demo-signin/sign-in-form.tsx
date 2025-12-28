@@ -65,32 +65,32 @@ export function SignInForm() {
         <p className="text-sm text-la-muted text-center">
           Quick demo sign-in:
         </p>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-2">
           <form action={signInAsDemoOwnerAction}>
             <Button
               type="submit"
               variant="outline"
-              className="w-full text-xs"
+              className="w-full text-sm"
             >
-              Owner
+              Sign in as Demo Owner
             </Button>
           </form>
           <form action={signInAsDemoEditorAction}>
             <Button
               type="submit"
               variant="outline"
-              className="w-full text-xs"
+              className="w-full text-sm"
             >
-              Editor
+              Sign in as Demo Editor
             </Button>
           </form>
           <form action={signInAsDemoViewerAction}>
             <Button
               type="submit"
               variant="outline"
-              className="w-full text-xs"
+              className="w-full text-sm"
             >
-              Viewer
+              Sign in as Demo Viewer
             </Button>
           </form>
         </div>

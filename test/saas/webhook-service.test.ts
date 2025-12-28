@@ -10,7 +10,7 @@
  * - Recording lastTriggered and lastStatus
  */
 
-import { describe, it, expect, beforeAll, afterEach, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest'
 import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 import {
@@ -27,8 +27,15 @@ describe('Webhook Service', () => {
     await seedDemoWorkspaceAndLessons(prisma)
   })
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prisma.$disconnect()
+  })
+
+  beforeEach(async () => {
+    // Clear all webhooks before each test to avoid interference from seed
+    await prisma.workspaceWebhook.deleteMany({})
+    // Clear comments created in previous tests
+    await prisma.lessonComment.deleteMany({})
     vi.clearAllMocks()
   })
 
@@ -161,7 +168,6 @@ describe('Webhook Service', () => {
 
     // Cleanup
     await prisma.workspaceWebhook.delete({ where: { id: webhook.id } })
-    await prisma.lessonComment.delete({ where: { id: comment.id } })
   })
 
   it('should skip inactive webhooks', async () => {
@@ -213,7 +219,6 @@ describe('Webhook Service', () => {
 
     // Cleanup
     await prisma.workspaceWebhook.delete({ where: { id: webhook.id } })
-    await prisma.lessonComment.delete({ where: { id: comment.id } })
   })
 
   it('should handle webhook delivery errors gracefully', async () => {
@@ -274,7 +279,6 @@ describe('Webhook Service', () => {
 
     // Cleanup
     await prisma.workspaceWebhook.delete({ where: { id: webhook.id } })
-    await prisma.lessonComment.delete({ where: { id: comment.id } })
   })
 
   it('should return early if no webhooks are configured', async () => {
@@ -303,7 +307,7 @@ describe('Webhook Service', () => {
       },
     })
 
-    // Ensure no webhooks exist for this workspace
+    // Ensure no webhooks exist for this workspace (already done in beforeEach)
     await prisma.workspaceWebhook.deleteMany({
       where: { workspaceId: workspace!.id },
     })
@@ -320,8 +324,5 @@ describe('Webhook Service', () => {
 
     // Verify fetch was NOT called
     expect(mockFetch).not.toHaveBeenCalled()
-
-    // Cleanup
-    await prisma.lessonComment.delete({ where: { id: comment.id } })
   })
 })

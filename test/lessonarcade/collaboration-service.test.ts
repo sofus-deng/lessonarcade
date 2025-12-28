@@ -10,7 +10,7 @@
  * - Permission helper enforces role hierarchy correctly
  */
 
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 import {
@@ -30,8 +30,13 @@ describe('Collaboration Service', () => {
   /**
    * Disconnect Prisma client after all tests
    */
-  afterEach(async () => {
+  afterAll(async () => {
     await prisma.$disconnect()
+  })
+
+  beforeEach(async () => {
+    // Clear comments before each test to avoid interference
+    await prisma.lessonComment.deleteMany({})
   })
 
   it('should allow EDITOR to create a comment', async () => {

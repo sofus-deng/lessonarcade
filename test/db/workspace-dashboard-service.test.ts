@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { seedAllDemoData } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 import { getWorkspaceOverviewBySlug } from '@/lib/lessonarcade/workspace-dashboard-service'
@@ -11,11 +11,13 @@ describe('Workspace Dashboard Service', () => {
     await seedAllDemoData(prisma)
   })
 
-  /**
-   * Clean up after each test if needed (seedAllDemoData is idempotent enough for these reads)
-   */
-  afterEach(async () => {
-    // No specific cleanup needed for read-only tests
+  afterAll(async () => {
+    await prisma.$disconnect()
+  })
+
+  beforeEach(async () => {
+    // Clear lesson runs before each test to avoid data accumulation
+    await prisma.lessonRun.deleteMany({})
   })
 
   it('should return correct overview for "demo" workspace', async () => {
@@ -72,14 +74,16 @@ describe('Workspace Dashboard Service', () => {
   })
 
   it('should handle workspace with no lessons gracefully', async () => {
+    // Use unique slug to avoid conflicts
+    const uniqueSlug = `empty-workspace-${Date.now()}`
     await prisma.workspace.create({
       data: {
         name: 'Empty Workspace',
-        slug: 'empty-workspace',
+        slug: uniqueSlug,
       }
     })
 
-    const overview = await getWorkspaceOverviewBySlug(prisma, 'empty-workspace')
+    const overview = await getWorkspaceOverviewBySlug(prisma, uniqueSlug)
     expect(overview.totalLessons).toBe(0)
     expect(overview.totalLessonRuns).toBe(0)
     expect(overview.avgScorePercent).toBeNull()

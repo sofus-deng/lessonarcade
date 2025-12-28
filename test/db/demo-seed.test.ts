@@ -108,14 +108,14 @@ describe('Demo Seed', () => {
     const users1 = await prisma.user.findMany()
     const members1 = await prisma.workspaceMember.findMany()
 
-    // Second seed
+    // Second seed - should update existing records, not create new ones
     await seedDemoWorkspaceAndLessons(prisma)
 
     const workspaces2 = await prisma.workspace.findMany()
     const users2 = await prisma.user.findMany()
     const members2 = await prisma.workspaceMember.findMany()
 
-    // Should have the same number of workspaces, users, and members
+    // Should have the same number of workspaces, users, and members (no new records created)
     expect(workspaces2).toHaveLength(workspaces1.length)
     expect(users2).toHaveLength(users1.length)
     expect(members2).toHaveLength(members1.length)

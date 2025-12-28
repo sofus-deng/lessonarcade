@@ -196,12 +196,13 @@ export async function triggerWorkspaceWebhooksForLessonCommentCreated(
 
         clearTimeout(timeoutId)
 
-        // Update webhook with status
+        // Update webhook with status - handle case where response might be undefined on error
+        const status = response && 'status' in response ? response.status : 0
         await prisma.workspaceWebhook.update({
           where: { id: webhook.id },
           data: {
             lastTriggered: new Date(),
-            lastStatus: response.status,
+            lastStatus: status,
           },
         })
       } catch (error) {

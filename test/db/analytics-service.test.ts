@@ -10,7 +10,7 @@
  * - Edge cases (no data, empty workspace) are handled gracefully
  */
 
-import { describe, it, expect, beforeAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { seedAllDemoData } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 import {
@@ -26,11 +26,14 @@ describe('Analytics Service', () => {
     await seedAllDemoData(prisma)
   })
 
-  /**
-   * Disconnect Prisma client after all tests
-   */
-  afterEach(async () => {
+  afterAll(async () => {
     await prisma.$disconnect()
+  })
+
+  beforeEach(async () => {
+    // Clear lesson runs and comments before each test to avoid data accumulation
+    await prisma.lessonRun.deleteMany({})
+    await prisma.lessonComment.deleteMany({})
   })
 
   it('should return correct insights for "demo" workspace with seeded data', async () => {
@@ -235,6 +238,7 @@ describe('Analytics Service', () => {
     )
     expect(strugglingLesson).toBeDefined()
     expect(strugglingLesson?.runCount).toBeGreaterThanOrEqual(3)
+    // Average of 30, 40, 35 is 35, which is less than 50
     expect(strugglingLesson?.avgScorePercent).toBeLessThan(50)
   })
 
@@ -383,17 +387,18 @@ describe('Analytics Service', () => {
   })
 
   it('should handle empty time window gracefully', async () => {
-    // Create a new workspace with no data
+    // Create a new workspace with no data - use unique slug to avoid conflicts
+    const uniqueSlug = `empty-workspace-${Date.now()}`
     await prisma.workspace.create({
       data: {
         name: 'Empty Workspace',
-        slug: 'empty-workspace',
+        slug: uniqueSlug,
       },
     })
 
     // Get insights with a very small window (1 second)
     const insights = await getWorkspaceInsights(prisma, {
-      workspaceSlug: 'empty-workspace',
+      workspaceSlug: uniqueSlug,
       windowDays: 0,
     })
 
@@ -410,17 +415,18 @@ describe('Analytics Service', () => {
   })
 
   it('should handle workspace with no lessons gracefully', async () => {
-    // Create a new workspace with no lessons
+    // Create a new workspace with no lessons - use unique slug to avoid conflicts
+    const uniqueSlug = `no-lessons-workspace-${Date.now()}`
     await prisma.workspace.create({
       data: {
         name: 'No Lessons Workspace',
-        slug: 'no-lessons-workspace',
+        slug: uniqueSlug,
       },
     })
 
     // Get insights
     const insights = await getWorkspaceInsights(prisma, {
-      workspaceSlug: 'no-lessons-workspace',
+      workspaceSlug: uniqueSlug,
     })
 
     // All metrics should be zero or null

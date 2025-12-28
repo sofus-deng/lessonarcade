@@ -29,6 +29,7 @@ import { requireAuth } from '@/lib/saas/session'
 import { prisma } from '@/lib/db/prisma'
 import { getWorkspaceInsights, DEFAULT_WINDOW_DAYS } from '@/lib/lessonarcade/analytics-service'
 import { buildWorkspaceInsightsCsv } from '@/lib/lessonarcade/analytics-export'
+import { sanitizeFilename } from '@/lib/utils/filename-sanitizer'
 
 /**
  * GET /api/studio/insights.csv
@@ -74,8 +75,9 @@ export async function GET(request: NextRequest) {
     // Build CSV
     const csv = buildWorkspaceInsightsCsv(insights)
 
-    // Generate filename
-    const filename = `lessonarcade-insights-${workspace.slug}-${windowDays}d.csv`
+    // Generate safe filename
+    const sanitizedWorkspaceSlug = sanitizeFilename(workspace.slug)
+    const filename = `lessonarcade-insights-${sanitizedWorkspaceSlug}-${windowDays}d.csv`
 
     // Return CSV with download headers
     return new NextResponse(csv, {

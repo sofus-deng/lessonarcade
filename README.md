@@ -762,3 +762,163 @@ For questions or issues, please open an issue in the repository.
 ---
 
 **Built for AI Partner Catalyst Hackathon — ElevenLabs Challenge**
+
+## Lesson Drilldown Insights (v0.3)
+
+LessonArcade v0.3 adds lesson-level insights that allow teams to drill down into specific lessons for deeper analysis. Click on any lesson title from Insights dashboard or Lessons Overview to see detailed metrics for that specific lesson.
+
+### Accessing Lesson Insights
+
+1. From **Workspace Insights** page (`/studio/insights`):
+   - Click on any lesson title in the "Lessons that need attention" or "Most engaged lessons" tables
+   - Navigate to the lesson drilldown page
+
+2. From **Lessons Overview** page (`/studio/lessons`):
+   - Click on the "Insights" button next to any lesson (only visible if the lesson has runs)
+
+3. Direct URL access:
+   - Navigate directly to `/studio/insights/lessons/{lessonSlug}`
+
+### Lesson Insights Dashboard
+
+The lesson insights page displays the following metrics for a specific lesson:
+
+**Metric Cards:**
+- **Total Runs** – Count of lesson completions within the time window
+- **Average Score** – Average percentage score across all completed runs
+- **Unique Sessions** – Count of distinct learner sessions (via anonymous session IDs)
+- **Comments** – Count of open and resolved comments (displayed as "Open / Resolved")
+
+**Mode Breakdown:**
+- **Focus Mode** – Number of runs completed in focus mode
+- **Arcade Mode** – Number of runs completed in arcade mode
+
+**Daily Activity (UTC):**
+- Table showing runs and average scores by day
+- Days are grouped using UTC date boundaries for consistency
+
+**Recent Activity:**
+- Timeline showing the last 10 events from lesson completions and comments
+- Events are merged and sorted by timestamp (most recent first)
+- Activity types include:
+  - **Run completion** – Shows "Completed with {score}%" or "Completed"
+  - **Comment** – Shows "Comment added by {authorName}"
+
+### Time Window Selection
+
+The page supports switching between 7-day and 30-day time windows:
+- Default: 30 days
+- Option: 7 days
+- Clicking a window selector updates the URL with `?window=7` or `?window=30`
+- All metrics and data refresh to reflect the selected time window
+
+### CSV Export
+
+The lesson insights page includes an "Export CSV" button that downloads all lesson-level metrics:
+
+**Features:**
+- One-click download of lesson insights data
+- Filename format: `lessonarcade-lesson-insights-{workspaceSlug}-{lessonSlug}-{windowDays}d.csv`
+- Safe filename sanitization (only lowercase, numbers, dots, hyphens, and underscores allowed)
+- Includes all sections: Summary, Mode Breakdown, Comments Summary, Daily Buckets (UTC), Recent Activity
+
+### API Endpoints
+
+#### GET /api/studio/lessons/[lessonSlug]/insights
+
+Returns lesson-level insights data for a specific lesson in the active workspace.
+
+**Query Parameters:**
+- `window` (optional): Time window in days (7 or 30, default: 30)
+
+**Response:**
+```json
+{
+  "ok": true,
+  "insights": {
+    "timeWindowStart": "2025-12-28T00:00:00.000Z",
+    "timeWindowEnd": "2025-12-28T23:59:59.999Z",
+    "lesson": {
+      "id": "lesson-id",
+      "slug": "lesson-slug",
+      "title": "Lesson Title"
+    },
+    "totalRuns": 10,
+    "avgScorePercent": 75.5,
+    "modeBreakdown": {
+      "focusRuns": 7,
+      "arcadeRuns": 3
+    },
+    "uniqueSessions": 5,
+    "totalComments": 3,
+    "openComments": 2,
+    "resolvedComments": 1,
+    "dailyBuckets": [
+      {
+        "date": "2025-12-27",
+        "runs": 5,
+        "avgScorePercent": 70.0
+      }
+    ],
+    "recentActivity": [
+      {
+        "type": "run",
+        "timestamp": "2025-12-28T10:00:00.000Z",
+        "description": "Completed with 80% score"
+      }
+    ]
+  }
+}
+```
+
+**Error Responses:**
+- `401`: Unauthorized (no valid session)
+- `400`: Bad request (invalid window parameter)
+- `404`: Not found (workspace or lesson not found)
+- `500`: Internal server error
+
+#### GET /api/studio/lessons/[lessonSlug]/insights.csv
+
+Returns a CSV download of lesson insights for a specific lesson in the active workspace.
+
+**Query Parameters:**
+- `window` (optional): Time window in days (7 or 30, default: 30)
+
+**Response:**
+- Content-Type: `text/csv; charset=utf-8`
+- Content-Disposition: `attachment; filename="lessonarcade-lesson-insights-{workspaceSlug}-{lessonSlug}-{windowDays}d.csv"`
+
+**CSV Format:**
+The CSV includes the following sections:
+- **Summary** – Lesson title, slug, time window, total runs, average score, unique sessions, total comments
+- **Mode Breakdown** – Focus mode runs, Arcade mode runs
+- **Comments Summary** – Open comments, Resolved comments, Total comments
+- **Daily Buckets (UTC)** – Date, runs, average score per day
+- **Recent Activity** – Type, timestamp, description
+
+**Error Responses:**
+- `401`: Unauthorized (no valid session)
+- `400`: Bad request (invalid window parameter)
+- `404`: Not found (workspace or lesson not found)
+- `500`: Internal server error
+
+### Workspace Scoping
+
+All lesson insights endpoints are workspace-scoped:
+- Data is only returned for the lesson in the active workspace
+- Users cannot access insights for lessons in other workspaces
+- Attempting to access a lesson that doesn't exist in the active workspace returns 404
+
+### Limitations
+
+This is a v0.3 feature intended for small teams and demos:
+- No advanced date range picker (only 7/30 day presets)
+- No cohort analysis or per-learner drilldown beyond the single lesson view
+- No comparison with previous periods
+
+Future versions may include:
+- Custom date range picker
+- Cohort analysis and learner retention
+- Per-learner performance drilldown
+- Integration with personalization engine
+

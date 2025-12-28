@@ -13,6 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { BarChart3 } from 'lucide-react'
 import type { LessonStats } from '@/lib/lessonarcade/lesson-dashboard-service'
 
 /**
@@ -60,6 +61,7 @@ function formatDate(date: Date | null): string {
  * - Default sorting by lastCompletedAt descending
  * - Lessons with no runs appear after those with runs
  * - Review button to navigate to lesson review page
+ * - Insights button to navigate to lesson drilldown page
  */
 export function LessonsTableClient({ lessons }: LessonsTableClientProps) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -121,7 +123,7 @@ export function LessonsTableClient({ lessons }: LessonsTableClientProps) {
                 <TableHead className="text-right">Runs</TableHead>
                 <TableHead className="text-right">Avg Score</TableHead>
                 <TableHead>Last Completed</TableHead>
-                <TableHead></TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -142,15 +144,32 @@ export function LessonsTableClient({ lessons }: LessonsTableClientProps) {
                   </TableCell>
                   <TableCell>{formatDate(lesson.lastCompletedAt)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                    >
-                      <Link href={`/studio/lessons/${lesson.slug}`}>
-                        Review
-                      </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                      >
+                        <Link href={`/studio/lessons/${lesson.slug}`}>
+                          Review
+                        </Link>
+                      </Button>
+                      {lesson.runCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          asChild
+                        >
+                          <Link
+                            href={`/studio/insights/lessons/${lesson.slug}`}
+                            className="flex items-center gap-1"
+                          >
+                            <BarChart3 className="h-3 w-3" />
+                            Insights
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

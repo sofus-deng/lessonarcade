@@ -1,10 +1,16 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { notFound } from 'next/navigation'
 import { requireAuth } from '@/lib/saas/session'
 import { prisma } from '@/lib/db/prisma'
 import { StudioHeader } from '@/components/studio/studio-header'
-import { getWorkspaceInsights, DEFAULT_WINDOW_DAYS } from '@/lib/lessonarcade/analytics-service'
-import { Download } from 'lucide-react'
+import {
+  getLessonInsights,
+  DEFAULT_WINDOW_DAYS,
+  WorkspaceNotFoundError,
+  LessonNotFoundError,
+} from '@/lib/lessonarcade/lesson-insights-service'
+import { Download, PlayCircle, BarChart3, Users, MessageSquare, Clock } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -20,35 +26,28 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import {
-  PlayCircle,
-  BarChart3,
-  Users,
-  MessageSquare,
-  TrendingDown,
-  TrendingUp,
-  Clock,
-} from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Workspace Insights | LessonArcade Studio',
-  description: 'Learning effectiveness metrics and analytics for your workspace.',
-  keywords: ['insights', 'analytics', 'workspace', 'learning effectiveness'],
+  title: 'Lesson Insights | LessonArcade Studio',
+  description: 'Learning effectiveness metrics and analytics for a specific lesson.',
+  keywords: ['insights', 'analytics', 'lesson', 'workspace', 'studio'],
 }
 
 /**
- * Server component for the workspace insights page.
+ * Server component for the lesson insights drilldown page.
  *
  * This page:
  * - Requires authentication (redirects to sign-in if not signed in)
- * - Fetches workspace insights with time-windowed metrics
- * - Displays aggregate metrics, struggling lessons, engaged lessons, and recent activity
+ * - Fetches lesson insights with time-windowed metrics
+ * - Displays aggregate metrics, mode breakdown, daily buckets, and recent activity
  * - Supports time window selection via query params (?window=7 or ?window=30)
  * - Provides CSV export functionality
  */
-export default async function InsightsPage({
+export default async function LessonInsightsPage({
+  params,
   searchParams,
 }: {
+  params: { lessonSlug: string }
   searchParams: { window?: string }
 }) {
   // Require authentication
@@ -93,16 +92,20 @@ export default async function InsightsPage({
   const validWindowDays =
     windowDays === 7 || windowDays === 30 ? windowDays : DEFAULT_WINDOW_DAYS
 
-  // Fetch workspace insights
-  let insights: Awaited<ReturnType<typeof getWorkspaceInsights>> | null = null
+  // Fetch lesson insights
+  let insights: Awaited<ReturnType<typeof getLessonInsights>> | null = null
 
   try {
-    insights = await getWorkspaceInsights(prisma, {
+    insights = await getLessonInsights(prisma, {
       workspaceSlug: activeWorkspace.slug,
+      lessonSlug: params.lessonSlug,
       windowDays: validWindowDays,
     })
-  } catch {
-    // If workspace not found or other error, provide fallback
+  } catch (error) {
+    if (error instanceof WorkspaceNotFoundError || error instanceof LessonNotFoundError) {
+      notFound()
+    }
+    // If other error, provide fallback
     insights = null
   }
 
@@ -129,12 +132,12 @@ export default async function InsightsPage({
   }
 
   return (
-    <div data-testid="la-studio-insights-page" className="min-h-screen bg-la-bg">
+    <div data-testid="la-studio-lesson-insights-page" className="min-h-screen bg-la-bg">
       {/* Studio Header */}
       <StudioHeader
         currentWorkspaceId={session.activeWorkspaceId}
         workspaces={workspaces}
-        redirectTo="/studio/insights"
+        redirectTo={`/studio/insights/lessons/${params.lessonSlug}`}
       />
 
       <main className="container mx-auto px-4 py-8">
@@ -143,10 +146,16 @@ export default async function InsightsPage({
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-la-surface">
-                {activeWorkspace.name} Insights
+                {insights ? insights.lesson.title : 'Lesson Insights'}
               </h1>
               <p className="text-la-muted">
-                Learning effectiveness metrics for your workspace
+                {insights ? (
+                  <>
+                    {insights.lesson.slug} • {timeWindowLabel}
+                  </>
+                ) : (
+                  'Loading lesson insights...'
+                )}
               </p>
             </div>
 
@@ -156,7 +165,7 @@ export default async function InsightsPage({
                 <span className="text-sm text-la-muted">Time window:</span>
                 <div className="flex rounded-lg border border-la-border overflow-hidden">
                   <Link
-                    href="?window=7"
+                    href={`?window=7`}
                     className={`px-4 py-2 text-sm font-medium transition-colors ${
                       validWindowDays === 7
                         ? 'bg-la-accent text-la-bg'
@@ -166,7 +175,7 @@ export default async function InsightsPage({
                     7 days
                   </Link>
                   <Link
-                    href="?window=30"
+                    href={`?window=30`}
                     className={`px-4 py-2 text-sm font-medium transition-colors ${
                       validWindowDays === 30
                         ? 'bg-la-accent text-la-bg'
@@ -179,14 +188,16 @@ export default async function InsightsPage({
               </div>
 
               {/* Export CSV Button */}
-              <Link
-                href={`/api/studio/insights.csv?window=${validWindowDays}`}
-                data-testid="la-insights-export-csv"
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-la-bg bg-la-accent rounded-lg hover:bg-la-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
-              >
-                <Download className="h-4 w-4" />
-                Export CSV
-              </Link>
+              {insights && (
+                <Link
+                  href={`/api/studio/lessons/${params.lessonSlug}/insights.csv?window=${validWindowDays}`}
+                  data-testid="la-lesson-insights-export-csv"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-la-bg bg-la-accent rounded-lg hover:bg-la-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+                >
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </Link>
+              )}
             </div>
           </div>
 
@@ -200,15 +211,8 @@ export default async function InsightsPage({
                     <PlayCircle className="h-4 w-4 text-la-muted" />
                   </CardHeader>
                   <CardContent>
-                    <div
-                      data-testid="la-insights-metric-runs"
-                      className="text-2xl font-bold"
-                    >
-                      {insights.totalRunsInWindow}
-                    </div>
-                    <p className="text-xs text-la-muted">
-                      {timeWindowLabel}
-                    </p>
+                    <div className="text-2xl font-bold">{insights.totalRuns}</div>
+                    <p className="text-xs text-la-muted">{timeWindowLabel}</p>
                   </CardContent>
                 </Card>
 
@@ -218,17 +222,12 @@ export default async function InsightsPage({
                     <BarChart3 className="h-4 w-4 text-la-muted" />
                   </CardHeader>
                   <CardContent>
-                    <div
-                      data-testid="la-insights-metric-avg-score"
-                      className="text-2xl font-bold"
-                    >
-                      {insights.avgScorePercentInWindow !== null
-                        ? `${insights.avgScorePercentInWindow}%`
+                    <div className="text-2xl font-bold">
+                      {insights.avgScorePercent !== null
+                        ? `${insights.avgScorePercent}%`
                         : '—'}
                     </div>
-                    <p className="text-xs text-la-muted">
-                      {timeWindowLabel}
-                    </p>
+                    <p className="text-xs text-la-muted">{timeWindowLabel}</p>
                   </CardContent>
                 </Card>
 
@@ -241,11 +240,9 @@ export default async function InsightsPage({
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {insights.totalUniqueLearnerSessions}
+                      {insights.uniqueSessions}
                     </div>
-                    <p className="text-xs text-la-muted">
-                      {timeWindowLabel}
-                    </p>
+                    <p className="text-xs text-la-muted">{timeWindowLabel}</p>
                   </CardContent>
                 </Card>
 
@@ -255,112 +252,80 @@ export default async function InsightsPage({
                     <MessageSquare className="h-4 w-4 text-la-muted" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">
-                      {insights.totalCommentsInWindow}
+                    <div className="flex items-center gap-2">
+                      <div className="text-2xl font-bold">
+                        {insights.openComments}
+                      </div>
+                      <span className="text-la-muted">/</span>
+                      <div className="text-2xl font-bold text-la-muted">
+                        {insights.resolvedComments}
+                      </div>
                     </div>
                     <p className="text-xs text-la-muted">
-                      {timeWindowLabel}
+                      Open / Resolved • {timeWindowLabel}
                     </p>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Lessons that need attention */}
+              {/* Mode Breakdown */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <TrendingDown className="h-5 w-5 text-orange-500" />
-                    <CardTitle>Lessons that need attention</CardTitle>
-                  </div>
+                  <CardTitle>Mode Breakdown</CardTitle>
                   <CardDescription>
-                    Lessons with lowest average scores (min{' '}
-                    {3} runs)
+                    Distribution of runs by play mode
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {insights.topStrugglingLessons.length > 0 ? (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Lesson Title</TableHead>
-                          <TableHead className="text-right">Runs</TableHead>
-                          <TableHead className="text-right">Avg Score</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {insights.topStrugglingLessons.map((lesson) => (
-                          <TableRow key={lesson.lessonSlug}>
-                            <TableCell className="font-medium">
-                              <Link
-                                href={`/studio/insights/lessons/${lesson.lessonSlug}`}
-                                className="text-la-accent hover:underline"
-                              >
-                                {lesson.title}
-                              </Link>
-                            </TableCell>
-                            <TableCell className="text-right">
-                              {lesson.runCount}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <span className="text-orange-600 font-medium">
-                                {lesson.avgScorePercent}%
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  ) : (
-                    <div className="py-12 text-center">
-                      <p className="text-la-muted mb-2">
-                        No lessons need attention right now
-                      </p>
-                      <p className="text-sm text-la-muted">
-                        Lessons need at least 3 runs to be evaluated
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-la-muted mb-1">Focus Mode</p>
+                      <p className="text-2xl font-bold">
+                        {insights.modeBreakdown.focusRuns}
                       </p>
                     </div>
-                  )}
+                    <div>
+                      <p className="text-sm text-la-muted mb-1">Arcade Mode</p>
+                      <p className="text-2xl font-bold">
+                        {insights.modeBreakdown.arcadeRuns}
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
-              {/* Most engaged lessons */}
+              {/* Daily Buckets Table */}
               <Card>
                 <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                    <CardTitle>Most engaged lessons</CardTitle>
-                  </div>
+                  <CardTitle>Daily Activity (UTC)</CardTitle>
                   <CardDescription>
-                    Lessons with highest run counts
+                    Runs and average scores by day
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {insights.topEngagedLessons.length > 0 ? (
+                  {insights.dailyBuckets.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Lesson Title</TableHead>
+                          <TableHead>Date (UTC)</TableHead>
                           <TableHead className="text-right">Runs</TableHead>
-                          <TableHead className="text-right">Avg Score</TableHead>
+                          <TableHead className="text-right">
+                            Avg Score %
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {insights.topEngagedLessons.map((lesson) => (
-                          <TableRow key={lesson.lessonSlug}>
+                        {insights.dailyBuckets.map((bucket) => (
+                          <TableRow key={bucket.date}>
                             <TableCell className="font-medium">
-                              <Link
-                                href={`/studio/insights/lessons/${lesson.lessonSlug}`}
-                                className="text-la-accent hover:underline"
-                              >
-                                {lesson.title}
-                              </Link>
+                              {bucket.date}
                             </TableCell>
                             <TableCell className="text-right">
-                              {lesson.runCount}
+                              {bucket.runs}
                             </TableCell>
                             <TableCell className="text-right">
-                              {lesson.avgScorePercent !== null
-                                ? `${lesson.avgScorePercent}%`
+                              {bucket.avgScorePercent !== null
+                                ? `${bucket.avgScorePercent}%`
                                 : '—'}
                             </TableCell>
                           </TableRow>
@@ -368,21 +333,19 @@ export default async function InsightsPage({
                       </TableBody>
                     </Table>
                   ) : (
-                    <div className="py-12 text-center">
-                      <p className="text-la-muted">
-                        No lesson activity in this time window
-                      </p>
+                    <div className="py-12 text-center text-la-muted">
+                      No daily activity data in this time window
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Recent activity */}
+              {/* Recent Activity */}
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
                     <Clock className="h-5 w-5 text-la-accent" />
-                    <CardTitle>Recent activity</CardTitle>
+                    <CardTitle>Recent Activity</CardTitle>
                   </div>
                   <CardDescription>
                     Latest lesson completions and comments
@@ -409,8 +372,8 @@ export default async function InsightsPage({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-medium text-la-surface truncate">
-                                {activity.lessonTitle}
+                              <span className="font-medium text-la-surface capitalize">
+                                {activity.type}
                               </span>
                               <span className="text-xs text-la-muted whitespace-nowrap">
                                 {formatRelativeTime(activity.timestamp)}
@@ -424,10 +387,8 @@ export default async function InsightsPage({
                       ))}
                     </div>
                   ) : (
-                    <div className="py-12 text-center">
-                      <p className="text-la-muted">
-                        No recent activity in this time window
-                      </p>
+                    <div className="py-12 text-center text-la-muted">
+                      No recent activity in this time window
                     </div>
                   )}
                 </CardContent>
@@ -436,7 +397,7 @@ export default async function InsightsPage({
           ) : (
             <Card>
               <CardContent className="py-12 text-center text-la-muted">
-                Unable to load insights. Please try again later.
+                Unable to load lesson insights. Please try again later.
               </CardContent>
             </Card>
           )}

@@ -4,6 +4,7 @@ import { requireAuth } from '@/lib/saas/session'
 import { prisma } from '@/lib/db/prisma'
 import { StudioHeader } from '@/components/studio/studio-header'
 import { getWorkspaceInsights, DEFAULT_WINDOW_DAYS } from '@/lib/lessonarcade/analytics-service'
+import { Download } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -43,6 +44,7 @@ export const metadata: Metadata = {
  * - Fetches workspace insights with time-windowed metrics
  * - Displays aggregate metrics, struggling lessons, engaged lessons, and recent activity
  * - Supports time window selection via query params (?window=7 or ?window=30)
+ * - Provides CSV export functionality
  */
 export default async function InsightsPage({
   searchParams,
@@ -148,31 +150,43 @@ export default async function InsightsPage({
               </p>
             </div>
 
-            {/* Window Selector */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-la-muted">Time window:</span>
-              <div className="flex rounded-lg border border-la-border overflow-hidden">
-                <Link
-                  href="?window=7"
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${
-                    validWindowDays === 7
-                      ? 'bg-la-accent text-la-bg'
-                      : 'bg-la-surface text-la-surface hover:bg-la-muted/25'
-                  }`}
-                >
-                  7 days
-                </Link>
-                <Link
-                  href="?window=30"
-                  className={`px-4 py-2 text-sm font-medium transition-colors ${
-                    validWindowDays === 30
-                      ? 'bg-la-accent text-la-bg'
-                      : 'bg-la-surface text-la-surface hover:bg-la-muted/25'
-                  }`}
-                >
-                  30 days
-                </Link>
+            <div className="flex items-center gap-4">
+              {/* Window Selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-la-muted">Time window:</span>
+                <div className="flex rounded-lg border border-la-border overflow-hidden">
+                  <Link
+                    href="?window=7"
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                      validWindowDays === 7
+                        ? 'bg-la-accent text-la-bg'
+                        : 'bg-la-surface text-la-surface hover:bg-la-muted/25'
+                    }`}
+                  >
+                    7 days
+                  </Link>
+                  <Link
+                    href="?window=30"
+                    className={`px-4 py-2 text-sm font-medium transition-colors ${
+                      validWindowDays === 30
+                        ? 'bg-la-accent text-la-bg'
+                        : 'bg-la-surface text-la-surface hover:bg-la-muted/25'
+                    }`}
+                  >
+                    30 days
+                  </Link>
+                </div>
               </div>
+
+              {/* Export CSV Button */}
+              <Link
+                href={`/api/studio/insights.csv?window=${validWindowDays}`}
+                data-testid="la-insights-export-csv"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-la-bg bg-la-accent rounded-lg hover:bg-la-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </Link>
             </div>
           </div>
 

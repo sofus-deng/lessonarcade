@@ -175,7 +175,7 @@ For production deployments on Cloud Run, use Vertex AI with Application Default 
 
 ```bash
 # Vertex AI Configuration (Production Mode)
-# When set, uses Vertex AI instead of the developer API key
+# When set, uses Vertex AI instead of developer API key
 GCP_PROJECT_ID=your-gcp-project-id
 GCP_REGION=us-central1
 GCP_VERTEX_MODEL=gemini-2.0-flash-exp
@@ -294,7 +294,7 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
    --member="serviceAccount:$SERVICE_ACCOUNT" \
    --role="roles/aiplatform.user"
 
-# 4. Run the deployment script
+# 4. Run deployment script
 ./scripts/cloud-run/deploy.sh
 
 # The script will output: HOSTED_URL=https://your-service-url.a.run.app
@@ -368,14 +368,14 @@ Cloud Run automatically configures a default TCP startup probe:
 
 For custom health check configuration, see [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
-#### Getting the Hosted URL
+#### Getting Hosted URL
 
 The deployment script automatically outputs the hosted URL at the end:
 
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-======================================
+=====================================
 ```
 
 Alternatively, you can retrieve it manually:
@@ -540,6 +540,16 @@ LessonArcade v0.3 includes a Workspace Insights dashboard that provides learning
 2. Navigate to `/studio/insights` or click "Insights" in the Studio navigation
 3. The dashboard shows metrics for the currently selected workspace
 
+### CSV Export
+
+The insights dashboard includes an "Export CSV" button that allows you to download all insights data as a CSV file for external reporting and analysis.
+
+**Features:**
+- One-click download of insights data
+- Filename includes workspace slug and time window (e.g., `lessonarcade-insights-demo-30d.csv`)
+- Includes all sections: Summary, Top Struggling Lessons, Top Engaged Lessons, Recent Activity
+- Available to all roles (Owner, Editor, Viewer) since it's read-only
+
 ### Metrics Included
 
 The insights dashboard displays the following time-windowed metrics (default: 30 days, with option to switch to 7 days):
@@ -571,15 +581,150 @@ The insights dashboard uses the following data from the SaaS data model:
 This is a v0.3 reporting view intended for small teams and demos:
 - No advanced date range picker (only 7/30 day presets)
 - No cohort analysis or per-learner drilldown
-- No export functionality for external reporting
 - No comparison with previous periods
 
 Future versions may include:
 - Custom date range picker
 - Cohort analysis and learner retention
 - Per-learner performance drilldown
-- CSV export for external reporting
-- Integration with the personalization engine
+- Integration with personalization engine
+
+## Read-Only Reporting APIs (v0.3)
+
+LessonArcade v0.3 includes read-only API endpoints that return insights and lessons overview data for the active workspace. These endpoints enable future integrations to consume insights via stable endpoints.
+
+**Important:** These are Studio-scoped endpoints that require demo authentication (v0.3). They are not public APIs.
+
+### Available Endpoints
+
+#### GET /api/studio/insights
+
+Returns the same data as the `/studio/insights` page for the active workspace.
+
+**Query Parameters:**
+- `window` (optional): Time window in days (7 or 30, default: 30)
+
+**Request:**
+```http
+GET /api/studio/insights?window=30
+Authorization: [session cookie]
+```
+
+**Response:**
+```json
+{
+  "ok": true,
+  "insights": {
+    "timeWindowStart": "2025-12-28T00:00:00.000Z",
+    "timeWindowEnd": "2025-12-28T23:59:59.999Z",
+    "totalRunsInWindow": 10,
+    "avgScorePercentInWindow": 75.5,
+    "totalUniqueLearnerSessions": 5,
+    "totalCommentsInWindow": 3,
+    "topStrugglingLessons": [...],
+    "topEngagedLessons": [...],
+    "recentActivity": [...]
+  }
+}
+```
+
+**Error Responses:**
+- `401`: Unauthorized (no valid session)
+- `400`: Bad request (invalid window parameter)
+- `404`: Not found (workspace not found)
+- `500`: Internal server error
+
+#### GET /api/studio/insights.csv
+
+Returns a CSV download of workspace insights for the active workspace.
+
+**Query Parameters:**
+- `window` (optional): Time window in days (7 or 30, default: 30)
+
+**Request:**
+```http
+GET /api/studio/insights.csv?window=30
+Authorization: [session cookie]
+```
+
+**Response:**
+- Content-Type: `text/csv; charset=utf-8`
+- Content-Disposition: `attachment; filename="lessonarcade-insights-{workspaceSlug}-{windowDays}d.csv"`
+
+**CSV Format:**
+The CSV includes the following sections:
+- **Summary**: Time window start/end, total runs, average score, unique sessions, total comments
+- **Top Struggling Lessons**: Table with lesson title, slug, runs, and average score
+- **Top Engaged Lessons**: Table with lesson title, slug, runs, and average score
+- **Recent Activity**: Table with type, timestamp, lesson title, lesson slug, and description
+
+**Error Responses:**
+- `401`: Unauthorized (no valid session)
+- `400`: Bad request (invalid window parameter)
+- `404`: Not found (workspace not found)
+- `500`: Internal server error
+
+#### GET /api/studio/lessons-overview
+
+Returns the same data as the `/studio/lessons` page for the active workspace.
+
+**Request:**
+```http
+GET /api/studio/lessons-overview
+Authorization: [session cookie]
+```
+
+**Response:**
+```json
+{
+  "ok": true,
+  "lessons": {
+    "workspace": {
+      "id": "workspace-id",
+      "slug": "demo",
+      "name": "Demo Workspace"
+    },
+    "lessons": [
+      {
+        "id": "lesson-id",
+        "slug": "lesson-slug",
+        "title": "Lesson Title",
+        "status": "PUBLISHED",
+        "runCount": 10,
+        "averageScorePercent": 75.5,
+        "lastCompletedAt": "2025-12-28T00:00:00.000Z"
+      }
+    ],
+    "totals": {
+      "totalLessons": 5,
+      "totalRuns": 25,
+      "averageScorePercent": 72.3
+    }
+  }
+}
+```
+
+**Error Responses:**
+- `401`: Unauthorized (no valid session)
+- `404`: Not found (workspace not found)
+- `500`: Internal server error
+
+### Authentication & Workspace Scoping
+
+All read-only reporting APIs:
+- Require a valid session (via demo auth cookie)
+- Derive the active workspace from the session
+- Return data scoped to that workspace only
+- Do not allow cross-workspace data access
+
+### Future Enhancements
+
+Future versions may include:
+- Public API endpoints with proper API key authentication
+- More granular permissions (e.g., read-only for specific metrics)
+- Pagination for large datasets
+- Filtering and sorting options
+- Real-time data via WebSockets
 
 ## Pricing & Plans (Concept)
 
@@ -587,11 +732,11 @@ LessonArcade is moving toward a multi-workspace SaaS with plans based on workspa
 
 ## Demo
 
-Try the live demo at [demo-url-placeholder] (replace with actual Cloud Run URL).
+Try the live demo at [demo-url-placeholder] (replace with the actual Cloud Run URL).
 
 ## Devpost Submission
 
-For complete submission requirements and canonical Devpost write-up, see:
+For complete submission requirements and the canonical Devpost write-up, see:
 
 - **[`docs/devpost-draft.md`](docs/devpost-draft.md)** — Copy-paste ready Devpost submission content with all required sections (Problem, Solution, How We Built It, Architecture, Challenges, Accomplishments, What We Learned, What's Next)
 - **[`docs/submission.md`](docs/submission.md)** — Complete checklist for contest compliance, pre-submit verification, and final steps

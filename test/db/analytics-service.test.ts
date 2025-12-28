@@ -10,7 +10,6 @@
  * - Edge cases (no data, empty workspace) are handled gracefully
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, it, expect, beforeAll, afterEach } from 'vitest'
 import { seedAllDemoData } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
@@ -385,7 +384,7 @@ describe('Analytics Service', () => {
 
   it('should handle empty time window gracefully', async () => {
     // Create a new workspace with no data
-    const workspace = await prisma.workspace.create({
+    await prisma.workspace.create({
       data: {
         name: 'Empty Workspace',
         slug: 'empty-workspace',
@@ -412,7 +411,7 @@ describe('Analytics Service', () => {
 
   it('should handle workspace with no lessons gracefully', async () => {
     // Create a new workspace with no lessons
-    const workspace = await prisma.workspace.create({
+    await prisma.workspace.create({
       data: {
         name: 'No Lessons Workspace',
         slug: 'no-lessons-workspace',

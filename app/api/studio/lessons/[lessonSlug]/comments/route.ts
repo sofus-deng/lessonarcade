@@ -42,6 +42,7 @@ export async function GET(
   try {
     // Require authentication
     const session = await requireAuth()
+    const resolvedParams = await params
 
     // Get active workspace
     const workspace = await prisma.workspace.findUnique({
@@ -59,7 +60,11 @@ export async function GET(
     await requireWorkspaceMemberWithRole(prisma, session.userId, workspace.id, 'viewer')
 
     // List comments
-    const comments = await listLessonComments(prisma, workspace.slug, params.lessonSlug)
+    const comments = await listLessonComments(
+      prisma,
+      workspace.slug,
+      resolvedParams.lessonSlug
+    )
 
     return NextResponse.json({ comments })
   } catch (error) {
@@ -104,6 +109,7 @@ export async function POST(
   try {
     // Require authentication
     const session = await requireAuth()
+    const resolvedParams = await params
 
     // Get active workspace
     const workspace = await prisma.workspace.findUnique({
@@ -128,7 +134,7 @@ export async function POST(
     const comment = await createLessonComment(
       prisma,
       workspace.slug,
-      params.lessonSlug,
+      resolvedParams.lessonSlug,
       session.userId,
       input
     )

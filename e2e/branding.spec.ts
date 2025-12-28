@@ -5,30 +5,38 @@ test.describe('Branding System', () => {
     await page.goto('/demo')
 
     // Check data-brand attribute on document element (where BrandSwitcher sets it)
-    const brandAttr = await page.locator('html').getAttribute('data-brand')
-    expect(brandAttr).toBe('lessonarcade-default')
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-brand',
+      'lessonarcade-default'
+    )
   })
 
   test('demo page loads with warm-paper brand from query', async ({ page }) => {
     await page.goto('/demo?brand=warm-paper')
 
-    const brandAttr = await page.locator('html').getAttribute('data-brand')
-    expect(brandAttr).toBe('warm-paper')
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-brand',
+      'warm-paper'
+    )
   })
 
   test('demo page loads with night-classroom brand from query', async ({ page }) => {
     await page.goto('/demo?brand=night-classroom')
 
-    const brandAttr = await page.locator('html').getAttribute('data-brand')
-    expect(brandAttr).toBe('night-classroom')
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-brand',
+      'night-classroom'
+    )
   })
 
   test('demo page falls back to default for unknown brand', async ({ page }) => {
     await page.goto('/demo?brand=unknown-brand')
 
     // Verify brand falls back to default
-    const brandAttr = await page.locator('html').getAttribute('data-brand')
-    expect(brandAttr).toBe('lessonarcade-default')
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-brand',
+      'lessonarcade-default'
+    )
   })
 
   test('brand switcher updates URL query param', async ({ page }) => {
@@ -38,12 +46,13 @@ test.describe('Branding System', () => {
     await expect(brandSelect).toBeVisible()
 
     // Select warm-paper
-    const warmPaperOption = page.locator('select option[value="warm-paper"]')
-    await warmPaperOption.click()
+    await brandSelect.selectOption('warm-paper')
 
     // Verify data-brand attribute
-    const brandAttr = await page.locator('html').getAttribute('data-brand')
-    expect(brandAttr).toBe('warm-paper')
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-brand',
+      'warm-paper'
+    )
   })
 
   test('brand switcher reads initial brand from query param', async ({ page }) => {
@@ -64,11 +73,12 @@ test.describe('Branding System', () => {
     await expect(brandSelect).toBeVisible()
 
     // Select warm-paper
-    const warmPaperOption = page.locator('select option[value="warm-paper"]')
-    await warmPaperOption.click()
+    await brandSelect.selectOption('warm-paper')
 
     // Verify data-brand attribute on document element (where BrandSwitcher sets it)
-    const brandAttr = await page.locator('html').getAttribute('data-brand')
-    expect(brandAttr).toBe('warm-paper')
+    await expect(page.locator('html')).toHaveAttribute(
+      'data-brand',
+      'warm-paper'
+    )
   })
 })

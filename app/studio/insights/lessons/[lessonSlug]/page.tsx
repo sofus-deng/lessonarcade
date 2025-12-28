@@ -52,6 +52,8 @@ export default async function LessonInsightsPage({
 }) {
   // Require authentication
   const session = await requireAuth()
+  const resolvedParams = await params
+  const resolvedSearchParams = await searchParams
 
   // Fetch user's workspaces
   const user = await prisma.user.findUnique({
@@ -86,11 +88,13 @@ export default async function LessonInsightsPage({
   }
 
   // Parse window parameter (default to 30 days)
-  const windowDays = searchParams.window
-    ? parseInt(searchParams.window, 10)
+  const windowDays = resolvedSearchParams.window
+    ? parseInt(resolvedSearchParams.window, 10)
     : DEFAULT_WINDOW_DAYS
   const validWindowDays =
-    windowDays === 7 || windowDays === 30 ? windowDays : DEFAULT_WINDOW_DAYS
+    windowDays === 0 || windowDays === 7 || windowDays === 30
+      ? windowDays
+      : DEFAULT_WINDOW_DAYS
 
   // Fetch lesson insights
   let insights: Awaited<ReturnType<typeof getLessonInsights>> | null = null
@@ -98,7 +102,7 @@ export default async function LessonInsightsPage({
   try {
     insights = await getLessonInsights(prisma, {
       workspaceSlug: activeWorkspace.slug,
-      lessonSlug: params.lessonSlug,
+      lessonSlug: resolvedParams.lessonSlug,
       windowDays: validWindowDays,
     })
   } catch (error) {
@@ -110,7 +114,17 @@ export default async function LessonInsightsPage({
   }
 
   // Format time window label
-  const timeWindowLabel = validWindowDays === 7 ? 'Last 7 days' : 'Last 30 days'
+  const timeWindowLabel =
+    validWindowDays === 7
+      ? 'Last 7 days'
+      : validWindowDays === 0
+        ? 'Last 0 days'
+        : 'Last 30 days'
+
+  const hasDailyActivity =
+    insights?.dailyBuckets.some(
+      (bucket) => bucket.runs > 0 || bucket.avgScorePercent !== null
+    ) ?? false
 
   // Format relative time for activity entries
   const formatRelativeTime = (date: Date): string => {
@@ -137,7 +151,7 @@ export default async function LessonInsightsPage({
       <StudioHeader
         currentWorkspaceId={session.activeWorkspaceId}
         workspaces={workspaces}
-        redirectTo={`/studio/insights/lessons/${params.lessonSlug}`}
+        redirectTo={`/studio/insights/lessons/${resolvedParams.lessonSlug}`}
       />
 
       <main className="container mx-auto px-4 py-8">
@@ -190,7 +204,7 @@ export default async function LessonInsightsPage({
               {/* Export CSV Button */}
               {insights && (
                 <Link
-                  href={`/api/studio/lessons/${params.lessonSlug}/insights.csv?window=${validWindowDays}`}
+                  href={`/api/studio/lessons/${resolvedParams.lessonSlug}/insights.csv?window=${validWindowDays}`}
                   data-testid="la-lesson-insights-export-csv"
                   className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-la-bg bg-la-accent rounded-lg hover:bg-la-accent/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                 >
@@ -303,7 +317,7 @@ export default async function LessonInsightsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {insights.dailyBuckets.length > 0 ? (
+                  {hasDailyActivity ? (
                     <Table>
                       <TableHeader>
                         <TableRow>

@@ -47,6 +47,7 @@ export async function PATCH(
   try {
     // Require authentication
     const session = await requireAuth()
+    const resolvedParams = await params
 
     // Parse and validate request body
     const body = await request.json()
@@ -55,7 +56,7 @@ export async function PATCH(
     // Verify webhook belongs to active workspace
     const webhook = await prisma.workspaceWebhook.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         workspaceId: session.activeWorkspaceId,
       },
     })
@@ -66,7 +67,7 @@ export async function PATCH(
 
     // Update webhook
     const updated = await prisma.workspaceWebhook.update({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
       data: { isActive },
     })
 
@@ -105,11 +106,12 @@ export async function DELETE(
   try {
     // Require authentication
     const session = await requireAuth()
+    const resolvedParams = await params
 
     // Verify webhook belongs to active workspace
     const webhook = await prisma.workspaceWebhook.findFirst({
       where: {
-        id: params.id,
+        id: resolvedParams.id,
         workspaceId: session.activeWorkspaceId,
       },
     })
@@ -120,7 +122,7 @@ export async function DELETE(
 
     // Delete webhook
     await prisma.workspaceWebhook.delete({
-      where: { id: params.id },
+      where: { id: resolvedParams.id },
     })
 
     return NextResponse.json({ ok: true })

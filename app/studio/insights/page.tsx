@@ -53,6 +53,7 @@ export default async function InsightsPage({
 }) {
   // Require authentication
   const session = await requireAuth()
+  const resolvedSearchParams = await searchParams
 
   // Fetch user's workspaces
   const user = await prisma.user.findUnique({
@@ -87,11 +88,13 @@ export default async function InsightsPage({
   }
 
   // Parse window parameter (default to 30 days)
-  const windowDays = searchParams.window
-    ? parseInt(searchParams.window, 10)
+  const windowDays = resolvedSearchParams.window
+    ? parseInt(resolvedSearchParams.window, 10)
     : DEFAULT_WINDOW_DAYS
   const validWindowDays =
-    windowDays === 7 || windowDays === 30 ? windowDays : DEFAULT_WINDOW_DAYS
+    windowDays === 0 || windowDays === 7 || windowDays === 30
+      ? windowDays
+      : DEFAULT_WINDOW_DAYS
 
   // Fetch workspace insights
   let insights: Awaited<ReturnType<typeof getWorkspaceInsights>> | null = null
@@ -107,7 +110,12 @@ export default async function InsightsPage({
   }
 
   // Format time window label
-  const timeWindowLabel = validWindowDays === 7 ? 'Last 7 days' : 'Last 30 days'
+  const timeWindowLabel =
+    validWindowDays === 7
+      ? 'Last 7 days'
+      : validWindowDays === 0
+        ? 'Last 0 days'
+        : 'Last 30 days'
 
   // Format relative time for activity entries
   const formatRelativeTime = (date: Date): string => {

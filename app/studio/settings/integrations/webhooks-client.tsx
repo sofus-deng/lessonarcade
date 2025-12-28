@@ -151,12 +151,15 @@ export function WebhooksClient({ webhooks }: WebhooksClientProps) {
       ) : (
         <div className="space-y-4">
           {webhooks.map((webhook) => (
-            <Card key={webhook.id}>
+            <Card key={webhook.id} data-testid={`la-webhook-card-${webhook.id}`}>
               <CardContent className="py-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">
-                      <Badge variant={webhook.isActive ? 'default' : 'secondary'}>
+                      <Badge
+                        variant={webhook.isActive ? 'default' : 'secondary'}
+                        data-testid={`la-webhook-status-${webhook.id}`}
+                      >
                         {webhook.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                       <Badge variant="outline">{webhook.eventType}</Badge>
@@ -193,6 +196,7 @@ export function WebhooksClient({ webhooks }: WebhooksClientProps) {
                       size="icon"
                       onClick={() => handleToggleActive(webhook.id, webhook.isActive)}
                       title={webhook.isActive ? 'Deactivate' : 'Activate'}
+                      data-testid={`la-webhook-toggle-${webhook.id}`}
                     >
                       {webhook.isActive ? (
                         <X className="h-4 w-4" />

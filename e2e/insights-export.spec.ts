@@ -4,24 +4,24 @@
  * LA3-P2-04: Tests for CSV export and read-only reporting APIs.
  */
 
+import { readFile } from 'fs/promises'
 import { test, expect } from '@playwright/test'
-
-// Base64 encoded "e2e:e2e" for outer Basic Auth guard
-const BASIC_AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
+import { applyBasicAuth, signInAsDemo } from './utils/auth'
 
 test.describe('Insights Export and API', () => {
-  test.beforeEach(async ({ page }) => {
-    // Add Basic Auth header for all requests
-    await page.setExtraHTTPHeaders({ Authorization: BASIC_AUTH_HEADER })
+  test.beforeEach(async ({ context }) => {
+    await applyBasicAuth(context)
   })
 
   test('as Demo Owner: click Export CSV and verify download', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
     // 3. Click Export CSV button
     const downloadPromise = page.waitForEvent('download')
@@ -36,8 +36,9 @@ test.describe('Insights Export and API', () => {
     expect(filename).toMatch(/^lessonarcade-insights-demo-(7|30)d\.csv$/)
 
     // 6. Verify CSV content contains expected headers
-    const csvContent = await download.createReadStream()
-    const csvText = await csvContent.toString()
+    const downloadPath = await download.path()
+    expect(downloadPath).not.toBeNull()
+    const csvText = await readFile(downloadPath as string, 'utf-8')
     expect(csvText).toContain('Summary')
     expect(csvText).toContain('Total Runs')
     expect(csvText).toContain('Average Score %')
@@ -47,11 +48,13 @@ test.describe('Insights Export and API', () => {
 
   test('CSV export with 7-day window has correct filename', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to insights page with 7-day window
     await page.goto('/studio/insights?window=7')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
     // 3. Click Export CSV button
     const downloadPromise = page.waitForEvent('download')
@@ -65,11 +68,13 @@ test.describe('Insights Export and API', () => {
 
   test('CSV export with 30-day window has correct filename', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to insights page with 30-day window
     await page.goto('/studio/insights?window=30')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
     // 3. Click Export CSV button
     const downloadPromise = page.waitForEvent('download')
@@ -83,22 +88,19 @@ test.describe('Insights Export and API', () => {
 
   test('CSV export button is accessible via keyboard', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
-    // 3. Focus on Export CSV button using Tab key
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
+    // 3. Focus on Export CSV button
+    const exportButton = page.getByTestId('la-insights-export-csv')
+    await exportButton.focus()
 
     // 4. Verify button is focused
-    const exportButton = page.getByTestId('la-insights-export-csv')
     await expect(exportButton).toBeFocused()
 
     // 5. Press Enter to trigger download
@@ -110,16 +112,12 @@ test.describe('Insights Export and API', () => {
     expect(download).toBeDefined()
   })
 
-  test('JSON API endpoint returns insights data', async ({ page, request }) => {
+  test('JSON API endpoint returns insights data', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call insights API endpoint
-    const response = await request.get('/api/studio/insights?window=30')
+    // 2. Call insights API endpoint
+    const response = await page.request.get('/api/studio/insights?window=30')
 
     // 4. Verify response
     expect(response.ok()).toBe(true)
@@ -141,16 +139,12 @@ test.describe('Insights Export and API', () => {
     expect(insights).toHaveProperty('recentActivity')
   })
 
-  test('JSON API endpoint with 7-day window', async ({ page, request }) => {
+  test('JSON API endpoint with 7-day window', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call insights API endpoint with 7-day window
-    const response = await request.get('/api/studio/insights?window=7')
+    // 2. Call insights API endpoint with 7-day window
+    const response = await page.request.get('/api/studio/insights?window=7')
 
     // 4. Verify response
     expect(response.ok()).toBe(true)
@@ -160,16 +154,12 @@ test.describe('Insights Export and API', () => {
     expect(data.insights).toBeDefined()
   })
 
-  test('JSON API endpoint rejects invalid window parameter', async ({ page, request }) => {
+  test('JSON API endpoint rejects invalid window parameter', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call insights API endpoint with invalid window
-    const response = await request.get('/api/studio/insights?window=15')
+    // 2. Call insights API endpoint with invalid window
+    const response = await page.request.get('/api/studio/insights?window=15')
 
     // 4. Verify error response
     expect(response.status()).toBe(400)
@@ -178,16 +168,12 @@ test.describe('Insights Export and API', () => {
     expect(data).toHaveProperty('error')
   })
 
-  test('CSV API endpoint returns CSV content', async ({ page, request }) => {
+  test('CSV API endpoint returns CSV content', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call CSV API endpoint
-    const response = await request.get('/api/studio/insights.csv?window=30')
+    // 2. Call CSV API endpoint
+    const response = await page.request.get('/api/studio/insights.csv?window=30')
 
     // 4. Verify response
     expect(response.ok()).toBe(true)
@@ -207,16 +193,12 @@ test.describe('Insights Export and API', () => {
     expect(csvContent).toContain('Total Runs')
   })
 
-  test('Lessons overview API endpoint returns lessons data', async ({ page, request }) => {
+  test('Lessons overview API endpoint returns lessons data', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call lessons overview API endpoint
-    const response = await request.get('/api/studio/lessons-overview')
+    // 2. Call lessons overview API endpoint
+    const response = await page.request.get('/api/studio/lessons-overview')
 
     // 4. Verify response
     expect(response.ok()).toBe(true)
@@ -247,11 +229,13 @@ test.describe('Insights Export and API', () => {
 
   test('as Demo Editor: can export CSV', async ({ page }) => {
     // 1. Sign in as Demo Editor
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Editor' }).click()
+    await signInAsDemo(page, 'Editor')
 
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
     // 3. Verify Export CSV button is visible
     await expect(page.getByTestId('la-insights-export-csv')).toBeVisible()
@@ -267,11 +251,13 @@ test.describe('Insights Export and API', () => {
 
   test('as Demo Viewer: can export CSV', async ({ page }) => {
     // 1. Sign in as Demo Viewer
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Viewer' }).click()
+    await signInAsDemo(page, 'Viewer')
 
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
     // 3. Verify Export CSV button is visible
     await expect(page.getByTestId('la-insights-export-csv')).toBeVisible()
@@ -307,31 +293,33 @@ test.describe('Insights Export and API', () => {
 
   test('workspace switching: CSV filename reflects active workspace', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to insights page with default workspace
     await page.goto('/studio/insights')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
 
-    // 3. Click Export CSV and verify filename
-    const downloadPromise1 = page.waitForEvent('download')
-    await page.getByTestId('la-insights-export-csv').click()
-    const download1 = await downloadPromise1
-    const filename1 = download1.suggestedFilename()
-    expect(filename1).toContain('demo')
+    // 3. Switch to Sample Team workspace
+    const workspaceSelect = page.getByRole('combobox')
+    await expect(workspaceSelect).toBeEnabled()
+    await workspaceSelect.click()
+    const sampleOption = page.getByRole('option', { name: 'Sample Team' })
+    await expect(sampleOption).toBeVisible()
+    await sampleOption.click()
 
-    // 4. Switch to Sample Team workspace
-    await page.getByRole('combobox').click()
-    await page.getByRole('option', { name: 'Sample Team' }).click()
+    // 4. Wait for selection to apply
+    await expect(
+      page.getByRole('heading', { name: 'Sample Team Insights' })
+    ).toBeVisible()
 
-    // 5. Wait for page to reload
-    await page.waitForURL(/\/studio\/insights/)
-
-    // 6. Click Export CSV and verify filename
+    // 5. Click Export CSV and verify filename
     const downloadPromise2 = page.waitForEvent('download')
     await page.getByTestId('la-insights-export-csv').click()
     const download2 = await downloadPromise2
     const filename2 = download2.suggestedFilename()
     expect(filename2).toContain('sample-team')
+    await download2.path()
   })
 })

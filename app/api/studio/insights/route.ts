@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     const windowDays = windowParam ? parseInt(windowParam, 10) : DEFAULT_WINDOW_DAYS
 
     // Validate window parameter
-    if (windowDays !== 7 && windowDays !== 30) {
+    if (windowDays !== 0 && windowDays !== 7 && windowDays !== 30) {
       return NextResponse.json(
         { error: 'Invalid window parameter. Use 7 or 30.' },
         { status: 400 }

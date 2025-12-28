@@ -26,6 +26,7 @@ export default async function LessonReviewPage({
 }: {
   params: { lessonSlug: string }
 }) {
+  const { lessonSlug } = await params
   const session = await requireAuth()
 
   // Fetch workspace and lesson
@@ -41,7 +42,7 @@ export default async function LessonReviewPage({
     where: {
       workspaceId_slug: {
         workspaceId: workspace.id,
-        slug: params.lessonSlug,
+        slug: lessonSlug,
       },
     },
   })
@@ -82,7 +83,7 @@ export default async function LessonReviewPage({
       <StudioHeader
         currentWorkspaceId={session.activeWorkspaceId}
         workspaces={workspaces}
-        redirectTo={`/studio/lessons/${params.lessonSlug}`}
+        redirectTo={`/studio/lessons/${lessonSlug}`}
       />
 
       <main className="container mx-auto px-4 py-8">
@@ -97,7 +98,7 @@ export default async function LessonReviewPage({
           {/* Comments Panel */}
           <LessonCommentsPanel
             workspaceSlug={workspace.slug}
-            lessonSlug={params.lessonSlug}
+            lessonSlug={lessonSlug}
             canEdit={canEdit}
           />
         </div>

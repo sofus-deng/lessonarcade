@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
-import { seedDemoWorkspaceAndLessons } from '@/lib/test/demo-seed'
+import { seedAllDemoData } from '@/lib/test/demo-seed'
 import { prisma } from '@/lib/db/prisma'
 import {
   createLessonComment,
@@ -24,7 +24,7 @@ describe('Collaboration Service', () => {
    * Seed demo data before all tests
    */
   beforeAll(async () => {
-    await seedDemoWorkspaceAndLessons(prisma)
+    await seedAllDemoData(prisma)
   })
 
   /**

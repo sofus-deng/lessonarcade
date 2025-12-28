@@ -5,28 +5,24 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-const AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
+import { applyBasicAuth, signInAsDemo } from './utils/auth'
 
 test.describe('Collaboration Comments', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
+  test.beforeEach(async ({ context }) => {
+    await applyBasicAuth(context)
   })
 
   test('Editor can add and see comments', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
-    // Sign in as demo editor
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Editor' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Owner')
     
     // Navigate to lessons overview
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Click Review button on first lesson
-    await page.getByRole('button', { name: 'Review' }).first().click()
+    await page.getByRole('link', { name: 'Review' }).first().click()
     await expect(page).toHaveURL(/\/studio\/lessons\/.+/)
     
     // Verify comments panel is visible
@@ -50,23 +46,23 @@ test.describe('Collaboration Comments', () => {
     await page.getByRole('button', { name: 'Add Comment' }).click()
     
     // Verify comment appears in list
-    await expect(page.getByText(testComment)).toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list')
+    ).toContainText(testComment)
   })
 
   test('Viewer sees comments in read-only mode', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
     // First, sign in as editor to create a comment
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Editor' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Editor')
     
     // Navigate to lessons overview
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Click Review button on first lesson
-    await page.getByRole('button', { name: 'Review' }).first().click()
+    await page.getByRole('link', { name: 'Review' }).first().click()
     await expect(page).toHaveURL(/\/studio\/lessons\/.+/)
     
     // Add a comment
@@ -75,28 +71,27 @@ test.describe('Collaboration Comments', () => {
       .locator('[data-testid="la-lesson-comment-input"]')
       .fill(testComment)
     await page.getByRole('button', { name: 'Add Comment' }).click()
-    await expect(page.getByText(testComment)).toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list')
+    ).toContainText(testComment)
     
-    // Sign out
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Viewer' }).click()
-    await expect(page).toHaveURL(/\/auth\/demo-signin/)
-    
-    // Sign in as viewer
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Viewer' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    // Switch to viewer role
+    await signInAsDemo(page, 'Viewer')
     
     // Navigate to same lesson
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Click Review button on first lesson
-    await page.getByRole('button', { name: 'Review' }).first().click()
+    await page.getByRole('link', { name: 'Review' }).first().click()
     await expect(page).toHaveURL(/\/studio\/lessons\/.+/)
     
     // Verify comment is visible
-    await expect(page.getByText(testComment)).toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list')
+    ).toContainText(testComment)
     
     // Verify comment input is NOT available (viewer role)
     await expect(
@@ -110,24 +105,24 @@ test.describe('Collaboration Comments', () => {
   })
 
   test('Comments are scoped per workspace', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
     // Add comment in demo workspace
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Editor' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Owner')
     
     // Navigate to lessons overview
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Add comment in demo workspace
     const demoComment = 'Demo workspace specific comment'
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Click Review button on first lesson
-    await page.getByRole('button', { name: 'Review' }).first().click()
+    await page.getByRole('link', { name: 'Review' }).first().click()
     await expect(page).toHaveURL(/\/studio\/lessons\/.+/)
     
     // Add comment
@@ -135,18 +130,31 @@ test.describe('Collaboration Comments', () => {
       .locator('[data-testid="la-lesson-comment-input"]')
       .fill(demoComment)
     await page.getByRole('button', { name: 'Add Comment' }).click()
-    await expect(page.getByText(demoComment)).toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list')
+    ).toContainText(demoComment)
     
     // Switch to sample team workspace
     await page.goto('/studio')
-    await page.getByRole('button', { name: 'Switch Workspace' }).click()
-    await page.getByRole('menuitem', { name: 'Sample Team' }).click()
+    await expect(
+      page.locator('[data-testid="la-studio-dashboard-page"]')
+    ).toBeVisible()
+    const workspaceSelect = page.getByRole('combobox')
+    await expect(workspaceSelect).toBeEnabled()
+    await workspaceSelect.click()
+    const sampleOption = page.getByRole('option', { name: 'Sample Team' })
+    await expect(sampleOption).toBeVisible()
+    await sampleOption.click()
     
     // Navigate to lessons in sample team
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Verify demo workspace comment is NOT visible
-    await expect(page.getByText(demoComment)).not.toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list').getByText(demoComment)
+    ).toHaveCount(0)
   })
 })

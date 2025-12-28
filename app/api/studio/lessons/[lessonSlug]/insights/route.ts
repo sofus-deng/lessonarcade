@@ -46,6 +46,7 @@ export async function GET(
   try {
     // Require authentication
     const session = await requireAuth()
+    const resolvedParams = await params
 
     // Get workspace from session
     const workspace = await prisma.workspace.findUnique({
@@ -65,7 +66,7 @@ export async function GET(
     const windowDays = windowParam ? parseInt(windowParam, 10) : DEFAULT_WINDOW_DAYS
 
     // Validate window parameter
-    if (windowDays !== 7 && windowDays !== 30) {
+    if (windowDays !== 0 && windowDays !== 7 && windowDays !== 30) {
       return NextResponse.json(
         { error: 'Invalid window parameter. Use 7 or 30.' },
         { status: 400 }
@@ -75,7 +76,7 @@ export async function GET(
     // Get lesson insights
     const insights = await getLessonInsights(prisma, {
       workspaceSlug: workspace.slug,
-      lessonSlug: params.lessonSlug,
+      lessonSlug: resolvedParams.lessonSlug,
       windowDays,
     })
 

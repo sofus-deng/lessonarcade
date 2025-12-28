@@ -1,5 +1,5 @@
 import { prisma } from '../lib/db/prisma'
-import { seedDemoWorkspaceAndLessons } from '../lib/test/demo-seed'
+import { seedAllDemoData } from '../lib/test/demo-seed'
 
 const DEFAULT_DATABASE_URL = 'file:./dev.db'
 
@@ -8,8 +8,8 @@ export default async function globalSetup() {
   process.env.DATABASE_URL = databaseUrl
 
   try {
-    await seedDemoWorkspaceAndLessons(prisma)
-    console.log('Seeded demo data for E2E tests.')
+    await seedAllDemoData(prisma)
+    console.log('Seeded demo + sample team data for E2E tests.')
   } finally {
     await prisma.$disconnect()
   }

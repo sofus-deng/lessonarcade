@@ -178,6 +178,30 @@ export async function getLessonInsights(
     timeWindowEnd.getTime() - windowDays * 24 * 60 * 60 * 1000
   )
 
+  if (windowDays <= 0) {
+    return {
+      timeWindowStart,
+      timeWindowEnd,
+      lesson: {
+        id: lesson.id,
+        slug: lesson.slug,
+        title: lesson.title,
+      },
+      totalRuns: 0,
+      avgScorePercent: null,
+      modeBreakdown: {
+        focusRuns: 0,
+        arcadeRuns: 0,
+      },
+      uniqueSessions: 0,
+      totalComments: 0,
+      openComments: 0,
+      resolvedComments: 0,
+      dailyBuckets: [],
+      recentActivity: [],
+    }
+  }
+
   // 4. Query lesson runs within window for this lesson
   const runs = await prisma.lessonRun.findMany({
     where: {

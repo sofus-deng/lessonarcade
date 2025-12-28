@@ -5,14 +5,11 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-// Base64 encoded "e2e:e2e" for outer Basic Auth guard
-const BASIC_AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
+import { applyBasicAuth, signInAsDemo } from './utils/auth'
 
 test.describe('Studio Dashboard', () => {
-  test.beforeEach(async ({ page }) => {
-    // Add Basic Auth header for all requests
-    await page.setExtraHTTPHeaders({ Authorization: BASIC_AUTH_HEADER })
+  test.beforeEach(async ({ context }) => {
+    await applyBasicAuth(context)
   })
 
   test('anonymous visit to /studio redirects to sign-in', async ({ page }) => {
@@ -22,8 +19,7 @@ test.describe('Studio Dashboard', () => {
 
   test('dashboard shows metrics and top lessons for active workspace', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Land on /studio
     await expect(page).toHaveURL(/\/studio/)
@@ -33,9 +29,11 @@ test.describe('Studio Dashboard', () => {
     await expect(page.getByRole('heading', { name: 'LessonArcade Demo Workspace Dashboard' })).toBeVisible()
 
     // 4. Verify metric cards
-    await expect(page.getByText('Lessons', { exact: true })).toBeVisible()
-    await expect(page.getByText('Lesson Runs', { exact: true })).toBeVisible()
-    await expect(page.getByText('Average Score', { exact: true })).toBeVisible()
+    await expect(
+      page.getByRole('heading', { name: 'Lessons', exact: true })
+    ).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Lesson Runs' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Average Score' })).toBeVisible()
     
     // In seeded demo workspace, we expect 2 lessons
     await expect(page.getByText('2', { exact: true }).first()).toBeVisible()
@@ -48,8 +46,7 @@ test.describe('Studio Dashboard', () => {
 
   test('workspace switcher updates dashboard data', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Start at Demo Workspace
     await expect(page.getByRole('heading', { name: 'LessonArcade Demo Workspace Dashboard' })).toBeVisible()

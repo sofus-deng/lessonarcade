@@ -5,25 +5,22 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-const AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
+import { applyBasicAuth, signInAsDemo } from './utils/auth'
 
 test.describe('Integrations - Webhooks', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
+  test.beforeEach(async ({ context }) => {
+    await applyBasicAuth(context)
   })
 
   test('Owner can view and manage webhooks', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
     // Sign in as demo owner
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Owner' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Owner')
     
     // Navigate to integrations page
     await page.goto('/studio/settings/integrations')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-integrations-page"]')
+    ).toBeVisible()
     
     // Verify page loads
     await expect(
@@ -42,19 +39,17 @@ test.describe('Integrations - Webhooks', () => {
   })
 
   test('Owner can add a new webhook', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
     // Sign in as demo owner
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Owner' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Owner')
     
     // Navigate to integrations page
     await page.goto('/studio/settings/integrations')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-integrations-page"]')
+    ).toBeVisible()
     
     // Click "Add Webhook"
-    await page.getByRole('button', { name: 'Add Webhook' }).click()
+    await page.getByRole('button', { name: 'Add Webhook' }).first().click()
     
     // Fill in webhook URL
     await page
@@ -62,7 +57,7 @@ test.describe('Integrations - Webhooks', () => {
       .fill('https://test.example.com/webhook')
     
     // Click "Add Webhook" button
-    await page.getByRole('button', { name: 'Add Webhook' }).click()
+    await page.getByRole('button', { name: 'Add Webhook' }).nth(1).click()
     
     // Verify new webhook appears (page reloads)
     await expect(
@@ -71,19 +66,17 @@ test.describe('Integrations - Webhooks', () => {
   })
 
   test('Webhook is triggered when comment is created', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
     // Sign in as demo owner
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Owner' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Owner')
     
     // Navigate to lessons overview
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Click Review button on first lesson
-    await page.getByRole('button', { name: 'Review' }).first().click()
+    await page.getByRole('link', { name: 'Review' }).first().click()
     await expect(page).toHaveURL(/\/studio\/lessons\/.+/)
     
     // Add a comment
@@ -94,36 +87,43 @@ test.describe('Integrations - Webhooks', () => {
     await page.getByRole('button', { name: 'Add Comment' }).click()
     
     // Verify comment appears
-    await expect(page.getByText(testComment)).toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list')
+    ).toContainText(testComment)
   })
 
   test('Inactive webhooks are not triggered', async ({ page }) => {
-    await page.setExtraHTTPHeaders({ Authorization: AUTH_HEADER })
-    
     // Sign in as demo owner
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Owner' }).click()
-    await expect(page).toHaveURL(/\/studio/)
+    await signInAsDemo(page, 'Owner')
     
     // Navigate to integrations page
     await page.goto('/studio/settings/integrations')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-integrations-page"]')
+    ).toBeVisible()
     
-    // Deactivate pre-seeded webhook
-    await page
-      .locator('button[title="Deactivate"]')
-      .first()
-      .click()
-    
-    // Verify webhook is now inactive
-    await expect(page.getByText('Inactive')).toBeVisible()
+    const demoWebhookCard = page.getByTestId('la-webhook-card-demo-webhook-1')
+    await expect(demoWebhookCard).toBeVisible()
+
+    const statusBadge = demoWebhookCard.getByTestId('la-webhook-status-demo-webhook-1')
+    const toggleButton = demoWebhookCard.getByTestId('la-webhook-toggle-demo-webhook-1')
+    const statusText = (await statusBadge.textContent()) ?? ''
+
+    if (statusText.includes('Active')) {
+      await toggleButton.click()
+      await expect(statusBadge).toHaveText('Inactive')
+    } else {
+      await expect(statusBadge).toHaveText('Inactive')
+    }
     
     // Navigate to lessons and add a comment
     await page.goto('/studio/lessons')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-lessons-overview-page"]')
+    ).toBeVisible()
     
     // Click Review button on first lesson
-    await page.getByRole('button', { name: 'Review' }).first().click()
+    await page.getByRole('link', { name: 'Review' }).first().click()
     await expect(page).toHaveURL(/\/studio\/lessons\/.+/)
     
     // Add a comment
@@ -134,13 +134,20 @@ test.describe('Integrations - Webhooks', () => {
     await page.getByRole('button', { name: 'Add Comment' }).click()
     
     // Verify comment appears
-    await expect(page.getByText(testComment)).toBeVisible()
+    await expect(
+      page.getByTestId('la-lesson-comments-list')
+    ).toContainText(testComment)
     
     // Reactivate webhook for other tests
     await page.goto('/studio/settings/integrations')
-    await page
-      .locator('button[title="Activate"]')
-      .first()
-      .click()
+    const reactivateCard = page.getByTestId('la-webhook-card-demo-webhook-1')
+    await expect(reactivateCard).toBeVisible()
+    const reactivateStatus = reactivateCard.getByTestId('la-webhook-status-demo-webhook-1')
+    const reactivateToggle = reactivateCard.getByTestId('la-webhook-toggle-demo-webhook-1')
+    const reactivateText = (await reactivateStatus.textContent()) ?? ''
+    if (reactivateText.includes('Inactive')) {
+      await reactivateToggle.click()
+      await expect(reactivateStatus).toHaveText('Active')
+    }
   })
 })

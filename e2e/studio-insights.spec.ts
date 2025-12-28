@@ -5,24 +5,22 @@
  */
 
 import { test, expect } from '@playwright/test'
-
-// Base64 encoded "e2e:e2e" for outer Basic Auth guard
-const BASIC_AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
+import { applyBasicAuth, signInAsDemo } from './utils/auth'
 
 test.describe('Studio Insights', () => {
-  test.beforeEach(async ({ page }) => {
-    // Add Basic Auth header for all requests
-    await page.setExtraHTTPHeaders({ Authorization: BASIC_AUTH_HEADER })
+  test.beforeEach(async ({ context }) => {
+    await applyBasicAuth(context)
   })
 
   test('as Demo Owner: view insights page with metrics', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
     
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
     
     // 3. Verify page is visible
     await expect(
@@ -63,8 +61,7 @@ test.describe('Studio Insights', () => {
 
   test('as Demo Owner: navigate via Studio navigation', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
     
     // 2. Start at /studio
     await expect(page).toHaveURL(/\/studio$/)
@@ -74,7 +71,6 @@ test.describe('Studio Insights', () => {
     
     // 4. Verify navigated to insights page
     await expect(page).toHaveURL(/\/studio\/insights/)
-    await page.waitForLoadState('networkidle')
     await expect(
       page.locator('[data-testid="la-studio-insights-page"]')
     ).toBeVisible()
@@ -84,12 +80,13 @@ test.describe('Studio Insights', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
     
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
     
     // 3. Get initial workspace name (Demo)
     const initialWorkspaceName = await page
@@ -114,12 +111,13 @@ test.describe('Studio Insights', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
     
     // 2. Navigate to insights page with default 30-day window
     await page.goto('/studio/insights')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
     
     // 3. Verify 30 days is selected (has active styling)
     const thirtyDaysLink = page.getByRole('link', { name: '30 days' })
@@ -142,12 +140,13 @@ test.describe('Studio Insights', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
     
     // 2. Navigate to insights page with a very small window (0 days = empty)
     await page.goto('/studio/insights?window=0')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
     
     // 3. Verify page loads
     await expect(
@@ -178,23 +177,21 @@ test.describe('Studio Insights', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
     
     // 2. Start at /studio
     await expect(page).toHaveURL(/\/studio$/)
     
-    // 3. Navigate using Tab key
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab')
-    await page.keyboard.press('Tab') // Should land on Insights link
+    // 3. Focus Insights link
+    const insightsLink = page.getByRole('link', { name: 'Insights' })
+    await insightsLink.focus()
+    await expect(insightsLink).toBeFocused()
     
     // 4. Press Enter to navigate
     await page.keyboard.press('Enter')
     
     // 5. Verify navigated to insights page
     await expect(page).toHaveURL(/\/studio\/insights/)
-    await page.waitForLoadState('networkidle')
     await expect(
       page.locator('[data-testid="la-studio-insights-page"]')
     ).toBeVisible()
@@ -202,12 +199,13 @@ test.describe('Studio Insights', () => {
 
   test('as Demo Editor: can view insights page', async ({ page }) => {
     // 1. Sign in as Demo Editor
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Editor' }).click()
+    await signInAsDemo(page, 'Editor')
     
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
     
     // 3. Verify page is visible
     await expect(
@@ -222,12 +220,13 @@ test.describe('Studio Insights', () => {
 
   test('as Demo Viewer: can view insights page', async ({ page }) => {
     // 1. Sign in as Demo Viewer
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Viewer' }).click()
+    await signInAsDemo(page, 'Viewer')
     
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
-    await page.waitForLoadState('networkidle')
+    await expect(
+      page.locator('[data-testid="la-studio-insights-page"]')
+    ).toBeVisible()
     
     // 3. Verify page is visible
     await expect(

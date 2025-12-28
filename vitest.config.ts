@@ -8,6 +8,7 @@ export default defineConfig({
     // Use jsdom for tests (most project tests need DOM APIs)
     environment: 'jsdom',
     setupFiles: ['./test/setup.ts'],
+    fileParallelism: false,
     // Exclude node_modules and other non-project test files
     exclude: [
       'node_modules/**',

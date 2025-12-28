@@ -157,12 +157,9 @@ test.describe('Vertex AI Gemini API', () => {
     expect(body).toHaveProperty('text', mockResponseText)
   })
 
-  // Note: The following tests for JSON parse error handling are temporarily skipped
-  // due to Next.js caching behavior in the E2E environment.
-  // The route implementation correctly handles JSON parse errors and returns
-  // BAD_REQUEST error code, but the E2E test server may be using
-  // a cached version of the route handler. These tests should pass
-  // when run against a fresh server instance.
+  // Skipped: Next.js dev server can cache the route handler in E2E, masking
+  // JSON parse errors. Unskip once the route is forced dynamic/no-store or
+  // the test runner restarts the server between these cases.
 
   test.skip('POST /api/ai/gemini returns 400 for malformed JSON with stable error shape', async ({ request }) => {
     const response = await request.post('/api/ai/gemini', {

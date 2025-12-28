@@ -4,23 +4,20 @@
  * LA3-P2-05: Tests for the lesson-level insights drilldown page.
  */
 
+import { readFile } from 'fs/promises'
 import { test, expect } from '@playwright/test'
-
-// Base64 encoded "e2e:e2e" for outer Basic Auth guard
-const BASIC_AUTH_HEADER = 'Basic ' + Buffer.from('e2e:e2e').toString('base64')
+import { applyBasicAuth, signInAsDemo } from './utils/auth'
 
 test.describe('Lesson Insights Drilldown', () => {
-  test.beforeEach(async ({ page }) => {
-    // Add Basic Auth header for all requests
-    await page.setExtraHTTPHeaders({ Authorization: BASIC_AUTH_HEADER })
+  test.beforeEach(async ({ context }) => {
+    await applyBasicAuth(context)
   })
 
   test('as Demo Owner: navigate to lesson insights from workspace insights', async ({
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to insights page
     await page.goto('/studio/insights')
@@ -31,21 +28,10 @@ test.describe('Lesson Insights Drilldown', () => {
     ).toBeVisible()
 
     // 4. Find and click on a lesson link in struggling or engaged lessons table
-    // First, wait for tables to load
-    await page.waitForTimeout(1000)
-
-    // Try to find a lesson link (either in struggling or engaged lessons)
-    const lessonLinks = await page.getByRole('link').all()
-    let lessonInsightLink = null
-    for (const link of lessonLinks) {
-      const href = await link.getAttribute('href')
-      if (href && href.includes('/studio/insights/lessons/')) {
-        lessonInsightLink = link
-        break
-      }
-    }
-
-    if (lessonInsightLink) {
+    const lessonInsightLink = page
+      .locator('a[href*="/studio/insights/lessons/"]')
+      .first()
+    if (await lessonInsightLink.count()) {
       await lessonInsightLink.click()
 
       // 5. Verify navigated to lesson insights page
@@ -62,8 +48,7 @@ test.describe('Lesson Insights Drilldown', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate directly to a lesson insights page (using a known lesson slug)
     await page.goto('/studio/insights/lessons/effective-meetings')
@@ -78,9 +63,9 @@ test.describe('Lesson Insights Drilldown', () => {
 
     // 5. Verify metric cards are visible
     await expect(page.getByText('Total Runs')).toBeVisible()
-    await expect(page.getByText('Avg Score')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Avg Score' })).toBeVisible()
     await expect(page.getByText('Unique Sessions')).toBeVisible()
-    await expect(page.getByText('Comments')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
 
     // 6. Verify mode breakdown section
     await expect(page.getByText('Mode Breakdown')).toBeVisible()
@@ -98,12 +83,13 @@ test.describe('Lesson Insights Drilldown', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to lesson insights page with default 30-day window
     await page.goto('/studio/insights/lessons/effective-meetings')
-    await expect(page).toHaveURL(/window=30/)
+    await expect(
+      page.locator('[data-testid="la-studio-lesson-insights-page"]')
+    ).toBeVisible()
 
     // 3. Click 7 days
     await page.getByRole('link', { name: '7 days' }).click()
@@ -122,13 +108,16 @@ test.describe('Lesson Insights Drilldown', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to lesson insights page
     await page.goto('/studio/insights/lessons/effective-meetings')
+    await expect(
+      page.locator('[data-testid="la-studio-lesson-insights-page"]')
+    ).toBeVisible()
 
     // 3. Click Export CSV button
+    await expect(page.getByTestId('la-lesson-insights-export-csv')).toBeVisible()
     const downloadPromise = page.waitForEvent('download')
     await page.getByTestId('la-lesson-insights-export-csv').click()
     const download = await downloadPromise
@@ -145,20 +134,24 @@ test.describe('Lesson Insights Drilldown', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to lesson insights page
     await page.goto('/studio/insights/lessons/effective-meetings')
+    await expect(
+      page.locator('[data-testid="la-studio-lesson-insights-page"]')
+    ).toBeVisible()
 
     // 3. Click Export CSV button
+    await expect(page.getByTestId('la-lesson-insights-export-csv')).toBeVisible()
     const downloadPromise = page.waitForEvent('download')
     await page.getByTestId('la-lesson-insights-export-csv').click()
     const download = await downloadPromise
 
     // 4. Verify CSV content contains expected headers
-    const csvContent = await download.createReadStream()
-    const csvText = await csvContent.toString()
+    const downloadPath = await download.path()
+    expect(downloadPath).not.toBeNull()
+    const csvText = await readFile(downloadPath as string, 'utf-8')
 
     expect(csvText).toContain('Summary')
     expect(csvText).toContain('Lesson Title')
@@ -173,19 +166,14 @@ test.describe('Lesson Insights Drilldown', () => {
     expect(csvText).toContain('Recent Activity')
   })
 
-  test('JSON API endpoint: returns lesson insights data', async ({
-    page,
-    request,
-  }) => {
+  test('JSON API endpoint: returns lesson insights data', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call lesson insights API endpoint
-    const response = await request.get('/api/studio/lessons/effective-meetings/insights?window=30')
+    // 2. Call lesson insights API endpoint
+    const response = await page.request.get(
+      '/api/studio/lessons/effective-meetings/insights?window=30'
+    )
 
     // 4. Verify response
     expect(response.ok()).toBe(true)
@@ -219,19 +207,14 @@ test.describe('Lesson Insights Drilldown', () => {
     expect(insights.modeBreakdown).toHaveProperty('arcadeRuns')
   })
 
-  test('JSON API endpoint: rejects invalid window parameter', async ({
-    page,
-    request,
-  }) => {
+  test('JSON API endpoint: rejects invalid window parameter', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call lesson insights API endpoint with invalid window
-    const response = await request.get('/api/studio/lessons/effective-meetings/insights?window=15')
+    // 2. Call lesson insights API endpoint with invalid window
+    const response = await page.request.get(
+      '/api/studio/lessons/effective-meetings/insights?window=15'
+    )
 
     // 4. Verify error response
     expect(response.status()).toBe(400)
@@ -244,8 +227,7 @@ test.describe('Lesson Insights Drilldown', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to lesson insights page in Demo workspace
     await page.goto('/studio/insights/lessons/effective-meetings')
@@ -259,26 +241,17 @@ test.describe('Lesson Insights Drilldown', () => {
     await page.getByRole('combobox').click()
     await page.getByRole('option', { name: 'Sample Team' }).click()
 
-    // 5. Wait for page to reload
-    await page.waitForTimeout(2000)
-
-    // 6. Verify page shows 404 or different data for Sample Team
-    // The lesson "effective-meetings" doesn't exist in Sample Team, so should show 404
-    const pageContent = await page.locator('body').textContent() || ''
-    // Either shows 404 error or redirects
-    expect(
-      pageContent.includes('not found') ||
-      pageContent.includes('404') ||
-      pageContent.includes('Unable to load')
-    ).toBe(true)
+    // 5. Verify page shows 404 or different data for Sample Team
+    await expect
+      .poll(async () => (await page.locator('body').textContent()) || '')
+      .toMatch(/not found|404|Unable to load/i)
   })
 
   test('as Demo Editor: can view lesson insights page', async ({
     page,
   }) => {
     // 1. Sign in as Demo Editor
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Editor' }).click()
+    await signInAsDemo(page, 'Editor')
 
     // 2. Navigate to lesson insights page
     await page.goto('/studio/insights/lessons/effective-meetings')
@@ -290,15 +263,14 @@ test.describe('Lesson Insights Drilldown', () => {
 
     // 4. Verify metrics are shown
     await expect(page.getByText('Total Runs')).toBeVisible()
-    await expect(page.getByText('Avg Score')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Avg Score' })).toBeVisible()
   })
 
   test('as Demo Viewer: can view lesson insights page', async ({
     page,
   }) => {
     // 1. Sign in as Demo Viewer
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Viewer' }).click()
+    await signInAsDemo(page, 'Viewer')
 
     // 2. Navigate to lesson insights page
     await page.goto('/studio/insights/lessons/effective-meetings')
@@ -310,22 +282,17 @@ test.describe('Lesson Insights Drilldown', () => {
 
     // 4. Verify metrics are shown
     await expect(page.getByText('Total Runs')).toBeVisible()
-    await expect(page.getByText('Avg Score')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Avg Score' })).toBeVisible()
   })
 
-  test('CSV API endpoint: returns CSV with correct headers', async ({
-    page,
-    request,
-  }) => {
+  test('CSV API endpoint: returns CSV with correct headers', async ({ page }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
-    // 2. Wait for session to be established
-    await page.waitForURL(/\/studio/)
-
-    // 3. Call CSV API endpoint
-    const response = await request.get('/api/studio/lessons/effective-meetings/insights.csv?window=30')
+    // 2. Call CSV API endpoint
+    const response = await page.request.get(
+      '/api/studio/lessons/effective-meetings/insights.csv?window=30'
+    )
 
     // 4. Verify response
     expect(response.ok()).toBe(true)
@@ -345,8 +312,7 @@ test.describe('Lesson Insights Drilldown', () => {
     page,
   }) => {
     // 1. Sign in
-    await page.goto('/auth/demo-signin')
-    await page.getByRole('button', { name: 'Sign in as Demo Owner' }).click()
+    await signInAsDemo(page, 'Owner')
 
     // 2. Navigate to lesson insights page with a very small window (0 days = empty)
     await page.goto('/studio/insights/lessons/effective-meetings?window=0')

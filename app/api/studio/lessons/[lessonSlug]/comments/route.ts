@@ -3,7 +3,7 @@
  *
  * LA3-P2-01: API endpoints for lesson comments
  *
- * GET  - List comments for a lesson in the active workspace
+ * GET  - List comments for a lesson in active workspace
  * POST - Create a new comment on a lesson
  *
  * @module app/api/studio/lessons/[lessonSlug]/comments/route
@@ -37,7 +37,7 @@ import {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { lessonSlug: string } }
+  { params }: { params: Promise<{ lessonSlug: string }> }
 ) {
   try {
     // Require authentication
@@ -104,7 +104,7 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { lessonSlug: string } }
+  { params }: { params: Promise<{ lessonSlug: string }> }
 ) {
   try {
     // Require authentication

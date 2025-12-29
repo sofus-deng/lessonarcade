@@ -18,6 +18,12 @@ export default defineConfig({
         url: "http://localhost:3100",
       },
     },
+    reporters: process.env.CI
+      ? [
+          ["default", { outputFile: "test-results/vitest-junit.xml" }],
+          ["junit", { outputFile: "test-results/vitest-junit.xml" }],
+        ]
+      : [["default"]],
   },
   plugins: [tsconfigPaths()],
   resolve: {

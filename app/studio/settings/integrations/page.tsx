@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 }
 
 /**
- * Server component for the Studio Integrations page.
+ * Server component for Studio Integrations page.
  *
  * LA3-P2-02: Webhook-based integration PoC
  * This page allows workspace owners and admins to configure webhook endpoints
@@ -84,7 +84,6 @@ export default async function IntegrationsPage() {
 
           {/* Webhooks Client */}
           <WebhooksClient
-            workspaceId={activeWorkspace.id}
             webhooks={activeWorkspace.webhooks}
           />
         </div>

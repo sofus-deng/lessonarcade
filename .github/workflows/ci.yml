@@ -29,7 +29,6 @@ jobs:
         shell: bash
         run: |
           echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-          echo "STORE_PATH=$(pnpm store path)"
 
       - name: Setup pnpm cache
         uses: actions/cache@v4
@@ -37,7 +36,7 @@ jobs:
           path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-store-
+            ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,9 +45,12 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
+          key: ${{ runner.os }}-playwright
           restore-keys: |
-            ${{ runner.os }}-playwright-
+            ${{ runner.os }}-playwright
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
 
       - name: Run linter
         run: pnpm lint
@@ -65,13 +67,13 @@ jobs:
       - name: Build application
         run: pnpm build
 
-      - name: Install Playwright browsers
+      - name: Install Playwright browsers (for E2E tests)
         run: pnpm exec playwright install --with-deps
 
       - name: Run E2E tests
         env:
           PLAYWRIGHT_WEB_SERVER_CMD: "pnpm start -- -p 3100"
-        run: pnpm test:e2e
+        run: pnpm test:e2e:ci
 
       - name: Upload Playwright HTML report
         if: always()
@@ -86,5 +88,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: playwright-test-results
+          path: test-results/
+          retention-days: 30
+
+      - name: Upload Vitest test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-junit
           path: test-results/
           retention-days: 30

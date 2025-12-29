@@ -41,7 +41,7 @@ import {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { lessonSlug: string } }
+  { params }: { params: Promise<{ lessonSlug: string }> }
 ) {
   try {
     // Require authentication

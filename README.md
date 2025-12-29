@@ -268,6 +268,16 @@ pnpm test:e2e
 pnpm test:e2e:ci
 ```
 
+### Run CI Checks Locally
+
+To run the same checks as CI locally, use:
+
+```bash
+pnpm ci:check
+```
+
+This command runs lint, typecheck, build, test, and smoke tests in the same order as CI.
+
 ## Deployment
 
 ### Cloud Run Deployment (Primary Contest Path)
@@ -291,8 +301,8 @@ gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregi
 PROJECT_NUMBER=$(gcloud projects describe $GCP_PROJECT_ID --format='value(projectNumber)')
 SERVICE_ACCOUNT="${PROJECT_NUMBER}-compute@developer.gserviceaccount.com"
 gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
-   --member="serviceAccount:$SERVICE_ACCOUNT" \
-   --role="roles/aiplatform.user"
+    --member="serviceAccount:$SERVICE_ACCOUNT" \
+    --role="roles/aiplatform.user"
 
 # 4. Run deployment script
 ./scripts/cloud-run/deploy.sh
@@ -302,6 +312,7 @@ gcloud projects add-iam-policy-binding $GCP_PROJECT_ID \
 ```
 
 **Optional: Run smoke tests after deployment:**
+
 ```bash
 # Get the URL from the deploy script output or:
 SERVICE_URL=$(gcloud run services describe lessonarcade --region=us-central1 --format="value(status.url)")
@@ -309,8 +320,6 @@ SERVICE_URL=$(gcloud run services describe lessonarcade --region=us-central1 --f
 # Run smoke tests
 ./scripts/cloud-run/smoke-test.sh $SERVICE_URL
 ```
-
-For complete deployment instructions, see [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
 #### Prerequisites
 
@@ -340,6 +349,8 @@ gcloud secrets create studio-auth-pass --replication-policy="automatic"
 
 # Add secret values
 echo -n "your-key" | gcloud secrets versions add gemini-api-key --data-file=-
+echo -n "your-password" | gcloud secrets versions add studio-auth-user --data-file=-
+echo -n "your-password" | gcloud secrets versions add studio-auth-pass --data-file=-
 ```
 
 **For Vertex AI mode**, set the following environment variables (non-sensitive, can be set directly):
@@ -375,22 +386,22 @@ The deployment script automatically outputs the hosted URL at the end:
 ```bash
 === HOSTED URL FOR DEVPOST SUBMISSION ===
 HOSTED_URL=https://lessonarcade-xxxxx.a.run.app
-=====================================
+====================================
 ```
 
 Alternatively, you can retrieve it manually:
 
 ```bash
 SERVICE_URL=$(gcloud run services describe lessonarcade \
-     --region=us-central1 \
-     --format="value(status.url)")
+      --region=us-central1 \
+      --format="value(status.url)")
 
 echo "$SERVICE_URL"
 ```
 
 #### Troubleshooting
 
-For common failures (port issues, health check failures, missing environment variables), see the [Common Failures](docs/deploy-cloud-run.md#common-failures) section in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
+For common failures (port issues, health check failures, missing environment variables), see [Common Failures](docs/deploy-cloud-run.md#common-failures) section in [`docs/deploy-cloud-run.md`](docs/deploy-cloud-run.md).
 
 ## Privacy & Data Handling
 
@@ -413,18 +424,14 @@ graph TB
     B --> F[ElevenLabs Agents API Route]
     B --> C --> G[ElevenLabs TTS API]
     C --> H[Rate Limiter]
-    C --> I[Telemetry Emitter]
-    D --> J[Voice Analytics Dashboard]
+    D --> I[Telemetry Emitter]
     G --> I
     I --> K[Vertex AI Client]
-    K --> L[Application Default Credentials]
     L --> M[Cloud Run Service Account]
     M --> N[Vertex AI API]
-    N --> O[Gemini Model]
     F --> P[ElevenLabs ConvAI API]
     P --> Q[ElevenLabs Agent]
     B --> R[Google Cloud Run]
-    R --> S[Artifact Registry]
     R --> T[Cloud Secrets Manager]
 ```
 
@@ -449,9 +456,9 @@ The project uses a local SQLite database at `prisma/dev.db` for development.
 
 - The file is not tracked in Git and can be safely deleted; it will be recreated from the Prisma schema and seed scripts.
 - To sync schema to the local dev DB, run:
-  ```bash
-    pnpm db:push:dev
-    ```
+```bash
+     pnpm db:push:dev
+```
 - There is normally no need to call `npx prisma db push` interactively; for this repo, always prefer the `db:push:dev` script.
 
 **Note:** This is dev-only. Production deployments should use a proper managed database with a separate `DATABASE_URL`.
@@ -472,6 +479,7 @@ Currently supported events:
 3. Click "Add Webhook" and enter your webhook URL
 4. Select event type (currently only "Lesson comment created")
 5. Toggle the webhook active/inactive as needed
+6. Delete webhooks as needed
 
 ### Webhook Payload Format
 
@@ -653,10 +661,10 @@ Authorization: [session cookie]
 
 **CSV Format:**
 The CSV includes the following sections:
-- **Summary**: Time window start/end, total runs, average score, unique sessions, total comments
+- **Summary** – Time window start/end, total runs, average score, unique sessions, total comments
 - **Top Struggling Lessons**: Table with lesson title, slug, runs, and average score
 - **Top Engaged Lessons**: Table with lesson title, slug, runs, and average score
-- **Recent Activity**: Table with type, timestamp, lesson title, lesson slug, and description
+- **Recent Activity**: Table with type, timestamp, description
 
 **Error Responses:**
 - `401`: Unauthorized (no valid session)
@@ -725,43 +733,7 @@ Future versions may include:
 - Pagination for large datasets
 - Filtering and sorting options
 - Real-time data via WebSockets
-
-## Pricing & Plans (Concept)
-
-LessonArcade is moving toward a multi-workspace SaaS with plans based on workspaces, editor seats, and lesson-run usage. The pricing structure includes three tiers: **Free** (for individuals experimenting with the platform), **Pro** (for small teams with voice and embed support), and **Team** (for larger organizations with multiple workspaces and advanced analytics). Pricing is currently conceptual for prototypes and proposals. For full details on the plan structure, metrics, and billing model, see [`plans/la3-p1-02-pricing-and-plans.md`](plans/la3-p1-02-pricing-and-plans.md). The plan definitions are also mirrored in [`lib/saas/pricing.ts`](lib/saas/pricing.ts) for future UI integration.
-
-## Demo
-
-Try the live demo at [demo-url-placeholder] (replace with the actual Cloud Run URL).
-
-## Devpost Submission
-
-For complete submission requirements and the canonical Devpost write-up, see:
-
-- **[`docs/devpost-draft.md`](docs/devpost-draft.md)** — Copy-paste ready Devpost submission content with all required sections (Problem, Solution, How We Built It, Architecture, Challenges, Accomplishments, What We Learned, What's Next)
-- **[`docs/submission.md`](docs/submission.md)** — Complete checklist for contest compliance, pre-submit verification, and final steps
-
-### Quick Links
-
-- Hosted project URL (Cloud Run): [your-deployment-url]
-- Demo video (<= 3 minutes): [your-video-url]
-- Repository: [your-repo-url]
-
-## Contributing
-
-This project is open source under the Apache 2.0 license. Contributions are welcome!
-
-## License
-
-This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
-
-## Support
-
-For questions or issues, please open an issue in the repository.
-
----
-
-**Built for AI Partner Catalyst Hackathon — ElevenLabs Challenge**
+- Filtering and sorting options
 
 ## Lesson Drilldown Insights (v0.3)
 
@@ -775,8 +747,6 @@ LessonArcade v0.3 adds lesson-level insights that allow teams to drill down into
 
 2. From **Lessons Overview** page (`/studio/lessons`):
    - Click on the "Insights" button next to any lesson (only visible if the lesson has runs)
-
-3. Direct URL access:
    - Navigate directly to `/studio/insights/lessons/{lessonSlug}`
 
 ### Lesson Insights Dashboard
@@ -911,9 +881,9 @@ All lesson insights endpoints are workspace-scoped:
 
 ### Limitations
 
-This is a v0.3 feature intended for small teams and demos:
+This is a v0.3 reporting view intended for small teams and demos:
 - No advanced date range picker (only 7/30 day presets)
-- No cohort analysis or per-learner drilldown beyond the single lesson view
+- No cohort analysis or per-learner drilldown
 - No comparison with previous periods
 
 Future versions may include:
@@ -922,3 +892,38 @@ Future versions may include:
 - Per-learner performance drilldown
 - Integration with personalization engine
 
+## Pricing & Plans (Concept)
+
+LessonArcade is moving toward a multi-workspace SaaS with plans based on workspaces, editor seats, and lesson-run usage. The pricing structure includes three tiers: **Free** (for individuals experimenting with the platform), **Pro** (for small teams with voice and embed support), and **Team** (for larger organizations with multiple workspaces and advanced analytics). Pricing is currently conceptual for prototypes and proposals. For full details on plan structure, metrics, and billing model, see [`plans/la3-p1-02-pricing-and-plans.md`](plans/la3-p1-02-pricing-and-plans.md). The plan definitions are also mirrored in [`lib/saas/pricing.ts`](lib/saas/pricing.ts) for future UI integration.
+
+## Demo
+
+Try the live demo at [demo-url-placeholder] (replace with the actual Cloud Run URL).
+
+## Devpost Submission
+
+For complete submission requirements and canonical Devpost write-up, see:
+- **[`docs/devpost-draft.md`](docs/devpost-draft.md)** — Copy-paste ready Devpost submission content with all required sections (Problem, Solution, How We Built It, Architecture, Challenges, Accomplishments, What We Learned, What's Next)
+- **[`docs/submission.md`](docs/submission.md)** — Complete checklist for contest compliance, pre-submit verification, and final steps
+
+### Quick Links
+
+- Hosted project URL (Cloud Run): [your-deployment-url]
+- Demo video (<= 3 minutes): [your-video-url]
+- Repository: [your-repo-url]
+
+## Contributing
+
+This project is open source under the Apache 2.0 license. Contributions are welcome!
+
+## License
+
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For questions or issues, please open an issue in the repository.
+
+---
+
+**Built for AI Partner Catalyst Hackathon — ElevenLabs Challenge**

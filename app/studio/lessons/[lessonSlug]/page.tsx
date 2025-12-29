@@ -76,7 +76,7 @@ export default async function LessonReviewPage({
   const workspaces = user?.workspaceMembers.map((m) => m.workspace) ?? []
 
   // Determine if user can edit (EDITOR, ADMIN, or OWNER)
-  const canEdit = member && ['EDITOR', 'ADMIN', 'OWNER'].includes(member.role)
+  const canEdit = member ? ['EDITOR', 'ADMIN', 'OWNER'].includes(member.role) : false
 
   return (
     <div data-testid="la-studio-lesson-review-page" className="min-h-screen bg-la-bg">
@@ -97,7 +97,6 @@ export default async function LessonReviewPage({
 
           {/* Comments Panel */}
           <LessonCommentsPanel
-            workspaceSlug={workspace.slug}
             lessonSlug={lessonSlug}
             canEdit={canEdit}
           />

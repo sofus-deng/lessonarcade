@@ -42,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <BrandThemeProvider brandId={brandPreset.id}>
+    <html lang="en" data-brand={brandPreset.id}>
+      <BrandThemeProvider>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >

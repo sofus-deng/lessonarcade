@@ -20,8 +20,10 @@ export default function EmbedLayout({
   children: React.ReactNode
 }) {
   return (
-    <BrandThemeProvider brandId={brandPreset.id}>
-      {children}
-    </BrandThemeProvider>
+    <html data-brand={brandPreset.id}>
+      <BrandThemeProvider>
+        {children}
+      </BrandThemeProvider>
+    </html>
   )
 }

@@ -2,7 +2,7 @@
 
 import { ElevenLabsConversation } from "@/components/agents/elevenlabs-conversation"
 import { useSearchParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 
 interface LessonContext {
@@ -26,7 +26,7 @@ interface ErrorResponse {
   }
 }
 
-export default function AgentsPage() {
+function AgentsPageContent() {
   const searchParams = useSearchParams()
   const lessonSlug = searchParams.get("lesson")
 
@@ -142,5 +142,13 @@ export default function AgentsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AgentsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-la-bg" data-testid="la-agents-page-loading">Loading...</div>}>
+      <AgentsPageContent />
+    </Suspense>
   )
 }

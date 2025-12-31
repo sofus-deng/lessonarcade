@@ -50,6 +50,8 @@ export default async function LessonInsightsPage({
   params: { lessonSlug: string }
   searchParams: { window?: string }
 }) {
+  type WorkspaceRef = { id: string; slug: string; name: string }
+
   // Require authentication
   const session = await requireAuth()
   const resolvedParams = await params
@@ -71,8 +73,12 @@ export default async function LessonInsightsPage({
     throw new Error('User not found')
   }
 
-  const workspaces = user.workspaceMembers.map((m) => m.workspace)
-  const activeWorkspace = workspaces.find((w) => w.id === session.activeWorkspaceId)
+  const workspaces = user.workspaceMembers.map(
+    (m: { workspace: WorkspaceRef }) => m.workspace,
+  )
+  const activeWorkspace = workspaces.find(
+    (w: WorkspaceRef) => w.id === session.activeWorkspaceId,
+  )
 
   if (!activeWorkspace) {
     return (

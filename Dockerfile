@@ -11,6 +11,8 @@ COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies
 FROM base AS deps
+# Copy Prisma schema before install (required for postinstall script)
+COPY prisma ./prisma
 RUN pnpm install --frozen-lockfile
 
 # Build application

@@ -4,6 +4,7 @@ import { DemoLessonGrid } from "@/components/demo/DemoLessonGrid"
 import { BrandSwitcher } from "@/components/demo/BrandSwitcher"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { getBrandPreset, type BrandId } from "@/lib/branding/brandPresets"
 
 export const metadata: Metadata = {
   title: "Demo Lessons | LessonArcade",
@@ -16,13 +17,24 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function DemoPage() {
+interface DemoPageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function DemoPage({ searchParams }: DemoPageProps) {
   const demoLessons = await getDemoLessonSummaries()
+
+  // Resolve initial brand from query param or fall back to default
+  const resolvedSearchParams = await searchParams
+  const brandParam = resolvedSearchParams.brand
+  const initialBrandId = getBrandPreset(
+    typeof brandParam === 'string' ? brandParam : null
+  ).id as BrandId
 
   return (
     <div data-testid="la-demo-page" className="min-h-screen bg-la-bg">
       {/* Brand Switcher (dev only) */}
-      <BrandSwitcher />
+      <BrandSwitcher initialBrandId={initialBrandId} />
 
       {/* Header Section */}
       <div className="bg-la-surface border-b border-la-border">

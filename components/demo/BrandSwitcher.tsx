@@ -8,46 +8,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BRAND_PRESETS, getBrandPreset, type BrandId } from "@/lib/branding/brandPresets";
+import { BRAND_PRESETS, type BrandId } from "@/lib/branding/brandPresets";
 
 /**
- * Get the initial brand ID from URL query param or data-brand attribute.
- * Falls back to the default brand if neither is valid.
+ * Props for BrandSwitcher component.
  */
-function getInitialBrandId(): BrandId {
-  // 1) Try URL ?brand=...
-  if (typeof window !== 'undefined') {
-    try {
-      const url = new URL(window.location.href);
-      const fromQuery = url.searchParams.get('brand');
-      if (fromQuery && fromQuery in BRAND_PRESETS) {
-        return fromQuery as BrandId;
-      }
-    } catch {
-      // ignore and fall through
-    }
-  }
-
-  // 2) Try <html data-brand="...">
-  if (typeof document !== 'undefined') {
-    const attr = document.documentElement.getAttribute('data-brand');
-    if (attr && attr in BRAND_PRESETS) {
-      return attr as BrandId;
-    }
-  }
-
-  // 3) Fallback
-  return getBrandPreset(null).id;
+export interface BrandSwitcherProps {
+  /** The initial brand ID to display on first render (SSR + hydration safe) */
+  initialBrandId: BrandId;
 }
 
 /**
  * BrandSwitcher provides a dropdown to preview different brand themes.
  * In production, this component renders nothing.
+ *
+ * The initial brand is provided via the `initialBrandId` prop, which should
+ * be computed on the server (e.g., from URL query params) to ensure SSR
+ * and hydration consistency.
  */
-export function BrandSwitcher() {
-  const [brandId, setBrandId] = useState<BrandId>(getInitialBrandId);
+export function BrandSwitcher({ initialBrandId }: BrandSwitcherProps) {
+  const [brandId, setBrandId] = useState<BrandId>(initialBrandId);
 
-  // Sync with URL changes
+  // Sync brand state with URL changes (for navigation)
   useEffect(() => {
     if (typeof window === 'undefined') {
       return;
@@ -56,7 +38,10 @@ export function BrandSwitcher() {
     const getBrandFromURL = (): BrandId => {
       const params = new URLSearchParams(window.location.search);
       const brand = params.get("brand");
-      return getBrandPreset(brand).id;
+      if (brand && brand in BRAND_PRESETS) {
+        return brand as BrandId;
+      }
+      return initialBrandId;
     };
 
     // Listen for URL changes
@@ -84,12 +69,18 @@ export function BrandSwitcher() {
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
     };
-  }, []);
+  }, [initialBrandId]);
+
+  // Sync data-brand attribute with current brand state
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset.brand = brandId;
+    }
+  }, [brandId]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newBrand = e.target.value as BrandId;
     setBrandId(newBrand);
-    document.documentElement.dataset.brand = newBrand;
 
     // Update URL query param
     const url = new URL(window.location.href);

@@ -11,11 +11,41 @@ import { useState, useEffect } from "react";
 import { BRAND_PRESETS, getBrandPreset, type BrandId } from "@/lib/branding/brandPresets";
 
 /**
+ * Get the initial brand ID from URL query param or data-brand attribute.
+ * Falls back to the default brand if neither is valid.
+ */
+function getInitialBrandId(): BrandId {
+  // 1) Try URL ?brand=...
+  if (typeof window !== 'undefined') {
+    try {
+      const url = new URL(window.location.href);
+      const fromQuery = url.searchParams.get('brand');
+      if (fromQuery && fromQuery in BRAND_PRESETS) {
+        return fromQuery as BrandId;
+      }
+    } catch {
+      // ignore and fall through
+    }
+  }
+
+  // 2) Try <html data-brand="...">
+  if (typeof document !== 'undefined') {
+    const attr = document.documentElement.getAttribute('data-brand');
+    if (attr && attr in BRAND_PRESETS) {
+      return attr as BrandId;
+    }
+  }
+
+  // 3) Fallback
+  return getBrandPreset(null).id;
+}
+
+/**
  * BrandSwitcher provides a dropdown to preview different brand themes.
  * In production, this component renders nothing.
  */
 export function BrandSwitcher() {
-  const [brandId, setBrandId] = useState<BrandId>("lessonarcade-default");
+  const [brandId, setBrandId] = useState<BrandId>(getInitialBrandId);
 
   // Sync with URL changes
   useEffect(() => {
@@ -28,11 +58,6 @@ export function BrandSwitcher() {
       const brand = params.get("brand");
       return getBrandPreset(brand).id;
     };
-
-    // Sync state with URL on mount (wrapped in setTimeout to avoid sync setState)
-    setTimeout(() => {
-      setBrandId(getBrandFromURL());
-    }, 0);
 
     // Listen for URL changes
     const handleUrlChange = () => {

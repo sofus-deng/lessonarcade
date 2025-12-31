@@ -74,7 +74,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     // Allow CI to override with production server for better determinism
-    command: process.env.PLAYWRIGHT_WEB_SERVER_CMD ?? 'pnpm dev --port 3100',
+    command: process.env.PLAYWRIGHT_WEB_SERVER_CMD ?? 'pnpm dev:e2e',
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: !process.env.CI,
     env: {

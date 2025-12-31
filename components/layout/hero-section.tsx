@@ -37,7 +37,7 @@ export function HeroSection() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+                  className="border-la-border hover:bg-la-muted/20 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                 >
                   <Link href="/agents">
                     Voice Conversation
@@ -47,7 +47,7 @@ export function HeroSection() {
                   asChild
                   variant="outline"
                   size="lg"
-                  className="border-la-border text-la-surface hover:bg-la-muted/20 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
+                  className="border-la-border hover:bg-la-muted/20 text-lg px-8 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg"
                 >
                   <Link href="#creators">
                     For creators

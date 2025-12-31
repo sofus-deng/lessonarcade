@@ -124,7 +124,7 @@ export function PillarsSection() {
                       Start creating lessons
                     </Link>
                   </Button>
-                  <Button asChild variant="outline" className="border-la-border text-la-surface hover:bg-la-muted/20 font-medium py-3 px-6 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
+                  <Button asChild variant="outline" className="border-la-border hover:bg-la-muted/20 font-medium py-3 px-6 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-la-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-la-bg">
                     <Link href="#case-studies">
                       View case studies
                     </Link>

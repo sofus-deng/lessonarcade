@@ -19,7 +19,9 @@
     "db:push:dev": "DATABASE_URL=\"file:./dev.db\" prisma db push --accept-data-loss",
     "hosted:url": "bash scripts/cloud-run/hosted-url.sh",
     "devpost:fields": "bash scripts/devpost/print-fields.sh",
-    "ci:check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm test:smoke"
+    "ci:check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test && pnpm test:smoke",
+    "prisma:generate": "prisma generate",
+    "postinstall": "pnpm prisma:generate"
   },
   "dependencies": {
     "@elevenlabs/react": "^0.12.3",

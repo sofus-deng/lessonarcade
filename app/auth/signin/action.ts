@@ -105,7 +105,7 @@ export async function signInAsDemoOwnerAction() {
 
   // Get demo workspace
   const demoWorkspace = user.workspaceMembers.find(
-    (m) => m.workspace.slug === 'demo'
+    (m: { workspace: { slug: string } }) => m.workspace.slug === 'demo'
   )?.workspace
 
   if (!demoWorkspace) {
@@ -152,7 +152,7 @@ export async function signInAsDemoEditorAction() {
 
   // Get demo workspace
   const demoWorkspace = user.workspaceMembers.find(
-    (m) => m.workspace.slug === 'demo'
+    (m: { workspace: { slug: string } }) => m.workspace.slug === 'demo'
   )?.workspace
 
   if (!demoWorkspace) {
@@ -199,7 +199,7 @@ export async function signInAsDemoViewerAction() {
 
   // Get demo workspace
   const demoWorkspace = user.workspaceMembers.find(
-    (m) => m.workspace.slug === 'demo'
+    (m: { workspace: { slug: string } }) => m.workspace.slug === 'demo'
   )?.workspace
 
   if (!demoWorkspace) {
